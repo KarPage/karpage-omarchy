@@ -1,0 +1,20 @@
+#!/bin/sh
+# Install the Kar Page launcher for this user. No sudo. No network.
+set -eu
+cd "$(dirname "$0")"
+
+if ! command -v chromium >/dev/null 2>&1; then
+  echo "Chromium is not installed. On Omarchy run: sudo pacman -S chromium" >&2
+  exit 1
+fi
+
+data="${XDG_DATA_HOME:-$HOME/.local/share}"
+apps="$data/applications"
+icons="$data/icons/hicolor/512x512/apps"
+mkdir -p "$apps" "$icons"
+cp -f karpage.desktop "$apps/karpage.desktop"
+cp -f karpage.png "$icons/karpage.png"
+if command -v update-desktop-database >/dev/null 2>&1; then
+  update-desktop-database "$apps" || true
+fi
+echo "Kar Page is in the launcher."

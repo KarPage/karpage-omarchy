@@ -1,0 +1,11 @@
+#!/bin/sh
+# Remove the Kar Page launcher for this user. Does not touch the website.
+set -eu
+data="${XDG_DATA_HOME:-$HOME/.local/share}"
+apps="$data/applications"
+icons="$data/icons/hicolor/512x512/apps"
+rm -f "$apps/karpage.desktop" "$icons/karpage.png"
+if command -v update-desktop-database >/dev/null 2>&1; then
+  update-desktop-database "$apps" || true
+fi
+echo "Kar Page launcher removed."

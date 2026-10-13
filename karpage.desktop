@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Kar Page
+Comment=Your cars. Your story.
+Exec=chromium --app=https://karpage.app --class=KarPage --window-size=480,960
+StartupWMClass=KarPage
+Icon=karpage
+Terminal=false
+Categories=Network;
+StartupNotify=true
