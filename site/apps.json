@@ -1,10 +1,125 @@
 {
   "since": "2026-10-27",
   "apps": [
-    {"name":"Kar Page","description":"Your cars. Your story.","status":"web","open":"https://karpage.app","mark":"kp","shot":"kar-page","shotAlt":"Kar Page public landing page, with the wordmark and a grid of car posts."},
-    {"name":"Oma Year Planner","description":"Your whole year on one screen. A local-first year calendar for Omarchy, with no backend, no account and no build step.","status":"marketplace","install":"omarchy plugin add https://github.com/KarPage/oma-year-planner --enable","launch":"~/.config/omarchy/plugins/io.github.karpage.oma-year/year-planner/open","source":"https://github.com/KarPage/oma-year-planner","mark":"year","shot":"oma-year-planner","shotAlt":"Oma Year Planner showing a full year of trips and events"},
-    {"name":"Kar Page launcher for Omarchy","description":"Launcher for Kar Page on Omarchy. It opens the live site in a Chromium app window.","status":"public","install":"git clone https://github.com/KarPage/karpage-omarchy.git && cd karpage-omarchy && less install && ./install","launch":"chromium --app=https://karpage.app --class=KarPage --window-size=480,960","source":"https://github.com/KarPage/karpage-omarchy","mark":"launch","shot":"kar-page-launcher","shotAlt":"Placeholder for the Kar Page launcher. It opens karpage.app in a Chromium window."},
-    {"name":"OmaWatch","description":"A native watcher window for Cursor cloud agents.","status":"private beta","launch":"oma-agent-watch open","mark":"watch","shot":"omawatch","shotAlt":"Placeholder card for OmaWatch. Not a capture of a live session."},
-    {"name":"OmaKarDash","description":"A Tesla dashboard for Omarchy.","status":"private beta","mark":"car","shot":"omakar-dash","shotAlt":"OmaKarDash demo dashboard for a fictional car named Northwind. The screen says the car was not contacted."}
+    {
+      "name": "Kar Page",
+      "description": "Your cars. Your story.",
+      "status": "WEB APP",
+      "open": "https://karpage.app",
+      "mark": "kp",
+      "frame": "phone",
+      "shots": [
+        {
+          "id": "kar-grid",
+          "alt": "Kar Page grid scan, a public browse screen for spots and cars. No one is signed in.",
+          "w": 390,
+          "h": 844,
+          "x2": true
+        },
+        {
+          "id": "kar-spot",
+          "alt": "The private-beta sheet Kar Page shows when Spot is opened while logged out. The page behind it is blurred.",
+          "w": 390,
+          "h": 844,
+          "x2": true
+        },
+        {
+          "id": "kar-invite",
+          "alt": "Kar Page request-access form. The email and handle fields show placeholders, and no one is signed in.",
+          "w": 390,
+          "h": 844,
+          "x2": true
+        },
+        {
+          "id": "kar-lane",
+          "alt": "Kar Page pit lane before anyone is signed in. It offers an invite and shows no account.",
+          "w": 390,
+          "h": 844,
+          "x2": true
+        }
+      ]
+    },
+    {
+      "name": "Oma Year Planner",
+      "description": "Your whole year on one screen. A local-first year calendar for Omarchy, with no backend, no account and no build step.",
+      "status": "marketplace",
+      "install": "omarchy plugin add https://github.com/KarPage/oma-year-planner --enable",
+      "launch": "~/.config/omarchy/plugins/io.github.karpage.oma-year/year-planner/open",
+      "source": "https://github.com/KarPage/oma-year-planner",
+      "mark": "year",
+      "frame": "wide",
+      "shots": [
+        {
+          "id": "oyp-year",
+          "alt": "Oma Year Planner showing the sample year: Ski week, City break, Wedding weekend, Workshop, Coast week, Lake week, Autumn hike, and Year-end break.",
+          "w": 1100,
+          "h": 720,
+          "x2": true
+        },
+        {
+          "id": "oyp-months",
+          "alt": "A closer crop of the sample calendar from May onward, with Workshop, Coast week, Lake week, and Autumn hike.",
+          "w": 1100,
+          "h": 720,
+          "x2": true
+        },
+        {
+          "id": "oyp-add",
+          "alt": "The add-plan dialog on May 12 in the sample calendar. The name field is empty.",
+          "w": 1100,
+          "h": 720,
+          "x2": true
+        },
+        {
+          "id": "oyp-search",
+          "alt": "The sample calendar filtered to workshop, with the three Workshop plans still on the board.",
+          "w": 1100,
+          "h": 720,
+          "x2": true
+        },
+        {
+          "id": "oyp-float",
+          "alt": "A translucent Oma Year Planner window over a desktop wallpaper, showing the same sample plans.",
+          "w": 1100,
+          "h": 720,
+          "x2": true
+        }
+      ]
+    },
+    {
+      "name": "Kar Page launcher for Omarchy",
+      "description": "Launcher for Kar Page on Omarchy. It opens the live site in a Chromium app window.",
+      "status": "public",
+      "install": "git clone https://github.com/KarPage/karpage-omarchy.git && cd karpage-omarchy && less install && ./install",
+      "launch": "chromium --app=https://karpage.app --class=KarPage --window-size=480,960",
+      "source": "https://github.com/KarPage/karpage-omarchy",
+      "mark": "launch",
+      "shot": "kar-page-launcher",
+      "shotAlt": "Placeholder for the Kar Page launcher. It opens karpage.app in a Chromium window."
+    },
+    {
+      "name": "OmaAgentWatch",
+      "description": "Watch your Cursor cloud agents cook, live on your Omarchy desktop.",
+      "status": "private beta",
+      "launch": "oma-agent-watch open",
+      "mark": "watch",
+      "frame": "wide",
+      "shots": []
+    },
+    {
+      "name": "OmaKarDash",
+      "description": "A Tesla dashboard for Omarchy.",
+      "status": "private beta",
+      "mark": "car",
+      "frame": "wide",
+      "shots": [
+        {
+          "id": "omakar-dash",
+          "alt": "OmaKarDash demo dashboard for a fictional car named Northwind. The screen says the car was not contacted.",
+          "w": 1280,
+          "h": 720
+        }
+      ]
+    }
   ]
 }

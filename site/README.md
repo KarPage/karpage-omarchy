@@ -4,10 +4,10 @@ Static list for [apps.karpage.com](https://apps.karpage.com). One HTML page, one
 
 ## Add an app
 
-Edit `apps.json`. `since` is the day this page started (`2026-10-27`). Each app is one JSON object on its own line inside `apps`. Keep the commas valid:
+Edit `apps.json`. `since` is the day this page started (`2026-10-27`). Each app is one object in `apps`. Keep the commas valid:
 
 ```json
-{"name":"Example","description":"One line, taken from that repo.","status":"coming soon","mark":"year","shot":"example","shotAlt":"What the picture shows"}
+{"name":"Example","description":"One line, taken from that repo.","status":"coming soon","mark":"year","shots":[]}
 ```
 
 That example is not a real app. Do not add an app you do not have a source for.
@@ -19,18 +19,24 @@ The page reads only these fields:
 | `since` | Calendar date `YYYY-MM-DD`. Days up uses America/Los_Angeles dates and counts that day as day 1, so `2026-10-27` reads 1. A bad or missing date falls back to `2026-10-27`. |
 | `name` | The row title. Required. |
 | `description` | One line. |
-| `status` | Badge text. `web`, `marketplace`, and `public` count as live. `private beta` and `coming soon` have their own counters. |
-| `open` | An `https` link labeled Open. |
-| `install` | One shell line, labeled Install, with a copy button. |
-| `launch` | One local shell line, labeled Launch, with a copy button. The page cannot start the app. |
-| `source` | A public `https` link labeled Source. |
+| `status` | Badge text. `web`, `web app`, `marketplace`, and `public` count as live. `private beta` and `coming soon` have their own counters. |
+| `open` | An `https` link. The button reads `open` and is the solid button when it is present. |
+| `install` | One shell line. The button reads `install`, copies the line, and is the solid button when there is no Open link. |
+| `launch` | One local shell line. The button reads `launch` and copies the line. The page cannot start the app. It is solid only when it is the only action. |
+| `source` | A public `https` link. The button reads `source` and opens in a new tab. |
 | `mark` | Logo. `kp`, `year`, `watch`, `car`, or `launch`. Anything else becomes a two-letter monogram. |
-| `shot` | File id. The page loads `img/<id>.webp` and falls back to `img/<id>.png`. Letters, numbers, and hyphens only. |
-| `shotAlt` | The picture's description. |
+| `frame` | `phone` or `wide`. Sets the gallery slide width. |
+| `shots` | Gallery list. Two or more entries scroll as a gallery. One entry is a single window. An empty list leaves the preview slot ready and shows no picture. |
+| `shot` | Older single-picture id, used only when `shots` is absent. |
+| `shotAlt` | Description for that older single picture. |
 
-Shots are lazy-loaded. Keep each WebP and each PNG under about 250 KB. Logos are drawn in the page. They are original glyphs, not trademarked marks.
+Each shot is `{"id","alt","w","h","x2"}`. `id` is letters, numbers, and hyphens. The page loads `img/<id>.webp` and falls back to `img/<id>.png`. `"x2": true` also loads `img/<id>-2x.webp` for sharp screens. The first picture on the page loads immediately. The rest wait until they are near the screen.
 
-Do not put keys, tokens, VINs, domain key paths, or account details in this file. OmaKarDash has no install line. Its picture is the demo dashboard for the fictional car Northwind. OmaWatch's picture is a drawn placeholder. Do not replace it with a capture of a live session, an account, a name, or a key path.
+A shot's `w` and `h` are the CSS pixel size of the 1x file. Keep each WebP and each PNG under about 250 KB. Logos are drawn in the page. They are original glyphs, not trademarked marks. The GitHub button uses the mark-github path from GitHub's MIT-licensed octicons.
+
+Buttons appear only for actions the app has. Install and Launch copy on click and show a toast that reads `copied ✓`. If the copy fails, the command is shown instead. Open and Source open in a new tab.
+
+Do not put keys, tokens, VINs, domain key paths, account names, email addresses, or license plates in this file or in the pictures. OmaKarDash has no install, launch, or source button. Its one picture is the demo dashboard for the fictional car Northwind, and the screen says the car was not contacted. OmaAgentWatch has a launch button and an empty `shots` list: there is no public demo image in this repo yet. Add sharp demo frames there when they exist. Do not fill that slot with a capture of a live session, an account, a name, or a key path. Kar Page's own codebase stays private, so that card has no source link.
 
 ## Preview
 
