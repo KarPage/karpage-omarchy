@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f4f7f4" media="(prefers-color-scheme: light)">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>Kar Page Apps</title>
+  <meta name="description" content="Kar Page apps for Omarchy.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#apps">Skip to apps</a>
+  <div class="wrap">
+    <header class="mast">
+      <h1>Kar Page Apps<span class="cursor" aria-hidden="true"></span></h1>
+      <p class="lede" id="lede"></p>
+      <noscript><p class="lede">built for Omarchy</p></noscript>
+      <dl class="stats" id="stats" aria-label="Counts" aria-busy="true">
+        <div class="stat"><dt>apps</dt><dd id="stat-total">–</dd></div>
+        <div class="stat"><dt>live</dt><dd id="stat-live">–</dd></div>
+        <div class="stat"><dt>private beta</dt><dd id="stat-beta">–</dd></div>
+        <div class="stat"><dt>coming soon</dt><dd id="stat-soon">–</dd></div>
+        <div class="stat"><dt>days up</dt><dd id="stat-days">–</dd></div>
+      </dl>
+    </header>
+    <main id="apps" tabindex="-1">
+      <noscript><p>This list is read from apps.json. Enable JavaScript to see it.</p></noscript>
+    </main>
+    <footer>
+      <p>KarPage · built for Omarchy</p>
+    </footer>
+  </div>
+  <p id="copy-status" class="visually-hidden" role="status"></p>
+  <script src="site.js"></script>
+</body>
+</html>
