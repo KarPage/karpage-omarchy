@@ -2,7 +2,7 @@
   var NS = "http://www.w3.org/2000/svg";
   var DEFAULT_SINCE = "2026-10-27";
   var ZONE = "America/Los_Angeles";
-  var SUBTITLE = "built for Omarchy";
+  var SUBTITLE = "open tools for people who drive their computers";
   var root = document.getElementById("apps");
   var live = document.getElementById("copy-status");
   var stats = document.getElementById("stats");
