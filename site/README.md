@@ -1,30 +1,36 @@
-# KarPage apps
+# Kar Page Apps
 
-Static list of KarPage apps, for [apps.karpage.com](https://apps.karpage.com). One HTML page, one stylesheet, one script. No framework, no build, no tracking, no external fonts or CDNs.
+Static list for [apps.karpage.com](https://apps.karpage.com). One HTML page, one stylesheet, one script. No framework, no build, no tracking, no external fonts or CDNs.
 
 ## Add an app
 
-Edit `apps.json`. Each app is one JSON object on its own line. Add a line inside the array and keep the commas valid:
+Edit `apps.json`. `since` is the day this page started (`2026-10-27`). Each app is one JSON object on its own line inside `apps`. Keep the commas valid:
 
 ```json
-{"name":"Example","description":"One line, taken from that repo.","status":"public","open":"https://example.com","install":"echo the real install line","launch":"example open","source":"https://github.com/KarPage/example","image":"img/example.jpg","imageAlt":"What the picture shows"}
+{"name":"Example","description":"One line, taken from that repo.","status":"coming soon","mark":"year","shot":"example","shotAlt":"What the picture shows"}
 ```
 
-Leave out any field that does not apply. The page reads only these fields:
+That example is not a real app. Do not add an app you do not have a source for.
+
+The page reads only these fields:
 
 | Field | What it shows |
 | --- | --- |
+| `since` | Calendar date `YYYY-MM-DD`. Days up counts that day as day 1. A bad or missing date falls back to `2026-10-27`. |
 | `name` | The row title. Required. |
 | `description` | One line. |
-| `status` | The badge text, such as `web`, `marketplace`, or `private beta`. |
+| `status` | Badge text. `web`, `marketplace`, and `public` count as live. `private beta` and `coming soon` have their own counters. |
 | `open` | An `https` link labeled Open. |
 | `install` | One shell line, labeled Install, with a copy button. |
 | `launch` | One local shell line, labeled Launch, with a copy button. The page cannot start the app. |
 | `source` | A public `https` link labeled Source. |
-| `image` | A file under this folder, such as `img/example.jpg`. No `..` and no remote URL. |
-| `imageAlt` | The picture's description. |
+| `mark` | Logo. `kp`, `year`, `watch`, `car`, or `launch`. Anything else becomes a two-letter monogram. |
+| `shot` | File id. The page loads `img/<id>.webp` and falls back to `img/<id>.png`. Letters, numbers, and hyphens only. |
+| `shotAlt` | The picture's description. |
 
-Do not put keys, tokens, VINs, domain key paths, or account details in this file. OmaKarDash is listed with a description and a private-beta badge only.
+Shots are lazy-loaded. Keep each WebP and each PNG under about 250 KB. Logos are drawn in the page. They are original glyphs, not trademarked marks.
+
+Do not put keys, tokens, VINs, domain key paths, or account details in this file. OmaKarDash has no install line. Its picture is the demo dashboard for the fictional car Northwind. OmaWatch's picture is a drawn placeholder. Do not replace it with a capture of a live session, an account, a name, or a key path.
 
 ## Preview
 
@@ -35,6 +41,8 @@ python3 -m http.server 8080
 ```
 
 Then open http://127.0.0.1:8080/.
+
+The counters (apps, live, private beta, coming soon, days up) are computed in the browser from `apps.json`.
 
 ## Deploy on Vercel
 

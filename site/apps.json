@@ -1,7 +1,10 @@
-[
-  {"name":"Kar Page","description":"Your cars. Your story.","status":"web","open":"https://karpage.app"},
-  {"name":"Oma Year Planner","description":"Your whole year on one screen. A local-first year calendar for Omarchy, with no backend, no account and no build step.","status":"marketplace","install":"omarchy plugin add https://github.com/KarPage/oma-year-planner --enable","launch":"~/.config/omarchy/plugins/io.github.karpage.oma-year/year-planner/open","source":"https://github.com/KarPage/oma-year-planner","image":"img/oma-year-planner.jpg","imageAlt":"Oma Year Planner showing a full year of trips and events"},
-  {"name":"Kar Page launcher for Omarchy","description":"Launcher for Kar Page on Omarchy. It opens the live site in a Chromium app window.","status":"public","install":"git clone https://github.com/KarPage/karpage-omarchy.git && cd karpage-omarchy && less install && ./install","launch":"chromium --app=https://karpage.app --class=KarPage --window-size=480,960","source":"https://github.com/KarPage/karpage-omarchy"},
-  {"name":"OmaWatch","description":"A native watcher window for Cursor cloud agents.","status":"private beta","launch":"oma-agent-watch open"},
-  {"name":"OmaKarDash","description":"A Tesla dashboard for Omarchy.","status":"private beta"}
-]
+{
+  "since": "2026-10-27",
+  "apps": [
+    {"name":"Kar Page","description":"Your cars. Your story.","status":"web","open":"https://karpage.app","mark":"kp","shot":"kar-page","shotAlt":"Kar Page public landing page, with the wordmark and a grid of car posts."},
+    {"name":"Oma Year Planner","description":"Your whole year on one screen. A local-first year calendar for Omarchy, with no backend, no account and no build step.","status":"marketplace","install":"omarchy plugin add https://github.com/KarPage/oma-year-planner --enable","launch":"~/.config/omarchy/plugins/io.github.karpage.oma-year/year-planner/open","source":"https://github.com/KarPage/oma-year-planner","mark":"year","shot":"oma-year-planner","shotAlt":"Oma Year Planner showing a full year of trips and events"},
+    {"name":"Kar Page launcher for Omarchy","description":"Launcher for Kar Page on Omarchy. It opens the live site in a Chromium app window.","status":"public","install":"git clone https://github.com/KarPage/karpage-omarchy.git && cd karpage-omarchy && less install && ./install","launch":"chromium --app=https://karpage.app --class=KarPage --window-size=480,960","source":"https://github.com/KarPage/karpage-omarchy","mark":"launch","shot":"kar-page-launcher","shotAlt":"Placeholder for the Kar Page launcher. It opens karpage.app in a Chromium window."},
+    {"name":"OmaWatch","description":"A native watcher window for Cursor cloud agents.","status":"private beta","launch":"oma-agent-watch open","mark":"watch","shot":"omawatch","shotAlt":"Placeholder card for OmaWatch. Not a capture of a live session."},
+    {"name":"OmaKarDash","description":"A Tesla dashboard for Omarchy.","status":"private beta","mark":"car","shot":"omakar-dash","shotAlt":"OmaKarDash demo dashboard for a fictional car named Northwind. The screen says the car was not contacted."}
+  ]
+}
