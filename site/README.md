@@ -16,7 +16,7 @@ The page reads only these fields:
 
 | Field | What it shows |
 | --- | --- |
-| `since` | Calendar date `YYYY-MM-DD`. Days up counts that day as day 1. A bad or missing date falls back to `2026-10-27`. |
+| `since` | Calendar date `YYYY-MM-DD`. Days up uses America/Los_Angeles dates and counts that day as day 1, so `2026-10-27` reads 1. A bad or missing date falls back to `2026-10-27`. |
 | `name` | The row title. Required. |
 | `description` | One line. |
 | `status` | Badge text. `web`, `marketplace`, and `public` count as live. `private beta` and `coming soon` have their own counters. |
@@ -42,16 +42,14 @@ python3 -m http.server 8080
 
 Then open http://127.0.0.1:8080/.
 
-The counters (apps, live, private beta, coming soon, days up) are computed in the browser from `apps.json`.
+The counters (apps, live, private beta, coming soon, days up) are computed in the browser from `apps.json`. Days up follows the America/Los_Angeles calendar.
 
 ## Deploy on Vercel
 
-Import this repository as a new Vercel project and use these settings. The files are already static, so there is no build.
+Import this repository as a new Vercel project. The files are already static. `site/vercel.json` selects no framework, skips install and build, turns on clean URLs, and sets security headers. There is no analytics and no tracking.
 
-1. Set **Root Directory** to `site`.
-2. Set **Framework Preset** to **Other**.
-3. Turn on **Override** for the build command and leave the command empty. Vercel then skips the build and serves the files as they are.
-4. Leave **Output Directory** unset. With Other, and with no `public` folder in `site`, Vercel serves this directory, which is where `index.html` lives.
+1. Set **Root Directory** to `site`. That setting is on the project. `vercel.json` cannot set it.
+2. Leave the build settings the file already defines: framework Other, empty install command, empty build command. Vercel then serves this directory.
 
 Do not add a `public` directory here. On the Other preset, Vercel prefers `public` over the project root.
 

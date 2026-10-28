@@ -1,6 +1,7 @@
 (function () {
   var NS = "http://www.w3.org/2000/svg";
   var DEFAULT_SINCE = "2026-10-27";
+  var ZONE = "America/Los_Angeles";
   var SUBTITLE = "built for Omarchy";
   var root = document.getElementById("apps");
   var live = document.getElementById("copy-status");
@@ -147,12 +148,33 @@
     return utc;
   }
 
+  function zoneToday(now) {
+    try {
+      var parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: ZONE,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(now);
+      var year = 0;
+      var month = 0;
+      var day = 0;
+      parts.forEach(function (part) {
+        if (part.type === "year") year = Number(part.value);
+        if (part.type === "month") month = Number(part.value);
+        if (part.type === "day") day = Number(part.value);
+      });
+      if (year && month && day) return Date.UTC(year, month - 1, day);
+    } catch (error) {
+      return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+    return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
   function daysUp(iso) {
     var start = parseDay(iso);
     if (start === null) start = parseDay(DEFAULT_SINCE);
-    var now = new Date();
-    var today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    var diff = Math.round((today - start) / 86400000);
+    var diff = Math.round((zoneToday(new Date()) - start) / 86400000);
     if (diff < 0) return 0;
     return diff + 1;
   }
