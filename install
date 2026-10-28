@@ -1,20 +1,98 @@
 #!/bin/sh
 # Install the Kar Page launcher for this user. No sudo. No network.
 set -eu
-cd "$(dirname "$0")"
 
-if ! command -v chromium >/dev/null 2>&1; then
-  echo "Chromium is not installed. On Omarchy run: sudo pacman -S chromium" >&2
+if [ "$(id -u)" -eq 0 ]; then
+  echo "Run ./install as your user, not root." >&2
   exit 1
 fi
 
-data="${XDG_DATA_HOME:-$HOME/.local/share}"
-apps="$data/applications"
-icons="$data/icons/hicolor/512x512/apps"
-mkdir -p "$apps" "$icons"
-cp -f karpage.desktop "$apps/karpage.desktop"
-cp -f karpage.png "$icons/karpage.png"
+cd "$(dirname "$0")"
+root=$(pwd)
+home=${HOME:?HOME is not set}
+bin_dir=$home/.local/bin
+data=${XDG_DATA_HOME:-$home/.local/share}
+config=${XDG_CONFIG_HOME:-$home/.config}
+apps=$data/applications
+icons=$data/icons/hicolor/512x512/apps
+hypr=$home/.config/hypr
+
+mkdir -p "$bin_dir" "$apps" "$icons" "$hypr" "$config/karpage"
+cp -f "$root/karpage" "$bin_dir/karpage"
+chmod 755 "$bin_dir/karpage"
+cp -f "$root/karpage.png" "$icons/karpage.png"
+cp -f "$root/hypr/karpage.lua" "$hypr/karpage.lua"
+cp -f "$root/hypr/karpage_binds.lua" "$hypr/karpage_binds.lua"
+
+awk -v exec="$bin_dir/karpage open" '
+  BEGIN { written = 0 }
+  /^Exec=/ { print "Exec=" exec; written = 1; next }
+  { print }
+  END { if (!written) print "Exec=" exec }
+' "$root/karpage.desktop" >"$apps/karpage.desktop"
+
+"$bin_dir/karpage" rules
+
+# Replace only the marked block. The rest of the file stays as it is.
+# A symlink is left alone so a managed config is not replaced by a copy.
+install_block() {
+  file=$1
+  prefix=$2
+  body=$3
+  if [ ! -f "$file" ]; then
+    return 0
+  fi
+  if [ -L "$file" ]; then
+    echo "Left $file alone because it is a symlink." >&2
+    echo "Add this yourself: $body" >&2
+    return 0
+  fi
+  tmp=$(mktemp)
+  awk '
+    BEGIN { n = 0; skip = 0 }
+    /karpage-omarchy:begin/ {
+      if (n > 0 && buf[n] ~ /^[[:space:]]*$/) n--
+      skip = 1
+      next
+    }
+    /karpage-omarchy:end/ { skip = 0; next }
+    skip { next }
+    { buf[++n] = $0 }
+    END {
+      for (i = 1; i <= n; i++) print buf[i]
+    }
+  ' "$file" >"$tmp"
+  printf '\n%s karpage-omarchy:begin\n%s\n%s karpage-omarchy:end\n' "$prefix" "$body" "$prefix" >>"$tmp"
+  mv "$tmp" "$file"
+}
+
+install_block "$hypr/hyprland.conf" "#" "source = $hypr/karpage.conf"
+install_block "$hypr/hyprland.lua" "--" 'require("hypr.karpage")'
+
+if [ ! -f "$hypr/hyprland.conf" ] && [ ! -f "$hypr/hyprland.lua" ]; then
+  echo "No hyprland.conf or hyprland.lua yet. Rules are in $hypr/karpage.conf." >&2
+  echo "When Hyprland is configured, run ./install again to source them." >&2
+fi
+
 if command -v update-desktop-database >/dev/null 2>&1; then
   update-desktop-database "$apps" || true
 fi
-echo "Kar Page is in the launcher."
+if command -v hyprctl >/dev/null 2>&1; then
+  hyprctl reload >/dev/null 2>&1 || true
+fi
+
+cat <<EOF
+Kar Page is in the launcher.
+
+EOF
+"$bin_dir/karpage" keys
+cat <<EOF
+
+Browser profiles are separate from your everyday browser:
+  $data/karpage/browsers/
+
+Upgrade from this directory with:
+  git pull && less install && ./install
+
+Remove the launcher with ./uninstall. That leaves the config and browser profiles.
+EOF

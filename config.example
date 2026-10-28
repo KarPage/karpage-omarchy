@@ -1,0 +1,30 @@
+# Kar Page launcher. One KEY=value per line. No secrets.
+# Edit this file, then run: karpage rules
+
+# auto, chromium, chrome, brave, vivaldi, edge, or firefox
+browser=auto
+
+url=https://karpage.app
+
+# Where the window sits: center, left, or right
+side=right
+
+# Starting mode: phone, tile, or full
+mode=phone
+
+# 1.0 is solid. A value like 0.98 lets a little wallpaper through.
+opacity=1.0
+
+# Logical phone size before it is fit to the monitor.
+phone_width=430
+phone_height=932
+
+# Gap from the screen edge, in logical pixels. Short monitors use a smaller gap.
+margin=48
+
+# Phone bezel, in pixels.
+rounding=46
+border_size=2
+
+# Keep the side column on every workspace: yes or no
+pin=no
