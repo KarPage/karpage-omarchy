@@ -563,6 +563,7 @@
   function galleryFor(name, shots) {
     var gallery = document.createElement("div");
     gallery.className = "gallery";
+    gallery.setAttribute("data-gallery", "");
     gallery.dataset.frame = frameKind({ frame: shots.frame }, shots);
     var scroller = document.createElement("div");
     scroller.className = "gal-scroller";
