@@ -203,11 +203,73 @@
     return value;
   }
 
-  function link(href, label) {
-    var anchor = document.createElement("a");
-    anchor.href = href;
-    anchor.textContent = label;
-    return anchor;
+  var heroAssigned = false;
+  var galleries = [];
+  var toastNode = null;
+  var toastTimer = 0;
+
+  function iconSvg(children) {
+    var svg = svgEl("svg", {
+      viewBox: "0 0 16 16",
+      width: "16",
+      height: "16",
+      fill: "none",
+      "aria-hidden": "true",
+      focusable: "false"
+    });
+    children.forEach(function (child) { svg.appendChild(child); });
+    return svg;
+  }
+
+  function iconDownload() {
+    return iconSvg([
+      svgEl("path", {
+        d: "M8 1.6v8.2M4.7 6.7 8 10l3.3-3.3M2.6 13.4h10.8",
+        stroke: "currentColor",
+        "stroke-width": "1.6",
+        "stroke-linecap": "square",
+        "stroke-linejoin": "miter"
+      })
+    ]);
+  }
+
+  function iconPlay() {
+    return iconSvg([
+      svgEl("path", { d: "M5 2.8v10.4l8.2-5.2z", fill: "currentColor" })
+    ]);
+  }
+
+  function iconExternal() {
+    return iconSvg([
+      svgEl("path", {
+        d: "M6.2 3H3.2v9.6h9.6V9.6M8.4 3H13v4.6M12.8 3.2 7.2 8.8",
+        stroke: "currentColor",
+        "stroke-width": "1.6",
+        "stroke-linecap": "square",
+        "stroke-linejoin": "miter"
+      })
+    ]);
+  }
+
+  function iconGithub() {
+    return iconSvg([
+      svgEl("path", {
+        fill: "currentColor",
+        d: "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+      })
+    ]);
+  }
+
+  function iconChevron(dir) {
+    return iconSvg([
+      svgEl("path", {
+        d: dir < 0 ? "M10 3 5 8l5 5" : "M6 3l5 5-5 5",
+        stroke: "currentColor",
+        "stroke-width": "1.6",
+        "stroke-linecap": "square",
+        "stroke-linejoin": "miter"
+      })
+    ]);
   }
 
   function say(message) {
@@ -215,6 +277,22 @@
     window.setTimeout(function () {
       live.textContent = message;
     }, 20);
+  }
+
+  function showCopied() {
+    if (!toastNode) {
+      toastNode = document.createElement("p");
+      toastNode.className = "toast";
+      toastNode.setAttribute("role", "status");
+      document.body.appendChild(toastNode);
+    }
+    toastNode.textContent = "copied \u2713";
+    toastNode.classList.add("show");
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(function () {
+      toastNode.classList.remove("show");
+      toastNode.textContent = "";
+    }, 1700);
   }
 
   function selectText(node) {
@@ -226,19 +304,10 @@
     selection.addRange(range);
   }
 
-  function copyText(value, name, label, code, button) {
+  function copyText(value, onOk, onFail) {
     function done(ok) {
-      if (ok) {
-        button.textContent = "Copied";
-        say("Copied " + label.toLowerCase() + " command for " + name + ".");
-      } else {
-        selectText(code);
-        button.textContent = "Copy";
-        say("Could not copy. The command for " + name + " is selected.");
-      }
-      window.setTimeout(function () {
-        button.textContent = "Copy";
-      }, 1600);
+      if (ok) onOk();
+      else onFail();
     }
 
     function fallback() {
@@ -277,9 +346,72 @@
     return wrap;
   }
 
-  function shotFor(app) {
-    var id = shotId(app.shot);
+  function shotRecord(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var id = shotId(raw.id);
     if (!id) return null;
+    var w = Number(raw.w);
+    var h = Number(raw.h);
+    return {
+      id: id,
+      alt: typeof raw.alt === "string" ? raw.alt.trim() : "",
+      w: w > 0 && w < 8000 ? Math.round(w) : 0,
+      h: h > 0 && h < 8000 ? Math.round(h) : 0,
+      x2: raw.x2 === true
+    };
+  }
+
+  function shotsFrom(app) {
+    if (Array.isArray(app.shots)) {
+      var listed = [];
+      app.shots.forEach(function (raw) {
+        var shot = shotRecord(raw);
+        if (shot) listed.push(shot);
+      });
+      return listed;
+    }
+    var id = shotId(app.shot);
+    if (!id) return [];
+    return [{
+      id: id,
+      alt: typeof app.shotAlt === "string" ? app.shotAlt.trim() : "",
+      w: 1280,
+      h: 800,
+      x2: false
+    }];
+  }
+
+  function frameKind(app, shots) {
+    if (app.frame === "phone" || app.frame === "wide") return app.frame;
+    if (shots[0] && shots[0].h > shots[0].w) return "phone";
+    return "wide";
+  }
+
+  function pictureFor(shot, name, eager) {
+    var picture = document.createElement("picture");
+    var source = document.createElement("source");
+    var base = "img/" + shot.id;
+    source.type = "image/webp";
+    source.srcset = shot.x2 ? base + ".webp 1x, " + base + "-2x.webp 2x" : base + ".webp";
+    var img = document.createElement("img");
+    img.src = base + ".png";
+    img.alt = shot.alt || name;
+    img.decoding = "async";
+    img.width = shot.w || 1280;
+    img.height = shot.h || 800;
+    if (eager && !heroAssigned) {
+      heroAssigned = true;
+      img.loading = "eager";
+      img.setAttribute("fetchpriority", "high");
+    } else {
+      img.loading = "lazy";
+    }
+    picture.appendChild(source);
+    picture.appendChild(img);
+    return picture;
+  }
+
+  function windowFrame(name, shot, eager) {
     var figure = document.createElement("figure");
     figure.className = "window";
     var caption = document.createElement("figcaption");
@@ -291,30 +423,216 @@
     for (n = 0; n < 3; n += 1) dots.appendChild(document.createElement("span"));
     var title = document.createElement("span");
     title.className = "wintitle";
-    title.textContent = app.name.trim();
+    title.textContent = name;
     caption.appendChild(dots);
     caption.appendChild(title);
     var screen = document.createElement("div");
     screen.className = "screen";
-    var picture = document.createElement("picture");
-    var source = document.createElement("source");
-    source.type = "image/webp";
-    source.srcset = "img/" + id + ".webp";
-    var img = document.createElement("img");
-    img.src = "img/" + id + ".png";
-    img.alt = typeof app.shotAlt === "string" && app.shotAlt.trim() !== ""
-      ? app.shotAlt.trim()
-      : app.name.trim();
-    img.loading = "lazy";
-    img.decoding = "async";
-    img.width = 1280;
-    img.height = 800;
-    picture.appendChild(source);
-    picture.appendChild(img);
-    screen.appendChild(picture);
+    if (shot.w && shot.h) screen.style.aspectRatio = shot.w + " / " + shot.h;
+    screen.appendChild(pictureFor(shot, name, eager));
     figure.appendChild(caption);
     figure.appendChild(screen);
     return figure;
+  }
+
+  function markGallery(gallery, index) {
+    var dots = gallery.querySelectorAll(".gal-dot");
+    var count = dots.length;
+    Array.prototype.forEach.call(dots, function (dot, i) {
+      if (i === index) dot.setAttribute("aria-current", "true");
+      else dot.removeAttribute("aria-current");
+    });
+    var prev = gallery.querySelector(".gal-prev");
+    var next = gallery.querySelector(".gal-next");
+    if (prev) prev.disabled = index <= 0;
+    if (next) next.disabled = index >= count - 1;
+  }
+
+  function layoutGallery(gallery) {
+    var scroller = gallery.querySelector(".gal-scroller");
+    var slides = gallery.querySelectorAll(".gal-slide");
+    if (!scroller || !slides.length) return;
+    var mid = scroller.scrollLeft + scroller.clientWidth / 2;
+    var closest = 0;
+    var closestDist = Infinity;
+    Array.prototype.forEach.call(slides, function (slide, i) {
+      var center = slide.offsetLeft + slide.offsetWidth / 2;
+      var dist = Math.abs(center - mid);
+      var span = Math.max(slide.offsetWidth, 1);
+      var amount = Math.min(1, dist / (span * 0.92));
+      var win = slide.querySelector(".window");
+      if (win) {
+        win.style.setProperty("--p", amount.toFixed(3));
+        win.style.setProperty("--side", center < mid ? "-1" : "1");
+      }
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = i;
+      }
+    });
+    var target = Number(gallery.dataset.index || "0");
+    if (gallery.dataset.lock === "1" && closest !== target) return;
+    gallery.dataset.lock = "";
+    gallery.dataset.index = String(closest);
+    markGallery(gallery, closest);
+  }
+
+  function goTo(gallery, index) {
+    var scroller = gallery.querySelector(".gal-scroller");
+    var slides = gallery.querySelectorAll(".gal-slide");
+    var count = slides.length;
+    if (!count || !scroller) return;
+    if (index < 0) index = 0;
+    if (index > count - 1) index = count - 1;
+    var slide = slides[index];
+    var left = Math.max(0, slide.offsetLeft - (scroller.clientWidth - slide.offsetWidth) / 2);
+    gallery.dataset.index = String(index);
+    gallery.dataset.lock = Math.abs(scroller.scrollLeft - left) < 2 ? "" : "1";
+    markGallery(gallery, index);
+    scroller.scrollTo({
+      left: left,
+      behavior: reduceMotion ? "auto" : "smooth"
+    });
+  }
+
+  function isEditable(el) {
+    if (!el || el.nodeType !== 1) return false;
+    var tag = el.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+    return el.isContentEditable;
+  }
+
+  function mostVisibleGallery() {
+    var best = null;
+    var bestRatio = 0;
+    var viewH = window.innerHeight || document.documentElement.clientHeight;
+    galleries.forEach(function (gallery) {
+      var rect = gallery.getBoundingClientRect();
+      var visible = Math.min(rect.bottom, viewH) - Math.max(rect.top, 0);
+      if (visible <= 0) return;
+      var ratio = visible / Math.max(rect.height, 1);
+      if (ratio > bestRatio) {
+        bestRatio = ratio;
+        best = gallery;
+      }
+    });
+    return best;
+  }
+
+  function onGalleryKey(event) {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    var active = document.activeElement;
+    if (isEditable(active) && !(active.closest && active.closest("[data-gallery]"))) return;
+    var gallery = active && active.closest ? active.closest("[data-gallery]") : null;
+    if (!gallery) gallery = document.querySelector("[data-gallery]:hover");
+    if (!gallery) gallery = mostVisibleGallery();
+    if (!gallery) return;
+    event.preventDefault();
+    var index = Number(gallery.dataset.index || "0");
+    goTo(gallery, index + (event.key === "ArrowRight" ? 1 : -1));
+  }
+
+  function bindGalleryKeys() {
+    if (bindGalleryKeys.done) return;
+    bindGalleryKeys.done = true;
+    document.addEventListener("keydown", onGalleryKey);
+    window.addEventListener("resize", function () {
+      galleries.forEach(layoutGallery);
+    });
+  }
+
+  function bindGallery(gallery) {
+    var scroller = gallery.querySelector(".gal-scroller");
+    var ticking = false;
+    galleries.push(gallery);
+    gallery.dataset.index = "0";
+    markGallery(gallery, 0);
+    scroller.addEventListener("scroll", function () {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(function () {
+        ticking = false;
+        layoutGallery(gallery);
+      });
+    }, { passive: true });
+    bindGalleryKeys();
+    window.requestAnimationFrame(function () { layoutGallery(gallery); });
+  }
+
+  function galleryFor(name, shots) {
+    var gallery = document.createElement("div");
+    gallery.className = "gallery";
+    gallery.dataset.frame = frameKind({ frame: shots.frame }, shots);
+    var scroller = document.createElement("div");
+    scroller.className = "gal-scroller";
+    scroller.tabIndex = 0;
+    scroller.setAttribute("role", "region");
+    scroller.setAttribute("aria-roledescription", "carousel");
+    scroller.setAttribute("aria-label", "Screenshots of " + name);
+    shots.forEach(function (shot, index) {
+      var slide = document.createElement("div");
+      slide.className = "gal-slide";
+      slide.setAttribute("role", "group");
+      slide.setAttribute("aria-roledescription", "slide");
+      slide.setAttribute("aria-label", (index + 1) + " of " + shots.length);
+      slide.appendChild(windowFrame(name, shot, index === 0));
+      scroller.appendChild(slide);
+    });
+    var controls = document.createElement("div");
+    controls.className = "gal-controls";
+    var prev = document.createElement("button");
+    prev.type = "button";
+    prev.className = "gal-nav gal-prev";
+    prev.setAttribute("aria-label", "Previous " + name + " screenshot");
+    prev.appendChild(iconChevron(-1));
+    var dots = document.createElement("div");
+    dots.className = "gal-dots";
+    shots.forEach(function (shot, index) {
+      var dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "gal-dot";
+      dot.setAttribute("aria-label", "Screenshot " + (index + 1) + " of " + shots.length);
+      dot.appendChild(document.createElement("span"));
+      dot.addEventListener("click", function () { goTo(gallery, index); });
+      dots.appendChild(dot);
+    });
+    var next = document.createElement("button");
+    next.type = "button";
+    next.className = "gal-nav gal-next";
+    next.setAttribute("aria-label", "Next " + name + " screenshot");
+    next.appendChild(iconChevron(1));
+    prev.addEventListener("click", function () {
+      goTo(gallery, Number(gallery.dataset.index || "0") - 1);
+    });
+    next.addEventListener("click", function () {
+      goTo(gallery, Number(gallery.dataset.index || "0") + 1);
+    });
+    controls.appendChild(prev);
+    controls.appendChild(dots);
+    controls.appendChild(next);
+    gallery.appendChild(scroller);
+    gallery.appendChild(controls);
+    bindGallery(gallery);
+    return gallery;
+  }
+
+  function mountMedia(app, name, article) {
+    var shots = shotsFrom(app);
+    if (!shots.length) return;
+    if (shots.length === 1) {
+      article.appendChild(windowFrame(name, shots[0], true));
+      return;
+    }
+    shots.frame = frameKind(app, shots);
+    article.appendChild(galleryFor(name, shots));
+  }
+
+  function showCommand(box, command) {
+    var code = box.querySelector("code");
+    code.textContent = command;
+    box.hidden = false;
+    selectText(code);
   }
 
   function renderApp(app, index) {
@@ -351,108 +669,107 @@
     }
     identity.appendChild(idText);
     article.appendChild(identity);
+    mountMedia(app, name, article);
 
-    var shot = shotFor(app);
-    if (shot) article.appendChild(shot);
+    var items = [];
+    var openUrl = httpsUrl(app.open);
+    if (openUrl) items.push({ kind: "open", href: openUrl });
+    var install = commandText(app.install);
+    if (install) items.push({ kind: "install", command: install });
+    var launch = commandText(app.launch);
+    if (launch) items.push({ kind: "launch", command: launch });
+    var source = httpsUrl(app.source);
+    if (source) items.push({ kind: "source", href: source });
+    if (!items.length) return article;
+
+    var primary = "launch";
+    var i;
+    for (i = 0; i < items.length; i += 1) {
+      if (items[i].kind === "open") primary = "open";
+    }
+    if (primary !== "open") {
+      for (i = 0; i < items.length; i += 1) {
+        if (items[i].kind === "install") primary = "install";
+      }
+    }
 
     var actions = document.createElement("div");
     actions.className = "actions";
-    var openUrl = httpsUrl(app.open);
-    if (openUrl) actions.appendChild(link(openUrl, "Open"));
-
-    var panel = document.createElement("div");
-    panel.className = "command";
-    panel.id = "command-" + index;
-    panel.hidden = true;
+    var fallback = document.createElement("p");
+    fallback.className = "command-fallback";
+    fallback.hidden = true;
     var prompt = document.createElement("span");
     prompt.className = "prompt";
     prompt.setAttribute("aria-hidden", "true");
     prompt.textContent = "$";
-    var pre = document.createElement("pre");
     var code = document.createElement("code");
-    pre.appendChild(code);
-    var copy = document.createElement("button");
-    copy.type = "button";
-    copy.className = "copy";
-    copy.textContent = "Copy";
-    panel.appendChild(prompt);
-    panel.appendChild(pre);
-    panel.appendChild(copy);
-
-    var current = "";
-    var currentLabel = "";
-    var opener = null;
+    fallback.appendChild(prompt);
+    fallback.appendChild(code);
     var hasCommand = false;
 
-    function setPressed(button, on) {
-      button.setAttribute("aria-pressed", on ? "true" : "false");
-      button.setAttribute("aria-expanded", on ? "true" : "false");
-    }
-
-    function closePanel() {
-      panel.hidden = true;
-      code.textContent = "";
-      current = "";
-      currentLabel = "";
-      if (opener) setPressed(opener, false);
-      opener = null;
-    }
-
-    function openPanel(button, label, command) {
-      if (opener === button && !panel.hidden) {
-        closePanel();
+    items.forEach(function (item) {
+      var el;
+      var label = document.createElement("span");
+      if (item.kind === "open") {
+        el = document.createElement("a");
+        el.href = item.href;
+        el.target = "_blank";
+        el.rel = "noopener noreferrer";
+        el.setAttribute("aria-label", "Open " + name);
+        el.appendChild(iconExternal());
+        label.textContent = "open";
+      } else if (item.kind === "source") {
+        el = document.createElement("a");
+        el.href = item.href;
+        el.target = "_blank";
+        el.rel = "noopener noreferrer";
+        el.setAttribute("aria-label", "Source for " + name);
+        el.appendChild(iconGithub());
+        label.textContent = "source";
+      } else if (item.kind === "install") {
+        el = document.createElement("button");
+        el.type = "button";
+        el.setAttribute("aria-label", "Copy install command for " + name);
+        el.appendChild(iconDownload());
+        label.textContent = "install";
+        hasCommand = true;
+        el.addEventListener("click", function () {
+          copyText(item.command, function () {
+            fallback.hidden = true;
+            showCopied();
+          }, function () {
+            showCommand(fallback, item.command);
+            say("Could not copy.");
+          });
+        });
+      } else if (item.kind === "launch") {
+        el = document.createElement("button");
+        el.type = "button";
+        el.setAttribute("aria-label", "Copy launch command for " + name);
+        el.appendChild(iconPlay());
+        label.textContent = "launch";
+        hasCommand = true;
+        el.addEventListener("click", function () {
+          copyText(item.command, function () {
+            fallback.hidden = true;
+            showCopied();
+          }, function () {
+            showCommand(fallback, item.command);
+            say("Could not copy.");
+          });
+        });
+      } else {
         return;
       }
-      if (opener && opener !== button) setPressed(opener, false);
-      current = command;
-      currentLabel = label;
-      code.textContent = command;
-      panel.hidden = false;
-      panel.setAttribute("aria-label", label + " command");
-      opener = button;
-      setPressed(button, true);
-      copy.setAttribute("aria-label", "Copy " + label.toLowerCase() + " command for " + name);
-      copy.focus();
-      say(label + " command for " + name + ". " + command);
-    }
-
-    function addCommand(label, value) {
-      var command = commandText(value);
-      if (!command) return;
-      hasCommand = true;
-      var button = document.createElement("button");
-      button.type = "button";
-      button.textContent = label;
-      button.setAttribute("aria-controls", panel.id);
-      setPressed(button, false);
-      button.addEventListener("click", function () {
-        openPanel(button, label, command);
-      });
-      actions.appendChild(button);
-    }
-
-    addCommand("Install", app.install);
-    addCommand("Launch", app.launch);
-    var source = httpsUrl(app.source);
-    if (source) actions.appendChild(link(source, "Source"));
-
-    copy.addEventListener("click", function () {
-      if (!current) return;
-      copyText(current, name, currentLabel, code, copy);
-    });
-    panel.addEventListener("keydown", function (event) {
-      if (event.key !== "Escape" || panel.hidden) return;
-      event.preventDefault();
-      var back = opener;
-      closePanel();
-      if (back) back.focus();
+      el.className = "btn" + (item.kind === primary ? " primary" : "");
+      el.appendChild(label);
+      actions.appendChild(el);
     });
 
-    if (actions.childNodes.length) article.appendChild(actions);
-    if (hasCommand) article.appendChild(panel);
+    article.appendChild(actions);
+    if (hasCommand) article.appendChild(fallback);
     return article;
   }
-
   function setCount(id, value) {
     document.getElementById(id).textContent = String(value);
   }
@@ -463,7 +780,7 @@
       if (!app || typeof app.name !== "string" || app.name.trim() === "") return;
       counts.total += 1;
       var status = typeof app.status === "string" ? app.status.trim().toLowerCase() : "";
-      if (status === "web" || status === "marketplace" || status === "public") counts.live += 1;
+      if (status === "web" || status === "web app" || status === "marketplace" || status === "public") counts.live += 1;
       else if (status === "private beta") counts.beta += 1;
       else if (status === "coming soon") counts.soon += 1;
     });
