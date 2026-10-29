@@ -4,6 +4,9 @@
     {
       "name": "Kar Page",
       "description": "Your cars. Your story.",
+      "notes": [
+        "An app for car enthusiasts to show off their cars and connect with like-minded people around the world."
+      ],
       "status": "WEB APP",
       "open": "https://karpage.app",
       "mark": "kp",
@@ -14,28 +17,8 @@
           "alt": "Kar Page grid scan, a public browse screen for spots and cars. No one is signed in.",
           "w": 390,
           "h": 844,
-          "x2": true
-        },
-        {
-          "id": "kar-spot",
-          "alt": "The private-beta sheet Kar Page shows when Spot is opened while logged out. The page behind it is blurred.",
-          "w": 390,
-          "h": 844,
-          "x2": true
-        },
-        {
-          "id": "kar-invite",
-          "alt": "Kar Page request-access form. The email and handle fields show placeholders, and no one is signed in.",
-          "w": 390,
-          "h": 844,
-          "x2": true
-        },
-        {
-          "id": "kar-lane",
-          "alt": "Kar Page pit lane before anyone is signed in. It offers an invite and shows no account.",
-          "w": 390,
-          "h": 844,
-          "x2": true
+          "x2": true,
+          "avif": true
         }
       ]
     },
@@ -99,25 +82,88 @@
     },
     {
       "name": "OmaAgentWatch",
-      "description": "Watch your Cursor cloud agents cook, live on your Omarchy desktop.",
+      "description": "Watch your Cursor cloud agents work live on your Omarchy desktop.",
+      "notes": [
+        "Each working agent gets a big square card with a spinning orb, and idle ones collapse into slim rows so everything fits on one screen."
+      ],
       "status": "private beta",
       "launch": "oma-agent-watch open",
       "mark": "watch",
       "frame": "wide",
-      "shots": []
+      "shots": [
+        {
+          "id": "oaw-agents",
+          "alt": "OmaAgentWatch demo on a wide desktop. Five working agents are square cards with spinning orbs, and idle agents are slim rows. The labels are samples: demo-api, oma-watch, OmaKarDash, worker, dotfiles, and Year planner.",
+          "w": 1280,
+          "h": 768,
+          "x2": true,
+          "avif": true
+        }
+      ],
+      "rail": [
+        {
+          "id": "oaw-narrow",
+          "alt": "OmaAgentWatch demo in a narrow window. Working agents stay square cards with spinning orbs, and the sample spend reads 24.40 of 40 dollars.",
+          "w": 640,
+          "h": 820,
+          "x2": true,
+          "avif": true
+        }
+      ]
     },
     {
       "name": "OmaKarDash",
-      "description": "A Tesla dashboard for Omarchy.",
+      "description": "V1 is a Tesla dashboard for Omarchy showing charge and range, climate, tires, lock state, and software updates.",
+      "notes": [
+        "It uses each owner's own Tesla developer app, reads Tesla's cached data without waking the car, and asks for a confirm on every command. No unlock, no location, and no remote start.",
+        "Advanced mode coming in V2.",
+        "Unofficial. Not affiliated with Tesla."
+      ],
       "status": "private beta",
       "mark": "car",
       "frame": "wide",
       "shots": [
         {
-          "id": "omakar-dash",
-          "alt": "OmaKarDash demo dashboard for a fictional car named Northwind. The screen says the car was not contacted.",
-          "w": 1280,
-          "h": 720
+          "id": "okd-jade",
+          "alt": "OmaKarDash Jade theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+          "w": 960,
+          "h": 540,
+          "x2": true,
+          "avif": true
+        },
+        {
+          "id": "okd-red",
+          "alt": "OmaKarDash Red theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+          "w": 960,
+          "h": 540,
+          "x2": true,
+          "avif": true
+        },
+        {
+          "id": "okd-purple",
+          "alt": "OmaKarDash Purple theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+          "w": 960,
+          "h": 540,
+          "x2": true,
+          "avif": true
+        }
+      ],
+      "rail": [
+        {
+          "id": "okd-clear-1",
+          "alt": "OmaKarDash Clear theme in a narrow window, with the car above and the controls along the bottom. Northwind is asleep and unplugged, at 78 percent and 251 miles, with the rear-right tire at 26 psi.",
+          "w": 590,
+          "h": 640,
+          "x2": true,
+          "avif": true
+        },
+        {
+          "id": "okd-clear-3",
+          "alt": "OmaKarDash Clear theme in a narrow window, with controls along both sides of the car. Northwind is asleep and unplugged, at 78 percent and 251 miles, with the rear-right tire at 26 psi.",
+          "w": 520,
+          "h": 450,
+          "x2": true,
+          "avif": true
         }
       ]
     }
