@@ -2,7 +2,6 @@
  "apps": [
   {
    "slug": "omaraptor",
-   "demo": {"id": "WhWc3b3KhnY", "title": "Spring", "channel": "Blender Studio", "url": "https://www.youtube.com/watch?v=WhWc3b3KhnY", "credit": "© Blender Foundation | studio.blender.org, CC BY 4.0"},
    "name": "OmaRaptor Player",
    "mark": "raptor",
    "status": "in review",
@@ -80,99 +79,37 @@
     ]
    ],
    "fine": [
-    "Web demo video: “Spring” (Blender Open Movie) © Blender Foundation | studio.blender.org, licensed CC BY 4.0, embedded from Blender Studio on YouTube.",
-    "Footage: SpaceX (CC0) via NASA; NASA, NASA/Cory S Huston, NASA SVS / Marit Jentoft-Nilsen (public domain/CC0).",
-    "Music: \"Cyber March\" by iamoneabe (CC0).",
+    "Footage in the screen recording and screenshots: “F-22 Demo Team performs for 2026 Cleveland Air Show”, U.S. Air Force video by Staff Sgt. Mary Bowers (DVIDS 1023319), public domain. The appearance of U.S. Department of Defense (DoD) visual information does not imply or constitute DoD endorsement.",
+    "Recorded in the real OmaRaptor Player (mpv with the OmaRaptor HUD) on Linux. Muted on this page.",
     "Unofficial fan project. Not affiliated with or endorsed by the U.S. Air Force, Lockheed Martin, SpaceX or NASA."
    ],
    "shots": [
     {
-     "id": "omr-bright",
-     "alt": "OmaRaptor Player in fullscreen COMBAT mode over a bright Falcon 9 night liftoff: the scope ring, heading tape, VOL and REM tapes and the full control bar.",
+     "id": "omr-f22-play",
+     "alt": "OmaRaptor Player playing an F-22 Raptor air show pass: the neon title ticker, the live audio meter, volume, seek tape with elapsed and remaining time, the progress ring, speed, repeat and link gauges.",
      "w": 960,
      "h": 540,
      "x2": true,
-     "cap": "COMBAT · FULLSCREEN"
+     "avif": true,
+     "cap": "PLAYING · LIVE GAUGES"
     },
     {
-     "id": "omr-cruise",
-     "alt": "CRUISE: a bare OmaRaptor player with a slim control bar over launch footage.",
+     "id": "omr-f22-fire",
+     "alt": "The OmaRaptor launch console after FIRE: a 3 counts down over the preloaded F-22 frame, MASTER ARM ON, SEEKER LOCK, signal and buffer bars, and the link below.",
      "w": 960,
      "h": 540,
      "x2": true,
-     "cap": "CRUISE"
+     "avif": true,
+     "cap": "ARMED → FIRE"
     },
     {
-     "id": "omr-multi-1",
-     "alt": "An Omarchy desktop with an OmaRaptor player playing a Falcon Heavy launch next to a code editor and a terminal.",
+     "id": "omr-f22-lock",
+     "alt": "The first second of playback: the OmaRaptor reticle locks on the F-22 as the picture fills the window and the control bar comes up.",
      "w": 960,
      "h": 540,
      "x2": true,
-     "cap": "ON THE DESKTOP"
-    },
-    {
-     "id": "omr-multi-2",
-     "alt": "Two OmaRaptor players at once, an aurora seen from the ISS and a Starship flight test, floating over a code editor.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "cap": "TWO PLAYERS"
-    },
-    {
-     "id": "omr-multi-3",
-     "alt": "Three OmaRaptor players parked in different corners of the screen: an aurora, a Falcon Heavy launch and an Artemis I liftoff.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "cap": "THREE CORNERS"
-    },
-    {
-     "id": "omr-hero",
-     "alt": "OmaRaptor Player in fullscreen COMBAT mode: the scope locked on the rocket, heading tape, VOL and REM tapes and the control bar.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "cap": "SCOPE LOCK"
-    },
-    {
-     "id": "omr-ring",
-     "alt": "Close-up of the control bar: the progress ring around the play button, the seek tape and the speed gauge.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "cap": "PROGRESS RING"
-    },
-    {
-     "id": "omr-master-arm",
-     "alt": "The MASTER ARM panel, switching between CRUISE and COMBAT over launch footage.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "cap": "MASTER ARM"
-    },
-    {
-     "id": "omr-end-ramp",
-     "alt": "End of video: the timers turn amber and red and a NEXT card shows what plays next.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "cap": "END RAMP · NEXT"
-    },
-    {
-     "id": "omr-sizes",
-     "alt": "Small, medium and large OmaRaptor players side by side.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "cap": "SIZES"
-    },
-    {
-     "id": "omr-help",
-     "alt": "The keyboard and mouse panel that opens with the ? key.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "cap": "HELP"
+     "avif": true,
+     "cap": "WEAPONS FREE · LOCK"
     }
    ],
    "repo": "KarPage/omaraptor-player",
@@ -187,7 +124,15 @@
     "release": "v1.0.0",
     "measured": "2026-10-30"
    },
-   "review": "https://github.com/omacom/omarchy-plugin-marketplace/issues/13398"
+   "review": "https://github.com/omacom/omarchy-plugin-marketplace/issues/13398",
+   "reel": {
+    "webm": "media/omaraptor-reel.webm",
+    "mp4": "media/omaraptor-reel.mp4",
+    "w": 1280,
+    "h": 720,
+    "label": "Screen recording of the real OmaRaptor Player in mpv: a DVIDS link comes up ARMED, FIRE counts down 3-2-1, then the F-22 demo flight plays under the live HUD gauges and audio meter.",
+    "cap": "Real screen recording: OmaRaptor in mpv, muted · footage U.S. Air Force / Staff Sgt. Mary Bowers (DVIDS), public domain · unofficial, not affiliated"
+   }
   },
   {
    "slug": "oma-year",
