@@ -144,7 +144,7 @@ def launcher(app):
     site.js shows the panel and runs it. Without JS only the plain link below it is there."""
     href = app["open"][1]
     sw = "".join(
-        '<button type="button" class="kpl-sw kpl-stop%s" data-arm="%d" aria-pressed="false">'
+        '<button type="button" class="kpl-sw kpl-stop%s" data-arm="%d" data-quiet aria-pressed="false">'
         '<span class="kpl-led" aria-hidden="true"></span>'
         '<span class="kpl-switch" aria-hidden="true"><span class="kpl-well"></span><span class="kpl-paddle"></span></span>'
         '<span class="kpl-lab">%s</span></button>' % (" is-up" if i == 2 else "", i, n)
