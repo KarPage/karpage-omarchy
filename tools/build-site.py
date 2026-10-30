@@ -291,8 +291,8 @@ def demo_player(app):
 </div>
 <p class="demo-hint" aria-hidden="true">Ctrl+V paste · ↵ play</p>
 <p class="demo-msg" role="status" aria-live="polite"></p>
-<p class="note demo-note">web demo uses YouTube's embed; the real app plays in mpv with the full HUD · demo clip “%s” by %s on YouTube · unofficial, not affiliated</p>
-</div>""" % (e(run), e(run), e(d["id"]), e(label), e(label), picture(poster, True), e(label), e(d["id"]), e(d["url"]), e(d["title"]), e(d["channel"]))
+<p class="note demo-note">web demo uses YouTube's embed; the real app plays in mpv with the full HUD · demo clip “%s” by %s on YouTube%s · unofficial, not affiliated</p>
+</div>""" % (e(run), e(run), e(d["id"]), e(label), e(label), picture(poster, True), e(label), e(d["id"]), e(d["url"]), e(d["title"]), e(d["channel"]), " (%s)" % e(d["credit"]) if d.get("credit") else "")
 
 
 def page(app, apps):

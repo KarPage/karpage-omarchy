@@ -2,7 +2,7 @@
  "apps": [
   {
    "slug": "omaraptor",
-   "demo": {"id": "A0FZIwabctw", "title": "Falcon Heavy & Starman", "channel": "SpaceX", "url": "https://www.youtube.com/watch?v=A0FZIwabctw"},
+   "demo": {"id": "WhWc3b3KhnY", "title": "Spring", "channel": "Blender Studio", "url": "https://www.youtube.com/watch?v=WhWc3b3KhnY", "credit": "© Blender Foundation | studio.blender.org, CC BY 4.0"},
    "name": "OmaRaptor Player",
    "mark": "raptor",
    "status": "in review",
@@ -80,6 +80,7 @@
     ]
    ],
    "fine": [
+    "Web demo video: “Spring” (Blender Open Movie) © Blender Foundation | studio.blender.org, licensed CC BY 4.0, embedded from Blender Studio on YouTube.",
     "Footage: SpaceX (CC0) via NASA; NASA, NASA/Cory S Huston, NASA SVS / Marit Jentoft-Nilsen (public domain/CC0).",
     "Music: \"Cyber March\" by iamoneabe (CC0).",
     "Unofficial fan project. Not affiliated with or endorsed by the U.S. Air Force, Lockheed Martin, SpaceX or NASA."
