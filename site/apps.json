@@ -2,6 +2,7 @@
  "apps": [
   {
    "slug": "omaraptor",
+   "demo": {"id": "A0FZIwabctw", "title": "Falcon Heavy & Starman", "channel": "SpaceX", "url": "https://www.youtube.com/watch?v=A0FZIwabctw"},
    "name": "OmaRaptor Player",
    "mark": "raptor",
    "status": "in review",
