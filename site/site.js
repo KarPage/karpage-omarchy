@@ -274,149 +274,17 @@
     }, true);
   }
 
-  /* Kar Page launch panel: IGN, WARM, RUN thrown in order arm the bar; holding it (pointer, or Enter/Space)
-     for the full time unlocks the live app panel below it (it stays until reload). Throwing a switch back disarms. */
-  Array.prototype.forEach.call(document.querySelectorAll("[data-kpl]"), function (root) {
-    var panel = root.querySelector(".kpl-panel"), link = root.querySelector(".kpl-alt a");
-    var sws = Array.prototype.slice.call(root.querySelectorAll(".kpl-sw"));
-    var hold = root.querySelector(".kpl-hold"), fill = root.querySelector(".kpl-fill");
-    var txt = root.querySelector(".kpl-txt"), state = root.querySelector(".kpl-state");
-    if (!panel || !link || sws.length !== 3 || !hold || !fill) return;
-    var NAMES = ["IGN", "WARM", "RUN"], UP = [true, true, false];
-    var calm = matchMedia("(prefers-reduced-motion: reduce)");
-    var ms = 2800, armed = 0, raf = 0, t0 = 0, by = null, done = false;
-    var name = hold.getAttribute("aria-label").replace(/\..*$/, "");
-
-    function say(s) { state.textContent = s; }
-    function paint() {
-      sws.forEach(function (b, i) {
-        var on = i < armed;
-        b.classList.toggle("is-on", on);
-        b.classList.toggle("is-up", on === UP[i]);
-        b.setAttribute("aria-pressed", on ? "true" : "false");
-      });
-      var ok = armed === 3;
-      root.classList.toggle("is-armed", ok);
-      hold.setAttribute("aria-disabled", ok ? "false" : "true");
-      hold.setAttribute("aria-label", name + (ok ? ". Armed: press and hold, or hold Enter or Space." : ". Arm IGN, WARM and RUN first."));
-      say(ok ? "ARMED · HOLD" : "THROW " + NAMES[armed]);
-    }
-    function setFill(p) {
-      if (calm.matches && p < 1) p = Math.floor(p * 10) / 10;
-      fill.style.width = (p * 100).toFixed(2) + "%";
-    }
-    function stop() {
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0; by = null;
-      hold.classList.remove("is-holding");
-      if (!done) { setFill(0); txt.textContent = "HOLD TO LAUNCH"; if (armed === 3) say("ARMED · HOLD"); }
-    }
-    function tick(now) {
-      var p = Math.min(1, (now - t0) / ms);
-      setFill(p);
-      if (p < 1) { raf = requestAnimationFrame(tick); return; }
-      raf = 0; done = true;
-      hold.classList.remove("is-holding");
-      hold.classList.add("is-done");
-      txt.textContent = "UNLOCKED";
-      say("UNLOCKED · LIVE");
-      unlock();
-    }
-    /* The live app panel under the launcher: no iframe src until the hold completes. */
-    var kpb = root.nextElementSibling, unlocked = false, waitT = 0;
-    if (kpb && !kpb.hasAttribute("data-kpb")) kpb = null;
-    var frame = kpb && kpb.querySelector(".kpb-frame"), view = kpb && kpb.querySelector(".kpb-view");
-    var fail = kpb && kpb.querySelector(".kpb-fail"), fstat = kpb && kpb.querySelector(".kpb-status");
-    var HOME = frame ? frame.getAttribute("data-src") : link.href;
-    function load(url, word) {
-      clearTimeout(waitT);
-      kpb.classList.add("is-loading");
-      fail.hidden = true;
-      fstat.textContent = word;
-      frame.src = url;
-      /* A cross-origin frame can't be inspected; if it hasn't fired load in 8s, offer the full app. */
-      waitT = setTimeout(function () { kpb.classList.remove("is-loading"); fail.hidden = false; fstat.textContent = "NO SIGNAL"; }, 8000);
-    }
-    function unlock() {
-      if (!kpb || !frame) { window.location.assign(link.href); return; }
-      if (unlocked) return;
-      unlocked = true;
-      kpb.hidden = false;
-      frame.addEventListener("load", function () {
-        clearTimeout(waitT);
-        kpb.classList.remove("is-loading");
-        fail.hidden = true;
-        fstat.textContent = "";
-        kpb.classList.add("is-live");
-      });
-      load(HOME, "CONNECTING…");
-      kpb.scrollIntoView({ block: "center", behavior: calm.matches ? "auto" : "smooth" });
-      view.focus({ preventScroll: true });
-    }
-    if (kpb) {
-      Array.prototype.forEach.call(kpb.querySelectorAll("[data-kpb-do]"), function (b) {
-        b.addEventListener("click", function () { load(HOME, b.getAttribute("data-kpb-do") === "home" ? "HOME…" : "RELOADING…"); });
-      });
-      /* Enter (via the cursor's data-kf click) or a click on the frame's edge hands focus to the app. */
-      view.addEventListener("click", function () { if (unlocked) frame.focus(); });
-    }
-    function start(src) {
-      if (done || by) return;
-      if (armed !== 3) { say("ARM " + NAMES[armed] + " FIRST"); return; }
-      by = src; t0 = performance.now();
-      hold.classList.add("is-holding");
-      txt.textContent = "HOLDING…";
-      say("HOLD · DON'T LET GO");
-      raf = requestAnimationFrame(tick);
-    }
-
-    sws.forEach(function (b, i) {
-      b.addEventListener("click", function () {
-        if (done) return;
-        if (i === armed) armed++;
-        else if (i < armed) armed = i;
-        else { say(NAMES[armed] + " FIRST"); return; }
-        stop();
-        paint();
-      });
-    });
-    hold.addEventListener("pointerdown", function (ev) {
-      if (ev.button !== 0) return;
-      ev.preventDefault();
-      hold.focus({ preventScroll: true });
-      if (armed === 3 && !by) { try { hold.setPointerCapture(ev.pointerId); } catch (x) {} }
-      start("p");
-    });
-    ["pointerup", "pointercancel", "lostpointercapture"].forEach(function (n) {
-      hold.addEventListener(n, function () { if (by === "p") stop(); });
-    });
-    hold.addEventListener("keydown", function (ev) {
-      if (ev.key !== "Enter" && ev.key !== " ") return;
-      ev.preventDefault();
-      if (!ev.repeat) start("k");
-    });
-    hold.addEventListener("keyup", function (ev) {
-      if (ev.key !== "Enter" && ev.key !== " ") return;
-      ev.preventDefault();
-      if (by === "k") stop();
-    });
-    hold.addEventListener("blur", function () { if (by) stop(); });
-    hold.addEventListener("click", function (ev) { ev.preventDefault(); });
-    hold.addEventListener("contextmenu", function (ev) { ev.preventDefault(); });
-    /* Back from the app (page cache): start over disarmed. */
-    window.addEventListener("pageshow", function (ev) {
-      if (!ev.persisted || unlocked) return;
-      done = false; armed = 0; hold.classList.remove("is-done"); stop(); paint();
-    });
-    paint();
-    panel.hidden = false;
+  /* Kar Page live frame: the frame is one cursor stop; Enter (or a click on its edge) moves focus into the app. */
+  Array.prototype.forEach.call(document.querySelectorAll(".live-phone"), function (v) {
+    var f = v.querySelector("iframe");
+    v.addEventListener("click", function (ev) { if (f && ev.target === v) f.focus(); });
   });
 
   /* Selection cursor: one box that follows the mouse and the arrow keys. */
   var home = document.body.classList.contains("home");
   var SPEC = home
     ? [".board .stat", "#panel .rows > li", "#grid > li"]
-    : [".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, .grid > .feat, section > .feat, .code, .others > li, .kpl-stop"];
+    : [".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, .grid > .feat, section > .feat, .code, .others > li, .live-phone, .live-open"];
   var groups = [], all = [], cur = null, lastStat = null;
   SPEC.forEach(function (sel, g) {
     var list = [];
@@ -451,11 +319,9 @@
     return null;
   }
   var queued = 0;
-  /* Stops marked data-quiet (the launch switches) highlight in place: the ring fades out where it is and
-     reappears at the next stop without sliding across. */
   function place() {
     queued = 0;
-    if (!cur || !shown(cur) || cur.box.hasAttribute("data-quiet")) { box.classList.remove("on"); return; }
+    if (!cur || !shown(cur)) { box.classList.remove("on"); return; }
     var r = cur.box.getBoundingClientRect(), pad = 5, jump = !box.classList.contains("on");
     if (jump) box.classList.remove("go");
     box.style.transform = "translate(" + Math.round(r.left + window.scrollX - pad) + "px," + Math.round(r.top + window.scrollY - pad) + "px)";

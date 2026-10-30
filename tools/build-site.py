@@ -136,64 +136,27 @@ def act(kind, main, detail, href=None, copy_id=None):
             % (e(href), e(kind), e(main), det))
 
 
-HEX = '<svg aria-hidden="true" focusable="false"><defs><pattern id="%s" width="16" height="28" patternUnits="userSpaceOnUse"><path d="M8 1.2 14.6 5 v8 L8 16.8 1.4 13 V5 Z" fill="none" stroke="%s" stroke-width="0.7"/><path d="M16 15.2 22.6 19 v8 L16 30.8 9.4 27 v-8 Z" fill="none" stroke="%s" stroke-width="0.7"/></pattern></defs><rect width="100%%" height="100%%" fill="url(#%s)"/></svg>'
-
-
-def launcher(app):
-    """Kar Page launch panel: IGN, WARM, RUN switches in order arm a hold bar; a full hold opens the web app.
-    site.js shows the panel and runs it. Without JS only the plain link below it is there."""
-    href = app["open"][1]
-    sw = "".join(
-        '<button type="button" class="kpl-sw kpl-stop%s" data-arm="%d" data-quiet aria-pressed="false">'
-        '<span class="kpl-led" aria-hidden="true"></span>'
-        '<span class="kpl-switch" aria-hidden="true"><span class="kpl-well"></span><span class="kpl-paddle"></span></span>'
-        '<span class="kpl-lab">%s</span></button>' % (" is-up" if i == 2 else "", i, n)
-        for i, n in enumerate(("IGN", "WARM", "RUN")))
+def live(app):
+    """Kar Page: the public karpage.app homepage, live in a phone-shaped frame sized to the viewport height.
+    Plain markup, so it works without JS; the frame is one cursor stop (Enter moves focus into the app)."""
+    home = app["open"][1].rstrip("/") + "/"
+    name = e(app["name"])
     return (
-        '<div class="kpl" data-kpl data-href="%s">'
-        '<div class="kpl-panel" hidden>'
-        '<div class="kpl-head"><span class="kpl-k">LAUNCH · %s</span><span class="kpl-state" role="status">THROW IGN</span></div>'
-        '<div class="kpl-bank" role="group" aria-label="Arm sequence: IGN, then WARM, then RUN. Throw a switch back to disarm.">%s</div>'
-        '<button type="button" class="kpl-hold kpl-stop" aria-disabled="true" aria-label="Hold to launch %s. Arm IGN, WARM and RUN first.">'
-        '<span class="kpl-hex" aria-hidden="true">%s</span><span class="kpl-fill" aria-hidden="true">%s</span>'
-        '<span class="kpl-copy" aria-hidden="true"><i class="kpl-dot"></i><span class="kpl-txt">HOLD TO LAUNCH</span></span></button>'
-        '</div>'
-        '<p class="kpl-alt"><a class="kpl-stop" href="%s" rel="noopener">or open %s <i aria-hidden="true">↗</i></a></p>'
-        '</div>%s' % (e(href), e(href.replace("https://", "").upper()), sw, e(href.replace("https://", "")),
-                    HEX % ("kplHex", "rgba(63,224,164,0.14)", "rgba(63,224,164,0.14)", "kplHex"),
-                    HEX % ("kplHexF", "rgba(63,224,164,0.9)", "rgba(63,224,164,0.9)", "kplHexF"),
-                    e(href), e(href.replace("https://", "")), browser(href)))
-
-
-def browser(href):
-    """The live app behind the launch hold: a HUD frame around an iframe of the public homepage.
-    site.js unhides it and only sets the iframe src once the hold completes; without JS it never shows."""
-    home = href.rstrip("/") + "/"
-    addr = e(home.replace("https://", "").rstrip("/").upper())
-    return (
-        '<section class="kpb" data-kpb hidden aria-label="%s, live">'
-        '<div class="kpb-bar"><span class="kpb-addr"><i class="kpb-dot" aria-hidden="true"></i>%s</span>'
-        '<span class="kpb-ctl">'
-        '<button type="button" class="kpb-btn kpl-stop" data-kpb-do="reload">RELOAD</button>'
-        '<button type="button" class="kpb-btn kpl-stop" data-kpb-do="home">HOME</button>'
-        '<a class="kpb-btn kpl-stop" href="%s" target="_blank" rel="noopener">OPEN FULL <i aria-hidden="true">↗</i></a>'
-        '</span></div>'
-        '<div class="kpb-view kpl-stop" data-kf tabindex="0" aria-label="Live %s. Press Enter to use it.">'
-        '<iframe class="kpb-frame" title="%s, live app" data-src="%s" tabindex="-1" '
+        '<div class="live">'
+        '<div class="live-phone" data-kf tabindex="0" aria-label="%s, live. Press Enter to use it.">'
+        '<iframe class="live-frame" src="%s" title="%s, live app" loading="eager" '
         'sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" '
         'referrerpolicy="strict-origin-when-cross-origin" allow="fullscreen"></iframe>'
-        '<div class="kpb-fail" hidden><p>%s DIDN\'T LOAD HERE</p><a href="%s" target="_blank" rel="noopener">OPEN FULL APP <i aria-hidden="true">↗</i></a></div>'
-        '<span class="kpb-status" role="status"></span>'
         '</div>'
-        '<p class="kpb-note">Live app · browse freely · sign in opens full app</p>'
-        '</section>' % (addr, addr, e(home), addr, addr, e(home), addr, e(home)))
+        '<a class="live-open" href="%s" target="_blank" rel="noopener">OPEN FULL APP <i aria-hidden="true">↗</i></a>'
+        '</div>' % (name, e(home), name, e(home)))
 
 
 def actions(app):
     out = []
     if app.get("install"):
         out.append(act("INSTALL", app["install"][0][1], install_detail(app), copy_id="act-install"))
-    if app.get("open") and not app.get("launch"):
+    if app.get("open") and not app.get("embed"):
         out.append(act("OPEN", app["open"][1], "web app · runs in the browser", href=app["open"][1]))
     for label, href in app["links"]:
         if label == "SOURCE":
@@ -203,15 +166,14 @@ def actions(app):
             out.append(act(label, href, detail, href=href))
     if app.get("review"):
         out.append(act("MARKETPLACE REVIEW", app["review"].replace("https://", ""), "submitted to the Omarchy plugin marketplace · open · in review", href=app["review"]))
-    lead = launcher(app) if app.get("launch") and app.get("open") else ""
     if not out:
-        return lead
+        return ""
     note = ""
     f = app.get("facts")
     if f:
         note = '<p class="act-note">Sizes measured %s from a depth-1 clone of github.com/%s.</p>' % (e(f["measured"]), e(app["repo"]))
     cls = "acts acts-3" if len(out) == 3 and media_top(app) else "acts"
-    return '%s<div class="%s">%s</div>%s' % (lead, cls, "".join(out), note)
+    return '<div class="%s">%s</div>%s' % (cls, "".join(out), note)
 
 
 def status_badge(app):
@@ -410,14 +372,11 @@ def page(app, apps):
     others = "".join('<li><a href="/%s">%s<span>%s</span></a></li>' % (e(a["slug"]), mark(a), e(a["name"]))
                      for a in apps if a is not app)
     seo = app["seo"]
-    return head(seo["title"], seo["description"], seo["keywords"], "/" + app["slug"], og_image(app)) + """<body class="app">
-<a class="skip" href="#top">Skip to content</a>
-<header class="bar">
-<a class="brand" href="/"><span class="back" aria-hidden="true">←</span> KAR PAGE APPS</a>
-<nav aria-label="Sections">%s</nav>
-</header>
-<main id="top" class="wrap" tabindex="-1">
-<section class="hero">
+    if app.get("embed"):
+        hero = ('<section class="hero hero-live">\n<div class="title-row">%s<h1>%s</h1>%s</div>\n<p class="live-desc">%s</p>\n%s\n</section>'
+                % (mark(app, "mark big"), e(app["name"]), status_badge(app), e(app["short"]), live(app)))
+    else:
+        hero = """<section class="hero">
 <p class="tag">%s</p>
 <div class="title-row">%s<h1>%s</h1>%s</div>
 <p class="tagline">%s</p>
@@ -425,12 +384,20 @@ def page(app, apps):
 <p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg"><kbd class="w" data-key="Enter">↲ ENTER</kbd><em>open</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span></p>
 %s
 %s
-</section>
+</section>""" % (e(app["tag"]), mark(app, "mark big"), e(app["name"]), status_badge(app), e(app["tagline"]), e(app["lede"]),
+                 *((hero_media, actions(app)) if media_top(app) else (actions(app), hero_media)))
+    return head(seo["title"], seo["description"], seo["keywords"], "/" + app["slug"], og_image(app)) + """<body class="app">
+<a class="skip" href="#top">Skip to content</a>
+<header class="bar">
+<a class="brand" href="/"><span class="back" aria-hidden="true">←</span> KAR PAGE APPS</a>
+<nav aria-label="Sections">%s</nav>
+</header>
+<main id="top" class="wrap" tabindex="-1">
+%s
 %s
 <section class="more"><h2><span>›</span> MORE APPS</h2><ul class="others">%s</ul></section>
 </main>
-""" % ("".join('<a href="#%s">%s</a>' % (i, t) for i, t in nav), e(app["tag"]), mark(app, "mark big"), e(app["name"]),
-       status_badge(app), e(app["tagline"]), e(app["lede"]), *((hero_media, actions(app)) if media_top(app) else (actions(app), hero_media)), "\n".join(sec), others) + FOOT
+""" % ("".join('<a href="#%s">%s</a>' % (i, t) for i, t in nav), hero, "\n".join(sec), others) + FOOT
 
 
 def main():

@@ -326,7 +326,7 @@
     "OPEN KARPAGE.APP",
     "https://karpage.app"
    ],
-   "launch": true,
+   "embed": true,
    "related": [
     "ON OMARCHY",
     "Kar Page Launcher adds Kar Page to your launcher as its own app window.",
@@ -334,7 +334,7 @@
    ],
    "links": [],
    "fine": [
-    "Screenshot of a public screen. No one is signed in."
+    "The frame shows the public karpage.app homepage, live. Signing in works best in the full app."
    ],
    "shots": [
     {
