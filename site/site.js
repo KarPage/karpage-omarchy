@@ -121,9 +121,9 @@
   var reel = document.querySelector("video.reel");
   if (reel) {
     var calm = window.matchMedia("(prefers-reduced-motion: reduce)");
-    var seen = !("IntersectionObserver" in window);
+    var seen = !("IntersectionObserver" in window), want = null;
     var sync = function () {
-      if (calm.matches || !seen) { reel.pause(); return; }
+      if (want === false || (want === null && (calm.matches || !seen))) { reel.pause(); return; }
       reel.muted = true;
       var p = reel.play();
       if (p && p.catch) p.catch(function () {});
@@ -131,6 +131,10 @@
     if (!seen) new IntersectionObserver(function (es) { seen = es[0].isIntersecting; sync(); }, { threshold: 0.2 }).observe(reel);
     if (calm.addEventListener) calm.addEventListener("change", sync);
     sync();
+    /* Keyboard: the reel is a stop in the page cursor; Enter or Space toggles play/pause and wins over autoplay. */
+    reel.tabIndex = -1;
+    reel.setAttribute("data-kf", "");
+    reel.addEventListener("click", function (ev) { if (ev.detail === 0) { want = reel.paused; sync(); } });
   }
 
   /* Screenshot lightbox: a real <a href> to the full image stays as the no-JS fallback; with JS a click opens
@@ -274,15 +278,16 @@
   var home = document.body.classList.contains("home");
   var SPEC = home
     ? [".board .stat", "#panel .rows > li", "#grid > li"]
-    : [".acts > .act", ".hero-shot", ".gallery > figure", ".shots > figure", ".others > li"];
+    : [".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, .grid > .feat, section > .feat, .code, .others > li"];
   var groups = [], all = [], cur = null, lastStat = null;
   SPEC.forEach(function (sel, g) {
     var list = [];
     Array.prototype.forEach.call(document.querySelectorAll(sel), function (box) {
-      var f = box.matches("a[href], button, [data-kf]") ? box : box.querySelector("a[href], button, input");
+      var f = box.matches("a[href], button, [data-kf]") ? box : box.querySelector("a[href], button, input, video[data-kf]");
+      if (!f && !home) { f = box; f.tabIndex = -1; }
       if (!f) return;
       f.setAttribute("data-k", "");
-      f.tabIndex = list.length ? -1 : 0;
+      if (home) f.tabIndex = list.length ? -1 : 0;
       var it = { box: box, f: f, g: g };
       list.push(it);
       all.push(it);
@@ -321,14 +326,15 @@
   function setCur(it, focus) {
     cur = it;
     if (home && it.g === 0) lastStat = it;
-    groups[it.g].forEach(function (x) { x.f.tabIndex = x === it ? 0 : -1; });
+    if (home) groups[it.g].forEach(function (x) { x.f.tabIndex = x === it ? 0 : -1; });
     if (focus && document.activeElement !== it.f) it.f.focus({ preventScroll: true });
     box.classList.remove("idle");
     place();
     document.dispatchEvent(new CustomEvent("kp:cur", { detail: it.box }));
   }
   function reveal(it) {
-    it.box.scrollIntoView({ block: "nearest", inline: "nearest", behavior: still.matches ? "auto" : "instant" });
+    if (!home) it.box.scrollIntoView({ block: "center", inline: "nearest", behavior: still.matches ? "auto" : "smooth" });
+    else it.box.scrollIntoView({ block: "nearest", inline: "nearest", behavior: still.matches ? "auto" : "instant" });
     place();
   }
   function gap(a1, a2, b1, b2) { return b2 < a1 ? a1 - b2 : b1 > a2 ? b1 - a2 : 0; }
@@ -353,6 +359,23 @@
     });
     if (best && best.g === 0 && from.g !== 0 && lastStat && shown(lastStat)) return lastStat;
     return best;
+  }
+  /* App pages step in reading order: Down/Up walk every stop one by one (hero, reel, each screenshot, the cards,
+     features...), Left/Right only move to a neighbour in the same visual row. Not engaged yet: start at the screen. */
+  function step(from, dir, engaged) {
+    var list = all.filter(shown), i = list.indexOf(from);
+    if (!engaged || i < 0) {
+      var top = 56, bot = window.innerHeight;
+      if (dir === "d" || dir === "r") { for (i = 0; i < list.length; i++) if (list[i].box.getBoundingClientRect().bottom > top + 24) return list[i]; return list[list.length - 1]; }
+      for (i = list.length - 1; i >= 0; i--) if (list[i].box.getBoundingClientRect().top < bot - 24) return list[i];
+      return list[0];
+    }
+    if (dir === "d") return list[i + 1] || null;
+    if (dir === "u") return list[i - 1] || null;
+    var n = list[i + (dir === "r" ? 1 : -1)];
+    if (!n || n.box.parentNode !== from.box.parentNode) return null;
+    var a = from.box.getBoundingClientRect(), b = n.box.getBoundingClientRect();
+    return gap(a.top, a.bottom, b.top, b.bottom) > 0 ? null : n;
   }
   function refresh() {
     groups.forEach(function (list) {
@@ -395,7 +418,13 @@
     var idle = !active || active === document.body || active === document.documentElement;
     if (!cur || !shown(cur)) cur = firstShown(all);
     if (!cur) return;
-    if (DIRS[k]) {
+    if (DIRS[k] && !home) {
+      var on = active === cur.f, nx = step(cur, DIRS[k], on);
+      if (!nx) return;
+      ev.preventDefault();
+      setCur(nx, true);
+      reveal(nx);
+    } else if (DIRS[k]) {
       var next = move(cur, DIRS[k]);
       if (!next && active !== cur.f) next = cur;
       if (!next) return;
@@ -418,6 +447,8 @@
       ev.preventDefault();
       setCur(cur, true);
       cur.f.click();
+    } else if (k === " " && !home && active === cur.f && cur.f.tagName !== "BUTTON") {
+      ev.preventDefault();
     }
   });
 
