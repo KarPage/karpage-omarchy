@@ -136,11 +136,40 @@ def act(kind, main, detail, href=None, copy_id=None):
             % (e(href), e(kind), e(main), det))
 
 
+HEX = '<svg aria-hidden="true" focusable="false"><defs><pattern id="%s" width="16" height="28" patternUnits="userSpaceOnUse"><path d="M8 1.2 14.6 5 v8 L8 16.8 1.4 13 V5 Z" fill="none" stroke="%s" stroke-width="0.7"/><path d="M16 15.2 22.6 19 v8 L16 30.8 9.4 27 v-8 Z" fill="none" stroke="%s" stroke-width="0.7"/></pattern></defs><rect width="100%%" height="100%%" fill="url(#%s)"/></svg>'
+
+
+def launcher(app):
+    """Kar Page launch panel: IGN, WARM, RUN switches in order arm a hold bar; a full hold opens the web app.
+    site.js shows the panel and runs it. Without JS only the plain link below it is there."""
+    href = app["open"][1]
+    sw = "".join(
+        '<button type="button" class="kpl-sw kpl-stop%s" data-arm="%d" aria-pressed="false">'
+        '<span class="kpl-led" aria-hidden="true"></span>'
+        '<span class="kpl-switch" aria-hidden="true"><span class="kpl-well"></span><span class="kpl-paddle"></span></span>'
+        '<span class="kpl-lab">%s</span></button>' % (" is-up" if i == 2 else "", i, n)
+        for i, n in enumerate(("IGN", "WARM", "RUN")))
+    return (
+        '<div class="kpl" data-kpl data-href="%s">'
+        '<div class="kpl-panel" hidden>'
+        '<div class="kpl-head"><span class="kpl-k">LAUNCH · %s</span><span class="kpl-state" role="status">THROW IGN</span></div>'
+        '<div class="kpl-bank" role="group" aria-label="Arm sequence: IGN, then WARM, then RUN. Throw a switch back to disarm.">%s</div>'
+        '<button type="button" class="kpl-hold kpl-stop" aria-disabled="true" aria-label="Hold to launch %s. Arm IGN, WARM and RUN first.">'
+        '<span class="kpl-hex" aria-hidden="true">%s</span><span class="kpl-fill" aria-hidden="true">%s</span>'
+        '<span class="kpl-copy" aria-hidden="true"><i class="kpl-dot"></i><span class="kpl-txt">HOLD TO LAUNCH</span></span></button>'
+        '</div>'
+        '<p class="kpl-alt"><a class="kpl-stop" href="%s" rel="noopener">or open %s <i aria-hidden="true">↗</i></a></p>'
+        '</div>' % (e(href), e(href.replace("https://", "").upper()), sw, e(href.replace("https://", "")),
+                    HEX % ("kplHex", "rgba(63,224,164,0.14)", "rgba(63,224,164,0.14)", "kplHex"),
+                    HEX % ("kplHexF", "rgba(63,224,164,0.9)", "rgba(63,224,164,0.9)", "kplHexF"),
+                    e(href), e(href.replace("https://", ""))))
+
+
 def actions(app):
     out = []
     if app.get("install"):
         out.append(act("INSTALL", app["install"][0][1], install_detail(app), copy_id="act-install"))
-    if app.get("open"):
+    if app.get("open") and not app.get("launch"):
         out.append(act("OPEN", app["open"][1], "web app · runs in the browser", href=app["open"][1]))
     for label, href in app["links"]:
         if label == "SOURCE":
@@ -150,14 +179,15 @@ def actions(app):
             out.append(act(label, href, detail, href=href))
     if app.get("review"):
         out.append(act("MARKETPLACE REVIEW", app["review"].replace("https://", ""), "submitted to the Omarchy plugin marketplace · open · in review", href=app["review"]))
+    lead = launcher(app) if app.get("launch") and app.get("open") else ""
     if not out:
-        return ""
+        return lead
     note = ""
     f = app.get("facts")
     if f:
         note = '<p class="act-note">Sizes measured %s from a depth-1 clone of github.com/%s.</p>' % (e(f["measured"]), e(app["repo"]))
     cls = "acts acts-3" if len(out) == 3 and media_top(app) else "acts"
-    return '<div class="%s">%s</div>%s' % (cls, "".join(out), note)
+    return '%s<div class="%s">%s</div>%s' % (lead, cls, "".join(out), note)
 
 
 def status_badge(app):
