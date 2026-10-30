@@ -233,49 +233,64 @@
     ]
    ],
    "fine": [
-    "All plans in these screenshots are demo data.",
+    "All plans in these screenshots are the planner's built-in demo year. Captured in a sandbox browser from the public repo at bd1c117.",
+    "The floating-window shot draws the window at 86% opacity over a plain generated backdrop, the way a translucent Hyprland window looks.",
     "Unofficial. Not affiliated with Omarchy."
    ],
    "shots": [
     {
-     "id": "oyp-year",
-     "alt": "Oma Year Planner showing the sample year: Ski week, City break, Wedding weekend, Workshop, Coast week, Lake week, Autumn hike, and Year-end break.",
-     "w": 1100,
-     "h": 720,
+     "id": "oyp-board",
+     "alt": "Oma Year Planner with the full 2026 year on one board: the built-in demo plans Ski week, City break, Wedding weekend, Workshop, Coast week, Lake week, Autumn hike and Year-end break, with plans, trips and days-away counts on the strip and today marked in October.",
+     "w": 960,
+     "h": 540,
      "x2": true,
-     "cap": "FULL YEAR"
+     "avif": true,
+     "cap": "FULL YEAR · ONE SCREEN"
     },
     {
-     "id": "oyp-months",
-     "alt": "A closer crop of the sample calendar from May onward, with Workshop, Coast week, Lake week, and Autumn hike.",
-     "w": 1100,
-     "h": 720,
+     "id": "oyp-quickadd",
+     "alt": "The quick add popover opened on November 12 in the demo year, with an empty name field, Add plan, Attach photo, Add tag, Plan or Trip and Add note.",
+     "w": 960,
+     "h": 540,
      "x2": true,
-     "cap": "MONTHS"
+     "avif": true,
+     "cap": "QUICK ADD · CLICK A DAY"
     },
     {
-     "id": "oyp-add",
-     "alt": "The add-plan dialog on May 12 in the sample calendar. The name field is empty.",
-     "w": 1100,
-     "h": 720,
+     "id": "oyp-filter",
+     "alt": "The demo year filtered by typing workshop into search: only the three Workshop plans stay lit and the counts drop to 3.",
+     "w": 960,
+     "h": 540,
      "x2": true,
-     "cap": "QUICK ADD"
+     "avif": true,
+     "cap": "SEARCH · / TO FILTER"
     },
     {
-     "id": "oyp-search",
-     "alt": "The sample calendar filtered to workshop, with the three Workshop plans still on the board.",
-     "w": 1100,
-     "h": 720,
+     "id": "oyp-rolling",
+     "alt": "Rolling 12 turned on: the board starts at the current month, October 2026, and runs twelve months into 2027 with the 2027 divider and the Year-end break wrapping into January.",
+     "w": 960,
+     "h": 540,
      "x2": true,
-     "cap": "SEARCH"
+     "avif": true,
+     "cap": "ROLLING 12"
     },
     {
-     "id": "oyp-float",
-     "alt": "A translucent Oma Year Planner window over a desktop wallpaper, showing the same sample plans.",
-     "w": 1100,
-     "h": 720,
+     "id": "oyp-help",
+     "alt": "The How it works panel opened with ?, showing add a plan, one day, move and resize, quick edit, scroll months and jump to today, plus the keyboard shortcuts.",
+     "w": 960,
+     "h": 540,
      "x2": true,
-     "cap": "FLOATING WINDOW"
+     "avif": true,
+     "cap": "? · HOW IT WORKS"
+    },
+    {
+     "id": "oyp-window",
+     "alt": "Oma Year Planner as a translucent floating window over a plain green desktop backdrop, showing the demo plans from April 2026 into 2027.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "FLOATING WINDOW · TRANSLUCENT"
     }
    ],
    "repo": "KarPage/oma-year-planner",
@@ -289,7 +304,8 @@
     "license": "MIT",
     "measured": "2026-10-30"
    },
-   "listing": "https://plugins.omarchy.org/plugin.html?id=io.github.karpage.oma-year"
+   "listing": "https://plugins.omarchy.org/plugin.html?id=io.github.karpage.oma-year",
+   "mediaTop": true
   },
   {
    "slug": "kar-page",

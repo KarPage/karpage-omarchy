@@ -156,7 +156,7 @@ def actions(app):
     f = app.get("facts")
     if f:
         note = '<p class="act-note">Sizes measured %s from a depth-1 clone of github.com/%s.</p>' % (e(f["measured"]), e(app["repo"]))
-    cls = "acts acts-3" if len(out) == 3 and app.get("reel") else "acts"
+    cls = "acts acts-3" if len(out) == 3 and media_top(app) else "acts"
     return '<div class="%s">%s</div>%s' % (cls, "".join(out), note)
 
 
@@ -276,21 +276,32 @@ def code_tile(i, label, cmd, detail=""):
             % (e(label), i, e(cmd), '<small>%s</small>' % e(detail) if detail else "", i, e(label.lower())))
 
 
+def media_top(app):
+    """Apps whose real media leads the page: hero shot, optional reel, more shots, then the three cards."""
+    return bool(app["shots"] and (app.get("reel") or app.get("mediaTop")))
+
+
 def reel(app):
-    """Hero screenshot on top (eager, sized), then the real-app screen recording (muted loop, poster is its own
-    first frame so the box is never black), then the other real screenshots, lazy-loaded. No third-party code."""
-    r, shots = app["reel"], app["shots"]
+    """Hero screenshot on top (eager, sized), then the real-app screen recording if there is one (muted loop,
+    poster is its own first frame so the box is never black), then the other real screenshots, lazy-loaded.
+    No third-party code."""
+    r, shots = app.get("reel"), app["shots"]
     hero = shots[0]
     top = ('<figure class="frame hero-shot hero-still"><a href="%s">%s</a><figcaption>%s</figcaption></figure>'
            % (e(full_src(hero)), picture(hero, True), e(hero.get("cap", ""))))
+    if not r:
+        return '%s<div class="shots">%s</div>' % (top, figs_html(shots[1:]))
     video = ('<video class="reel" width="%d" height="%d" poster="%s" muted loop playsinline preload="metadata" '
              'disablepictureinpicture aria-label="%s">%s</video>' % (
                  r["w"], r["h"], e(r.get("poster") or full_src(hero)), e(r["label"]),
                  "".join('<source src="%s" type="video/%s">' % (e(r[k]), k) for k in ("webm", "mp4") if r.get(k))))
-    figs = "".join('<figure class="frame"><a href="%s">%s</a><figcaption>%s</figcaption></figure>'
-                   % (e(full_src(s)), picture(s), e(s.get("cap", ""))) for s in shots[1:])
     return ('%s<figure class="frame reel-frame">%s<figcaption class="reel-cap">%s</figcaption></figure>'
-            '<div class="shots">%s</div>' % (top, video, e(r["cap"]), figs))
+            '<div class="shots">%s</div>' % (top, video, e(r["cap"]), figs_html(shots[1:])))
+
+
+def figs_html(shots):
+    return "".join('<figure class="frame"><a href="%s">%s</a><figcaption>%s</figcaption></figure>'
+                   % (e(full_src(s)), picture(s), e(s.get("cap", ""))) for s in shots)
 
 
 def page(app, apps):
@@ -304,7 +315,7 @@ def page(app, apps):
 
     nav = []
     shots = app["shots"]
-    if shots and app.get("reel"):
+    if media_top(app):
         hero_media = reel(app)
     elif shots:
         s = shots[0]
@@ -316,7 +327,7 @@ def page(app, apps):
     section("features", "FEATURES", '<div class="grid">%s</div>' % "".join(
         '<div class="feat"><b>%s</b><p>%s</p></div>' % (e(t), e(p)) for t, p in app["features"]))
     nav.append(("features", "FEATURES"))
-    rest = [] if app.get("reel") else shots[1:]
+    rest = [] if media_top(app) else shots[1:]
     if rest:
         figs = "".join('<figure class="frame"><a href="%s">%s</a><figcaption>%s</figcaption></figure>'
                        % (e(full_src(s)), picture(s), e(s.get("cap", ""))) for s in rest)
@@ -365,7 +376,7 @@ def page(app, apps):
 <section class="more"><h2><span>›</span> MORE APPS</h2><ul class="others">%s</ul></section>
 </main>
 """ % ("".join('<a href="#%s">%s</a>' % (i, t) for i, t in nav), e(app["tag"]), mark(app, "mark big"), e(app["name"]),
-       status_badge(app), e(app["tagline"]), e(app["lede"]), *((hero_media, actions(app)) if app.get("reel") else (actions(app), hero_media)), "\n".join(sec), others) + FOOT
+       status_badge(app), e(app["tagline"]), e(app["lede"]), *((hero_media, actions(app)) if media_top(app) else (actions(app), hero_media)), "\n".join(sec), others) + FOOT
 
 
 def main():
