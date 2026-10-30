@@ -134,9 +134,9 @@ body {
 
 h1 {
   margin: 0;
-  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
-  font-weight: 400;
-  letter-spacing: 0.04em;
+  font-size: clamp(1.9rem, 4.2vw, 2.9rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
   line-height: 1.2;
 }
 
@@ -161,18 +161,36 @@ h1 {
   color: var(--jade-ink);
 }
 
+.mast {
+  padding-bottom: 0.25rem;
+}
+
+.mast::before {
+  content: "karpage / omarchy";
+  display: block;
+  margin-bottom: 0.55rem;
+  color: var(--jade-ink);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
 .stats {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--tiles, 4), minmax(0, 1fr));
   gap: 0.5rem;
-  margin: 0 0 1.75rem;
+  margin: 0 0 0.9rem;
+}
+
+.stats:empty {
+  display: none;
 }
 
 .stat {
   display: flex;
   flex-direction: column;
   margin: 0;
-  padding: 0.55rem 0.45rem 0.5rem;
+  padding: 0.7rem 0.75rem 0.65rem;
   border: 1px solid var(--line);
   background: rgba(0, 168, 107, 0.05);
   box-shadow: 0 0 14px var(--glow);
@@ -182,15 +200,18 @@ h1 {
   order: 2;
   margin: 0.35rem 0 0;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   line-height: 1.25;
 }
 
 .stat dd {
   margin: 0;
   color: var(--jade-ink);
-  font-size: 1.35rem;
+  font-size: 1.9rem;
+  font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 0 12px var(--glow);
@@ -200,9 +221,54 @@ main:focus {
   outline: none;
 }
 
+.index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 1.6rem;
+}
+
+.index a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.index a:hover {
+  border-color: var(--jade);
+  background: var(--btn-hover);
+}
+
+.num {
+  color: var(--jade-ink);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
 .app {
-  padding: 1.2rem 0 1.35rem;
-  border-top: 1px solid var(--line);
+  position: relative;
+  margin: 0 0 1.25rem;
+  padding: 1.25rem 1.35rem 1.35rem;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(0, 168, 107, 0.06), transparent 9rem), var(--bg);
+  scroll-margin-top: 1rem;
+}
+
+.app::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  width: 2.2rem;
+  height: 3px;
+  background: var(--jade);
 }
 
 .identity {
@@ -241,10 +307,18 @@ main:focus {
   gap: 0.35rem 1rem;
 }
 
+.head .num {
+  flex: none;
+}
+
+.head h2 {
+  flex: 1 1 auto;
+}
+
 h2 {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 400;
+  font-size: 1.2rem;
+  font-weight: 700;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -252,10 +326,22 @@ h2 {
 .badge {
   color: var(--jade-ink);
   border: 1px solid var(--line);
-  padding: 0.05rem 0.45rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   line-height: 1.4;
   white-space: nowrap;
-  box-shadow: 0 0 10px var(--glow);
+}
+
+.badge.state-in-review {
+  color: #e0b04c;
+  border-color: rgba(224, 176, 76, 0.6);
+}
+
+.badge.state-coming-soon {
+  color: #d08a5a;
+  border-color: rgba(208, 138, 90, 0.6);
 }
 
 .desc {
@@ -595,7 +681,13 @@ footer {
 }
 
 footer p {
-  margin: 0;
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+}
+
+footer .foot-brand {
+  color: var(--jade-ink);
+  font-size: 0.85rem;
 }
 
 .error {
@@ -629,7 +721,11 @@ footer p {
 
 @media (max-width: 720px) {
   .stats {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(min(var(--tiles, 3), 3), minmax(0, 1fr));
+  }
+
+  .app {
+    padding: 1rem 0.85rem 1.1rem;
   }
 
   .gallery[data-frame="wide"] {
@@ -649,6 +745,31 @@ footer p {
 
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .stat dd {
+    font-size: 1.55rem;
+  }
+
+  .index {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: -0.75rem;
+    padding-inline: 0.75rem;
+  }
+
+  .index a {
+    flex: none;
+  }
+
+  .identity {
+    flex-direction: column;
+    gap: 0.6rem;
   }
 }
 
@@ -698,5 +819,17 @@ footer p {
   .app > .window:hover,
   .rail .window:hover {
     transform: none;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .badge.state-in-review {
+    color: #7a5200;
+    border-color: #7a5200;
+  }
+
+  .badge.state-coming-soon {
+    color: #8a3f12;
+    border-color: #8a3f12;
   }
 }

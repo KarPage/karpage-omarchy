@@ -1,7 +1,5 @@
 (function () {
   var NS = "http://www.w3.org/2000/svg";
-  var DEFAULT_SINCE = "2026-10-27";
-  var ZONE = "America/Los_Angeles";
   var SUBTITLE = "open tools for people who drive their computers";
   var root = document.getElementById("apps");
   var live = document.getElementById("copy-status");
@@ -53,12 +51,17 @@
     return s;
   }
 
-  function markWatch() {
+  function markRaptor() {
     var s = svgRoot();
-    s.appendChild(svgEl("circle", { cx: "16", cy: "16", r: "10.2", stroke: "currentColor", "stroke-width": "1.4" }));
-    s.appendChild(svgEl("circle", { cx: "16", cy: "16", r: "5.6", stroke: "currentColor", "stroke-width": "1.2" }));
-    s.appendChild(svgEl("circle", { cx: "16", cy: "16", r: "1.5", fill: "currentColor" }));
-    s.appendChild(svgEl("path", { d: "M16 16 16 6.1A9.9 9.9 0 0 1 24.6 13.4Z", fill: "currentColor" }));
+    s.appendChild(svgEl("path", {
+      d: "M4 10V4h6M22 4h6v6M28 22v6h-6M10 28H4v-6",
+      stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "square"
+    }));
+    s.appendChild(svgEl("path", {
+      d: "M16 8v5M16 19v5M8 16h5M19 16h5",
+      stroke: "currentColor", "stroke-width": "1.4", "stroke-linecap": "square"
+    }));
+    s.appendChild(svgEl("rect", { x: "14.6", y: "14.6", width: "2.8", height: "2.8", fill: "currentColor" }));
     return s;
   }
 
@@ -108,7 +111,7 @@
   var marks = {
     kp: markKp,
     year: markYear,
-    watch: markWatch,
+    raptor: markRaptor,
     car: markCar,
     launch: markLaunch
   };
@@ -125,49 +128,6 @@
       if (index < SUBTITLE.length) window.setTimeout(step, 46);
     }
     step();
-  }
-
-  function parseDay(iso) {
-    var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
-    if (!match) return null;
-    var year = Number(match[1]);
-    var month = Number(match[2]);
-    var day = Number(match[3]);
-    var utc = Date.UTC(year, month - 1, day);
-    var check = new Date(utc);
-    if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
-    return utc;
-  }
-
-  function zoneToday(now) {
-    try {
-      var parts = new Intl.DateTimeFormat("en-US", {
-        timeZone: ZONE,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).formatToParts(now);
-      var year = 0;
-      var month = 0;
-      var day = 0;
-      parts.forEach(function (part) {
-        if (part.type === "year") year = Number(part.value);
-        if (part.type === "month") month = Number(part.value);
-        if (part.type === "day") day = Number(part.value);
-      });
-      if (year && month && day) return Date.UTC(year, month - 1, day);
-    } catch (error) {
-      return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    }
-    return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  }
-
-  function daysUp(iso) {
-    var start = parseDay(iso);
-    if (start === null) start = parseDay(DEFAULT_SINCE);
-    var diff = Math.round((zoneToday(new Date()) - start) / 86400000);
-    if (diff < 0) return 0;
-    return diff + 1;
   }
 
   function httpsUrl(value) {
@@ -663,6 +623,7 @@
     var name = app.name.trim();
     var article = document.createElement("article");
     article.className = "app";
+    article.id = slugFor(name);
     var titleId = "app-" + index + "-title";
     article.setAttribute("aria-labelledby", titleId);
 
@@ -673,13 +634,18 @@
     idText.className = "id-text";
     var head = document.createElement("div");
     head.className = "head";
+    var num = document.createElement("span");
+    num.className = "num";
+    num.setAttribute("aria-hidden", "true");
+    num.textContent = String(index + 1).padStart(2, "0");
+    head.appendChild(num);
     var title = document.createElement("h2");
     title.id = titleId;
     title.textContent = name;
     head.appendChild(title);
     if (typeof app.status === "string" && app.status.trim() !== "") {
       var badge = document.createElement("span");
-      badge.className = "badge";
+      badge.className = "badge state-" + slugFor(app.status);
       badge.textContent = app.status.trim();
       head.appendChild(badge);
     }
@@ -706,6 +672,8 @@
     var items = [];
     var openUrl = httpsUrl(app.open);
     if (openUrl) items.push({ kind: "open", href: openUrl });
+    var site = httpsUrl(app.site);
+    if (site) items.push({ kind: "site", href: site });
     var install = commandText(app.install);
     if (install) items.push({ kind: "install", command: install });
     var launch = commandText(app.launch);
@@ -750,6 +718,14 @@
         el.setAttribute("aria-label", "Open " + name);
         el.appendChild(iconExternal());
         label.textContent = "open";
+      } else if (item.kind === "site") {
+        el = document.createElement("a");
+        el.href = item.href;
+        el.target = "_blank";
+        el.rel = "noopener noreferrer";
+        el.setAttribute("aria-label", "Website for " + name);
+        el.appendChild(iconExternal());
+        label.textContent = "website";
       } else if (item.kind === "source") {
         el = document.createElement("a");
         el.href = item.href;
@@ -802,35 +778,68 @@
     if (hasCommand) article.appendChild(fallback);
     return article;
   }
-  function setCount(id, value) {
-    document.getElementById(id).textContent = String(value);
+
+  function statusOf(app) {
+    return typeof app.status === "string" ? app.status.trim().toLowerCase() : "";
   }
 
-  function renderStats(since, apps) {
-    var counts = { total: 0, live: 0, beta: 0, soon: 0 };
+  function renderStats(apps) {
+    var counts = { total: 0, open: 0, listed: 0, review: 0, soon: 0 };
     apps.forEach(function (app) {
       if (!app || typeof app.name !== "string" || app.name.trim() === "") return;
       counts.total += 1;
-      var status = typeof app.status === "string" ? app.status.trim().toLowerCase() : "";
-      if (status === "web" || status === "web app" || status === "marketplace" || status === "public") counts.live += 1;
-      else if (status === "private beta") counts.beta += 1;
+      if (typeof app.license === "string" && app.license.trim() !== "" && httpsUrl(app.source)) counts.open += 1;
+      var status = statusOf(app);
+      if (status === "marketplace") counts.listed += 1;
+      else if (status === "in review") counts.review += 1;
       else if (status === "coming soon") counts.soon += 1;
     });
-    setCount("stat-total", counts.total);
-    setCount("stat-live", counts.live);
-    setCount("stat-beta", counts.beta);
-    setCount("stat-soon", counts.soon);
-    setCount("stat-days", daysUp(since));
+    [
+      ["apps", counts.total],
+      ["open source · MIT", counts.open],
+      ["on omarchy marketplace", counts.listed],
+      ["marketplace review", counts.review],
+      ["coming soon", counts.soon]
+    ].forEach(function (tile) {
+      if (!tile[1]) return;
+      var wrap = document.createElement("div");
+      wrap.className = "stat";
+      var dt = document.createElement("dt");
+      dt.textContent = tile[0];
+      var dd = document.createElement("dd");
+      dd.textContent = String(tile[1]);
+      wrap.appendChild(dt);
+      wrap.appendChild(dd);
+      stats.appendChild(wrap);
+    });
+    stats.style.setProperty("--tiles", String(stats.children.length));
     stats.setAttribute("aria-busy", "false");
   }
 
+  function slugFor(name) {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function renderIndex(apps) {
+    var nav = document.getElementById("index");
+    if (!nav) return;
+    apps.forEach(function (app, index) {
+      if (!app || typeof app.name !== "string" || app.name.trim() === "") return;
+      var a = document.createElement("a");
+      a.href = "#" + slugFor(app.name.trim());
+      var num = document.createElement("span");
+      num.className = "num";
+      num.textContent = String(index + 1).padStart(2, "0");
+      a.appendChild(num);
+      a.appendChild(document.createTextNode(app.name.trim()));
+      nav.appendChild(a);
+    });
+  }
+
   function normalize(data) {
-    if (Array.isArray(data)) return { since: DEFAULT_SINCE, apps: data };
+    if (Array.isArray(data)) return { apps: data };
     if (data && Array.isArray(data.apps)) {
-      return {
-        since: typeof data.since === "string" ? data.since : DEFAULT_SINCE,
-        apps: data.apps
-      };
+      return { apps: data.apps };
     }
     return null;
   }
@@ -855,7 +864,8 @@
         fail();
         return;
       }
-      renderStats(pack.since, pack.apps);
+      renderStats(pack.apps);
+      renderIndex(pack.apps);
       pack.apps.forEach(function (app, index) {
         var article = renderApp(app, index);
         if (article) root.appendChild(article);
