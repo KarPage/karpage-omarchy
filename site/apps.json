@@ -138,13 +138,13 @@
    "repo": "KarPage/omaraptor-player",
    "facts": {
     "files": 40,
-    "repoBytes": 16667068,
-    "downloadBytes": 15358007,
-    "appBytes": 306374,
-    "commit": "ebe3467",
+    "repoBytes": 16695942,
+    "downloadBytes": 15366215,
+    "appBytes": 335248,
+    "commit": "75685b0",
     "commitDate": "2026-10-30",
     "license": "MIT",
-    "release": "v1.0.0",
+    "release": "v1.0.2",
     "measured": "2026-10-30"
    },
    "review": "https://github.com/omacom/omarchy-plugin-marketplace/issues/13398",
