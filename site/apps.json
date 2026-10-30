@@ -2,9 +2,16 @@
   "apps": [
     {
       "name": "OmaRaptor Player",
-      "description": "A free, super-light player for almost any video link, with a working HUD inspired by the F-22 Raptor. Copy a link, press Super+Alt+Y, and it plays in a pinned 16:9 window.",
-      "notes": [
-        "CRUISE is a bare player, COMBAT is the full cockpit. Live time, seek, volume and audio-signal gauges, keyboard first, many players at once. mpv and yt-dlp underneath, no login and no browser.",
+      "tagline": "YouTube video player for Omarchy and Linux",
+      "description": "A free, open-source, super-light video player. Copy a link, press Super+Alt+Y, and it plays in a pinned 16:9 window.",
+      "points": [
+        "Plays YouTube, X, Twitch, TikTok, Instagram and live streams, and almost any link yt-dlp supports.",
+        "A working HUD inspired by the F-22 Raptor: time, seek, volume and a real audio-signal meter.",
+        "Two looks: CRUISE is a bare YouTube player, COMBAT is the full cockpit.",
+        "Keyboard first, with many players at once, each in its own corner.",
+        "No login and no browser. mpv and yt-dlp underneath, so it starts fast and stays light."
+      ],
+      "fine": [
         "Demo footage: Falcon Heavy / Roman Space Telescope launch drone video, SpaceX (CC0) via NASA, and launch high-speed footage, NASA/Cory S Huston (public domain).",
         "Unofficial fan project. Not affiliated with or endorsed by the U.S. Air Force, Lockheed Martin, SpaceX or NASA."
       ],
