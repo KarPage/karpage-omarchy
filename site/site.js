@@ -42,6 +42,42 @@
       });
     });
     reset.addEventListener("click", function () { pick(""); });
+
+    /* Selection over a stat box previews it in the panel text; Enter, Space or a click commits. */
+    var hint = panel.querySelector(".panel-hint");
+    var hinted = null;
+    var showHint = function (b) {
+      if (b === hinted) return;
+      hinted = b;
+      if (!b) { panel.classList.remove("hinting"); hint.hidden = true; return; }
+      var t = b.getAttribute("data-hint");
+      var act = b.getAttribute("aria-pressed") === "true" ? "enter to clear" : b.getAttribute("data-filter") === "all" ? "enter to list" : "enter to filter";
+      hint.textContent = t + " ";
+      var dim = document.createElement("span");
+      dim.textContent = act;
+      hint.appendChild(dim);
+      hint.hidden = false;
+      hint.style.animation = "none";
+      void hint.offsetWidth;
+      hint.style.animation = "";
+      panel.classList.add("hinting");
+    };
+    document.addEventListener("kp:cur", function (ev) {
+      var el = ev.detail;
+      showHint(el && el.classList.contains("stat") && board.contains(el) ? el : null);
+    });
+    document.addEventListener("kp:filter", function () { var b = hinted; hinted = null; if (b) showHint(b); });
+  }
+
+  /* Keycap hints light up while their real key is held. */
+  var caps = document.querySelectorAll(".keys kbd[data-key]");
+  if (caps.length) {
+    var lit = function (key, on) {
+      Array.prototype.forEach.call(caps, function (k) { if (k.getAttribute("data-key") === key) k.classList.toggle("hit", on); });
+    };
+    document.addEventListener("keydown", function (ev) { lit(ev.key, true); });
+    document.addEventListener("keyup", function (ev) { lit(ev.key, false); });
+    window.addEventListener("blur", function () { Array.prototype.forEach.call(caps, function (k) { k.classList.remove("hit"); }); });
   }
 
   function selectText(node) {
@@ -210,6 +246,7 @@
     if (focus && document.activeElement !== it.f) it.f.focus({ preventScroll: true });
     box.classList.remove("idle");
     place();
+    document.dispatchEvent(new CustomEvent("kp:cur", { detail: it.box }));
   }
   function reveal(it) {
     it.box.scrollIntoView({ block: "nearest", inline: "nearest", behavior: still.matches ? "auto" : "instant" });

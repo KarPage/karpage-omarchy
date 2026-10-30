@@ -213,9 +213,12 @@ def board(apps):
         hits = [a for a in apps if f(a)]
         if not hits:
             continue
-        boxes.append('<button class="stat" type="button" aria-pressed="false" aria-controls="panel" data-filter="%s">'
+        n = "%d app%s" % (len(hits), "" if len(hits) == 1 else "s")
+        if key != "all" and len(hits) <= 2:
+            n += ": " + ", ".join(a["name"] for a in hits)
+        boxes.append('<button class="stat" type="button" aria-pressed="false" aria-controls="panel" data-filter="%s" data-hint="&gt; %s — %s">'
                      '<span class="led" aria-hidden="true"></span><span class="stat-k">%s</span><span class="stat-v">%d</span></button>'
-                     % (key, e(label), len(hits)))
+                     % (key, e("all apps" if key == "all" else label), e(n), e(label), len(hits)))
         rows = []
         for a in hits:
             line, href = row_line(key, a)
@@ -228,7 +231,7 @@ def board(apps):
     return ('<div class="board" role="group" aria-label="Filter apps">%s</div>'
             '<div class="traces" aria-hidden="true"></div>'
             '<section class="panel" id="panel" aria-live="polite" aria-label="Selection"><div class="panel-top"><span>PREVIEW</span>'
-            '<button class="reset" type="button" hidden>× ALL</button></div>%s%s</section>'
+            '<button class="reset" type="button" hidden>× ALL</button></div><p class="panel-h panel-hint" aria-hidden="true" hidden></p>%s%s</section>'
             % ("".join(boxes), idle, "".join(panels)))
 
 
@@ -255,7 +258,7 @@ def index(apps):
 <p class="prompt">~/apps <span>$</span> ls</p>
 <h1>Kar Page Apps<span class="cursor" aria-hidden="true"></span></h1>
 <p class="lede">%s</p>
-<p class="keys" aria-hidden="true">←↑↓→ move · ↵ select · esc back</p>
+<p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg"><kbd class="w" data-key="Enter">↲ ENTER</kbd><em>select</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span></p>
 %s
 </header>
 <main id="apps" tabindex="-1">
@@ -359,7 +362,7 @@ def page(app, apps):
 <div class="title-row">%s<h1>%s</h1>%s</div>
 <p class="tagline">%s</p>
 <p class="lede">%s</p>
-<p class="keys" aria-hidden="true">←↑↓→ move · ↵ open · esc back</p>
+<p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg"><kbd class="w" data-key="Enter">↲ ENTER</kbd><em>open</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span></p>
 %s%s
 %s
 </section>
