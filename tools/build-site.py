@@ -255,6 +255,7 @@ def index(apps):
 <p class="prompt">~/apps <span>$</span> ls</p>
 <h1>Kar Page Apps<span class="cursor" aria-hidden="true"></span></h1>
 <p class="lede">%s</p>
+<p class="keys" aria-hidden="true">←↑↓→ move · ↵ select · esc back</p>
 %s
 </header>
 <main id="apps" tabindex="-1">
@@ -333,6 +334,7 @@ def page(app, apps):
 <div class="title-row">%s<h1>%s</h1>%s</div>
 <p class="tagline">%s</p>
 <p class="lede">%s</p>
+<p class="keys" aria-hidden="true">←↑↓→ move · ↵ open · esc back</p>
 %s
 %s
 </section>
