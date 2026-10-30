@@ -275,7 +275,7 @@
   }
 
   /* Kar Page launch panel: IGN, WARM, RUN thrown in order arm the bar; holding it (pointer, or Enter/Space)
-     for the full time opens the app through the plain link's href. Throwing a switch back disarms. */
+     for the full time unlocks the live app panel below it (it stays until reload). Throwing a switch back disarms. */
   Array.prototype.forEach.call(document.querySelectorAll("[data-kpl]"), function (root) {
     var panel = root.querySelector(".kpl-panel"), link = root.querySelector(".kpl-alt a");
     var sws = Array.prototype.slice.call(root.querySelectorAll(".kpl-sw"));
@@ -318,9 +318,47 @@
       raf = 0; done = true;
       hold.classList.remove("is-holding");
       hold.classList.add("is-done");
-      txt.textContent = "LAUNCHING";
-      say("LAUNCH · OPENING");
-      window.location.assign(link.href);
+      txt.textContent = "UNLOCKED";
+      say("UNLOCKED · LIVE");
+      unlock();
+    }
+    /* The live app panel under the launcher: no iframe src until the hold completes. */
+    var kpb = root.nextElementSibling, unlocked = false, waitT = 0;
+    if (kpb && !kpb.hasAttribute("data-kpb")) kpb = null;
+    var frame = kpb && kpb.querySelector(".kpb-frame"), view = kpb && kpb.querySelector(".kpb-view");
+    var fail = kpb && kpb.querySelector(".kpb-fail"), fstat = kpb && kpb.querySelector(".kpb-status");
+    var HOME = frame ? frame.getAttribute("data-src") : link.href;
+    function load(url, word) {
+      clearTimeout(waitT);
+      kpb.classList.add("is-loading");
+      fail.hidden = true;
+      fstat.textContent = word;
+      frame.src = url;
+      /* A cross-origin frame can't be inspected; if it hasn't fired load in 8s, offer the full app. */
+      waitT = setTimeout(function () { kpb.classList.remove("is-loading"); fail.hidden = false; fstat.textContent = "NO SIGNAL"; }, 8000);
+    }
+    function unlock() {
+      if (!kpb || !frame) { window.location.assign(link.href); return; }
+      if (unlocked) return;
+      unlocked = true;
+      kpb.hidden = false;
+      frame.addEventListener("load", function () {
+        clearTimeout(waitT);
+        kpb.classList.remove("is-loading");
+        fail.hidden = true;
+        fstat.textContent = "";
+        kpb.classList.add("is-live");
+      });
+      load(HOME, "CONNECTING…");
+      kpb.scrollIntoView({ block: "center", behavior: calm.matches ? "auto" : "smooth" });
+      view.focus({ preventScroll: true });
+    }
+    if (kpb) {
+      Array.prototype.forEach.call(kpb.querySelectorAll("[data-kpb-do]"), function (b) {
+        b.addEventListener("click", function () { load(HOME, b.getAttribute("data-kpb-do") === "home" ? "HOME…" : "RELOADING…"); });
+      });
+      /* Enter (via the cursor's data-kf click) or a click on the frame's edge hands focus to the app. */
+      view.addEventListener("click", function () { if (unlocked) frame.focus(); });
     }
     function start(src) {
       if (done || by) return;
@@ -367,7 +405,7 @@
     hold.addEventListener("contextmenu", function (ev) { ev.preventDefault(); });
     /* Back from the app (page cache): start over disarmed. */
     window.addEventListener("pageshow", function (ev) {
-      if (!ev.persisted) return;
+      if (!ev.persisted || unlocked) return;
       done = false; armed = 0; hold.classList.remove("is-done"); stop(); paint();
     });
     paint();
