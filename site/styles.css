@@ -784,6 +784,25 @@ footer .foot-brand {
 }
 
 @media (max-width: 480px) {
+  .gal-controls {
+    flex-wrap: nowrap;
+  }
+
+  .gal-dots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .gal-dot {
+    min-width: 20px;
+  }
+
+  .gal-nav {
+    min-width: 32px;
+  }
+
   .wrap {
     width: min(52rem, calc(100% - 1.5rem));
     padding-top: 1.75rem;

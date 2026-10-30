@@ -12,7 +12,7 @@
         "No login and no browser. mpv and yt-dlp underneath, so it starts fast and stays light."
       ],
       "fine": [
-        "Demo footage: Falcon Heavy / Roman Space Telescope launch drone video, SpaceX (CC0) via NASA, and launch high-speed footage, NASA/Cory S Huston (public domain).",
+        "Footage: SpaceX (CC0) via NASA; NASA, NASA/Cory S Huston, NASA SVS / Marit Jentoft-Nilsen (public domain/CC0).",
         "Unofficial fan project. Not affiliated with or endorsed by the U.S. Air Force, Lockheed Martin, SpaceX or NASA."
       ],
       "status": "in review",
@@ -23,6 +23,34 @@
       "mark": "raptor",
       "frame": "wide",
       "shots": [
+        {
+          "id": "omr-bright",
+          "alt": "OmaRaptor Player in fullscreen COMBAT mode over a bright Falcon 9 night liftoff: the scope ring, heading tape, VOL and REM tapes and the full control bar.",
+          "w": 960,
+          "h": 540,
+          "x2": true
+        },
+        {
+          "id": "omr-multi-1",
+          "alt": "An Omarchy desktop with an OmaRaptor player playing a Falcon Heavy launch next to a code editor and a terminal.",
+          "w": 960,
+          "h": 540,
+          "x2": true
+        },
+        {
+          "id": "omr-multi-2",
+          "alt": "Two OmaRaptor players at once, an aurora seen from the ISS and a Starship flight test, floating over a code editor.",
+          "w": 960,
+          "h": 540,
+          "x2": true
+        },
+        {
+          "id": "omr-multi-3",
+          "alt": "Three OmaRaptor players parked in different corners of the screen: an aurora, a Falcon Heavy launch and an Artemis I liftoff.",
+          "w": 960,
+          "h": 540,
+          "x2": true
+        },
         {
           "id": "omr-hero",
           "alt": "OmaRaptor Player in fullscreen COMBAT mode: the scope locked on the rocket, heading tape, VOL and REM tapes and the control bar.",
