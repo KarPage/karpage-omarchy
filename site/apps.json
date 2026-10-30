@@ -1,233 +1,551 @@
 {
-  "apps": [
+ "apps": [
+  {
+   "slug": "omaraptor",
+   "name": "OmaRaptor Player",
+   "mark": "raptor",
+   "status": "in review",
+   "license": "MIT",
+   "short": "YouTube video player for Omarchy and Linux.",
+   "tag": "OMARCHY · MPV · YT-DLP · MIT",
+   "tagline": "YouTube video player for Omarchy and Linux",
+   "lede": "A free, open-source, super-light player for almost any video link. Copy a link, press Super+Alt+Y, and it plays in a pinned 16:9 window. No login, no browser, and a HUD inspired by the F-22 Raptor.",
+   "seo": {
+    "title": "OmaRaptor Player: YouTube video player for Omarchy and Linux",
+    "description": "OmaRaptor Player is a free, open-source YouTube video player for Omarchy and Linux. It plays YouTube, X, Twitch, TikTok, Instagram and live streams in a light mpv window, with no login and an HUD inspired by the F-22 Raptor.",
+    "keywords": "YouTube player, video player, YouTube video player for Linux, YouTube video player for Omarchy, Omarchy, Hyprland, mpv, yt-dlp"
+   },
+   "features": [
+    [
+     "ANY LINK",
+     "Copy a link, press Super+Alt+Y. The first player opens centred, more players park in the free corners."
+    ],
+    [
+     "CRUISE · COMBAT",
+     "A bare player with a slim bar, or the full cockpit. MASTER ARM switches between them."
+    ],
+    [
+     "LIVE GAUGES",
+     "Seek tape, time, volume, speed, repeat, link status and a real audio signal meter."
+    ],
+    [
+     "FULLSCREEN HUD",
+     "Heading tape, VOL and REM tapes, a top time box and a scope that locks on when you pause."
+    ],
+    [
+     "END RAMP",
+     "Timers turn amber, then red, and a NEXT card shows what plays next."
+    ],
+    [
+     "LIGHT",
+     "No login and no browser. mpv and yt-dlp underneath, so it starts fast and stays light."
+    ]
+   ],
+   "chips": {
+    "title": "SUPPORTED SITES",
+    "items": [
+     "YOUTUBE",
+     "X",
+     "TWITCH",
+     "TIKTOK",
+     "INSTAGRAM",
+     "DAILYMOTION",
+     "STREAMABLE",
+     "DIRECT FILES",
+     "HLS",
+     "LIVE STREAMS"
+    ],
+    "note": "Vimeo and Reddit don't work, because they need a login."
+   },
+   "install": [
+    [
+     "OMARCHY PLUGIN",
+     "omarchy plugin add https://github.com/KarPage/omaraptor-player --enable"
+    ],
+    [
+     "OR FROM THE REPO",
+     "git clone https://github.com/KarPage/omaraptor-player && cd omaraptor-player && ./install.sh"
+    ]
+   ],
+   "installNote": "Needs mpv, yt-dlp, socat, jq and wl-clipboard. The installer asks before it adds one line to your Hyprland config. ./uninstall.sh removes it all.",
+   "links": [
+    [
+     "SOURCE",
+     "https://github.com/KarPage/omaraptor-player"
+    ],
+    [
+     "WEBSITE",
+     "https://omaraptor.vercel.app"
+    ]
+   ],
+   "fine": [
+    "Footage: SpaceX (CC0) via NASA; NASA, NASA/Cory S Huston, NASA SVS / Marit Jentoft-Nilsen (public domain/CC0).",
+    "Music: \"Cyber March\" by iamoneabe (CC0).",
+    "Unofficial fan project. Not affiliated with or endorsed by the U.S. Air Force, Lockheed Martin, SpaceX or NASA."
+   ],
+   "shots": [
     {
-      "name": "OmaRaptor Player",
-      "tagline": "YouTube video player for Omarchy and Linux",
-      "description": "A free, open-source, super-light video player. Copy a link, press Super+Alt+Y, and it plays in a pinned 16:9 window.",
-      "points": [
-        "Plays YouTube, X, Twitch, TikTok, Instagram and live streams, and almost any link yt-dlp supports.",
-        "A working HUD inspired by the F-22 Raptor: time, seek, volume and a real audio-signal meter.",
-        "Two looks: CRUISE is a bare YouTube player, COMBAT is the full cockpit.",
-        "Keyboard first, with many players at once, each in its own corner.",
-        "No login and no browser. mpv and yt-dlp underneath, so it starts fast and stays light."
-      ],
-      "fine": [
-        "Footage: SpaceX (CC0) via NASA; NASA, NASA/Cory S Huston, NASA SVS / Marit Jentoft-Nilsen (public domain/CC0).",
-        "Music: \"Cyber March\" by iamoneabe (CC0).",
-        "Unofficial fan project. Not affiliated with or endorsed by the U.S. Air Force, Lockheed Martin, SpaceX or NASA."
-      ],
-      "status": "in review",
-      "site": "https://omaraptor.vercel.app",
-      "install": "omarchy plugin add https://github.com/KarPage/omaraptor-player --enable",
-      "source": "https://github.com/KarPage/omaraptor-player",
-      "license": "MIT",
-      "mark": "raptor",
-      "frame": "wide",
-      "shots": [
-        {
-          "id": "omr-bright",
-          "alt": "OmaRaptor Player in fullscreen COMBAT mode over a bright Falcon 9 night liftoff: the scope ring, heading tape, VOL and REM tapes and the full control bar.",
-          "w": 960,
-          "h": 540,
-          "x2": true
-        },
-        {
-          "id": "omr-multi-1",
-          "alt": "An Omarchy desktop with an OmaRaptor player playing a Falcon Heavy launch next to a code editor and a terminal.",
-          "w": 960,
-          "h": 540,
-          "x2": true
-        },
-        {
-          "id": "omr-multi-2",
-          "alt": "Two OmaRaptor players at once, an aurora seen from the ISS and a Starship flight test, floating over a code editor.",
-          "w": 960,
-          "h": 540,
-          "x2": true
-        },
-        {
-          "id": "omr-multi-3",
-          "alt": "Three OmaRaptor players parked in different corners of the screen: an aurora, a Falcon Heavy launch and an Artemis I liftoff.",
-          "w": 960,
-          "h": 540,
-          "x2": true
-        },
-        {
-          "id": "omr-hero",
-          "alt": "OmaRaptor Player in fullscreen COMBAT mode: the scope locked on the rocket, heading tape, VOL and REM tapes and the control bar.",
-          "w": 960,
-          "h": 540,
-          "x2": true
-        },
-        {
-          "id": "omr-master-arm",
-          "alt": "The MASTER ARM panel, switching between CRUISE and COMBAT over launch footage.",
-          "w": 960,
-          "h": 540,
-          "x2": true
-        },
-        {
-          "id": "omr-end-ramp",
-          "alt": "End of video: the timers turn amber and red and a NEXT card shows what plays next.",
-          "w": 960,
-          "h": 540,
-          "x2": true
-        },
-        {
-          "id": "omr-sizes",
-          "alt": "Small, medium and large OmaRaptor players side by side.",
-          "w": 960,
-          "h": 540,
-          "x2": true
-        },
-        {
-          "id": "omr-help",
-          "alt": "The keyboard and mouse panel that opens with the ? key.",
-          "w": 960,
-          "h": 540,
-          "x2": true
-        }
-      ]
+     "id": "omr-bright",
+     "alt": "OmaRaptor Player in fullscreen COMBAT mode over a bright Falcon 9 night liftoff: the scope ring, heading tape, VOL and REM tapes and the full control bar.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "COMBAT · FULLSCREEN"
     },
     {
-      "name": "Oma Year Planner",
-      "description": "Your whole year on one screen. A local-first year calendar for Omarchy, with no backend, no account and no build step.",
-      "status": "marketplace",
-      "install": "omarchy plugin add https://github.com/KarPage/oma-year-planner --enable",
-      "launch": "~/.config/omarchy/plugins/io.github.karpage.oma-year/year-planner/open",
-      "source": "https://github.com/KarPage/oma-year-planner",
-      "mark": "year",
-      "frame": "wide",
-      "shots": [
-        {
-          "id": "oyp-year",
-          "alt": "Oma Year Planner showing the sample year: Ski week, City break, Wedding weekend, Workshop, Coast week, Lake week, Autumn hike, and Year-end break.",
-          "w": 1100,
-          "h": 720,
-          "x2": true
-        },
-        {
-          "id": "oyp-months",
-          "alt": "A closer crop of the sample calendar from May onward, with Workshop, Coast week, Lake week, and Autumn hike.",
-          "w": 1100,
-          "h": 720,
-          "x2": true
-        },
-        {
-          "id": "oyp-add",
-          "alt": "The add-plan dialog on May 12 in the sample calendar. The name field is empty.",
-          "w": 1100,
-          "h": 720,
-          "x2": true
-        },
-        {
-          "id": "oyp-search",
-          "alt": "The sample calendar filtered to workshop, with the three Workshop plans still on the board.",
-          "w": 1100,
-          "h": 720,
-          "x2": true
-        },
-        {
-          "id": "oyp-float",
-          "alt": "A translucent Oma Year Planner window over a desktop wallpaper, showing the same sample plans.",
-          "w": 1100,
-          "h": 720,
-          "x2": true
-        }
-      ],
-      "license": "MIT",
-      "notes": [
-        "Add plans, filter the year by name, and float it as a translucent window over your desktop."
-      ]
+     "id": "omr-cruise",
+     "alt": "CRUISE: a bare OmaRaptor player with a slim control bar over launch footage.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "CRUISE"
     },
     {
-      "name": "Kar Page",
-      "description": "Your cars. Your story.",
-      "notes": [
-        "An app for car enthusiasts to show off their cars and connect with like-minded people around the world."
-      ],
-      "status": "web app",
-      "open": "https://karpage.app",
-      "mark": "kp",
-      "frame": "phone",
-      "shots": [
-        {
-          "id": "kar-grid",
-          "alt": "Kar Page grid scan, a public browse screen for spots and cars. No one is signed in.",
-          "w": 390,
-          "h": 844,
-          "x2": true,
-          "avif": true
-        }
-      ]
+     "id": "omr-multi-1",
+     "alt": "An Omarchy desktop with an OmaRaptor player playing a Falcon Heavy launch next to a code editor and a terminal.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "ON THE DESKTOP"
     },
     {
-      "name": "Kar Page Launcher",
-      "description": "Kar Page as a desktop app on Omarchy. It adds a launcher entry and an icon, and opens karpage.app in its own Chromium app window.",
-      "status": "public",
-      "install": "git clone https://github.com/KarPage/karpage-omarchy.git && cd karpage-omarchy && less install && ./install",
-      "launch": "chromium --app=https://karpage.app --class=KarPage --window-size=480,960",
-      "source": "https://github.com/KarPage/karpage-omarchy",
-      "mark": "launch",
-      "notes": [
-        "The install script is short and readable. The command below opens it in less before it runs."
-      ],
-      "license": "MIT"
+     "id": "omr-multi-2",
+     "alt": "Two OmaRaptor players at once, an aurora seen from the ISS and a Starship flight test, floating over a code editor.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "TWO PLAYERS"
     },
     {
-      "name": "OmaKarDash",
-      "description": "A Tesla dashboard for Omarchy: charge and range, climate, tires, lock state and software updates.",
-      "notes": [
-        "It will use each owner's own Tesla developer app, read Tesla's cached data without waking the car, and ask for a confirm on every command. No unlock, no location and no remote start.",
-        "Preview screenshots use demo data for a fictional car. Unofficial. Not affiliated with Tesla."
-      ],
-      "status": "coming soon",
-      "mark": "car",
-      "frame": "wide",
-      "shots": [
-        {
-          "id": "okd-jade",
-          "alt": "OmaKarDash Jade theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
-          "w": 960,
-          "h": 540,
-          "x2": true,
-          "avif": true
-        },
-        {
-          "id": "okd-red",
-          "alt": "OmaKarDash Red theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
-          "w": 960,
-          "h": 540,
-          "x2": true,
-          "avif": true
-        },
-        {
-          "id": "okd-purple",
-          "alt": "OmaKarDash Purple theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
-          "w": 960,
-          "h": 540,
-          "x2": true,
-          "avif": true
-        }
-      ],
-      "rail": [
-        {
-          "id": "okd-clear-1",
-          "alt": "OmaKarDash Clear theme in a narrow window, with the car above and the controls along the bottom. Northwind is asleep and unplugged, at 78 percent and 251 miles, with the rear-right tire at 26 psi.",
-          "w": 590,
-          "h": 640,
-          "x2": true,
-          "avif": true
-        },
-        {
-          "id": "okd-clear-3",
-          "alt": "OmaKarDash Clear theme in a narrow window, with controls along both sides of the car. Northwind is asleep and unplugged, at 78 percent and 251 miles, with the rear-right tire at 26 psi.",
-          "w": 520,
-          "h": 450,
-          "x2": true,
-          "avif": true
-        }
-      ]
+     "id": "omr-multi-3",
+     "alt": "Three OmaRaptor players parked in different corners of the screen: an aurora, a Falcon Heavy launch and an Artemis I liftoff.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "THREE CORNERS"
+    },
+    {
+     "id": "omr-hero",
+     "alt": "OmaRaptor Player in fullscreen COMBAT mode: the scope locked on the rocket, heading tape, VOL and REM tapes and the control bar.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "SCOPE LOCK"
+    },
+    {
+     "id": "omr-ring",
+     "alt": "Close-up of the control bar: the progress ring around the play button, the seek tape and the speed gauge.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "PROGRESS RING"
+    },
+    {
+     "id": "omr-master-arm",
+     "alt": "The MASTER ARM panel, switching between CRUISE and COMBAT over launch footage.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "MASTER ARM"
+    },
+    {
+     "id": "omr-end-ramp",
+     "alt": "End of video: the timers turn amber and red and a NEXT card shows what plays next.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "END RAMP · NEXT"
+    },
+    {
+     "id": "omr-sizes",
+     "alt": "Small, medium and large OmaRaptor players side by side.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "SIZES"
+    },
+    {
+     "id": "omr-help",
+     "alt": "The keyboard and mouse panel that opens with the ? key.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "cap": "HELP"
     }
-  ]
+   ],
+   "repo": "KarPage/omaraptor-player",
+   "facts": {
+    "files": 40,
+    "repoBytes": 16667068,
+    "downloadBytes": 15358007,
+    "appBytes": 306374,
+    "commit": "ebe3467",
+    "commitDate": "2026-10-30",
+    "license": "MIT",
+    "release": "v1.0.0",
+    "measured": "2026-10-30"
+   },
+   "review": "https://github.com/omacom/omarchy-plugin-marketplace/issues/13398"
+  },
+  {
+   "slug": "oma-year",
+   "name": "Oma Year Planner",
+   "mark": "year",
+   "status": "marketplace",
+   "license": "MIT",
+   "short": "Your whole year on one screen. A local-first year calendar for Omarchy.",
+   "tag": "OMARCHY PLUGIN · LOCAL-FIRST · MIT",
+   "tagline": "Your whole year on one screen",
+   "lede": "A local-first year calendar for Omarchy, with no backend, no account and no build step. Add plans, filter the year by name, and float it as a translucent window over your desktop.",
+   "seo": {
+    "title": "Oma Year Planner: a local-first year calendar for Omarchy",
+    "description": "Oma Year Planner puts your whole year on one screen. A free, open-source, local-first year calendar plugin for Omarchy, with no backend, no account and no tracking.",
+    "keywords": "year planner, year calendar, Omarchy plugin, Omarchy, Hyprland, local-first calendar, Linux calendar"
+   },
+   "features": [
+    [
+     "WHOLE YEAR",
+     "Months run down one scrolling board. The day header stays pinned, and Today brings the current month back to the middle."
+    ],
+    [
+     "PAST FADES BACK",
+     "Past months and finished plans dim, so what is ahead stands out."
+    ],
+    [
+     "FAST PLANNING",
+     "Click a day, name the plan, pick Plan or Trip. Drag a bar to move it, or drag its ends to resize it."
+    ],
+    [
+     "TRIPS · DAYS AWAY",
+     "Trips add up to a days-away count per month and for the year. Next, Up next and Last sit on the strip."
+    ],
+    [
+     "PIN TO DESKTOP",
+     "A still picture of your year laid over your wallpaper, painted again at midnight."
+    ],
+    [
+     "YOUR THEME",
+     "Reads the colours from your active Omarchy theme each time it opens."
+    ],
+    [
+     "PRIVATE",
+     "Plans stay in your browser. No server, no account, no analytics and no tracking."
+    ],
+    [
+     "KEYBOARD",
+     "Search with /, undo with Ctrl+Z, and full keyboard navigation. Press ? for the list."
+    ]
+   ],
+   "install": [
+    [
+     "OMARCHY PLUGIN",
+     "omarchy plugin add https://github.com/KarPage/oma-year-planner --enable"
+    ],
+    [
+     "OPEN IT",
+     "~/.config/omarchy/plugins/io.github.karpage.oma-year/year-planner/open"
+    ],
+    [
+     "OR WITHOUT THE PLUGIN",
+     "git clone https://github.com/KarPage/oma-year-planner.git && cd oma-year-planner/year-planner && ./open"
+    ]
+   ],
+   "installNote": "The plugin adds a calendar button to your bar. You need Chromium (it ships with Omarchy), Python 3 and curl, plus ImageMagick for wallpaper mode.",
+   "links": [
+    [
+     "SOURCE",
+     "https://github.com/KarPage/oma-year-planner"
+    ],
+    [
+     "MARKETPLACE",
+     "https://plugins.omarchy.org/plugin.html?id=io.github.karpage.oma-year"
+    ]
+   ],
+   "fine": [
+    "All plans in these screenshots are demo data.",
+    "Unofficial. Not affiliated with Omarchy."
+   ],
+   "shots": [
+    {
+     "id": "oyp-year",
+     "alt": "Oma Year Planner showing the sample year: Ski week, City break, Wedding weekend, Workshop, Coast week, Lake week, Autumn hike, and Year-end break.",
+     "w": 1100,
+     "h": 720,
+     "x2": true,
+     "cap": "FULL YEAR"
+    },
+    {
+     "id": "oyp-months",
+     "alt": "A closer crop of the sample calendar from May onward, with Workshop, Coast week, Lake week, and Autumn hike.",
+     "w": 1100,
+     "h": 720,
+     "x2": true,
+     "cap": "MONTHS"
+    },
+    {
+     "id": "oyp-add",
+     "alt": "The add-plan dialog on May 12 in the sample calendar. The name field is empty.",
+     "w": 1100,
+     "h": 720,
+     "x2": true,
+     "cap": "QUICK ADD"
+    },
+    {
+     "id": "oyp-search",
+     "alt": "The sample calendar filtered to workshop, with the three Workshop plans still on the board.",
+     "w": 1100,
+     "h": 720,
+     "x2": true,
+     "cap": "SEARCH"
+    },
+    {
+     "id": "oyp-float",
+     "alt": "A translucent Oma Year Planner window over a desktop wallpaper, showing the same sample plans.",
+     "w": 1100,
+     "h": 720,
+     "x2": true,
+     "cap": "FLOATING WINDOW"
+    }
+   ],
+   "repo": "KarPage/oma-year-planner",
+   "facts": {
+    "files": 49,
+    "repoBytes": 6225070,
+    "downloadBytes": 5067825,
+    "appBytes": 525539,
+    "commit": "bd1c117",
+    "commitDate": "2026-10-27",
+    "license": "MIT",
+    "measured": "2026-10-30"
+   },
+   "listing": "https://plugins.omarchy.org/plugin.html?id=io.github.karpage.oma-year"
+  },
+  {
+   "slug": "kar-page",
+   "name": "Kar Page",
+   "mark": "kp",
+   "status": "web app",
+   "frame": "phone",
+   "short": "Your cars. Your story. A web app for car enthusiasts.",
+   "tag": "WEB APP · KARPAGE.APP",
+   "tagline": "Your cars. Your story.",
+   "lede": "An app for car enthusiasts to show off their cars and connect with like-minded people around the world.",
+   "seo": {
+    "title": "Kar Page: your cars, your story",
+    "description": "Kar Page is a web app for car enthusiasts to show off their cars and connect with like-minded people around the world.",
+    "keywords": "Kar Page, car enthusiasts, car community, cars, karpage.app"
+   },
+   "features": [
+    [
+     "SHOW OFF YOUR CARS",
+     "A place for car enthusiasts to show the cars they love."
+    ],
+    [
+     "CONNECT",
+     "Meet like-minded people from around the world."
+    ],
+    [
+     "IN THE BROWSER",
+     "A web app at karpage.app. Nothing to install."
+    ],
+    [
+     "ON OMARCHY",
+     "Want it as a desktop app? The Kar Page Launcher opens it in its own window."
+    ]
+   ],
+   "open": [
+    "OPEN KARPAGE.APP",
+    "https://karpage.app"
+   ],
+   "related": [
+    "ON OMARCHY",
+    "Kar Page Launcher adds Kar Page to your launcher as its own app window.",
+    "launcher"
+   ],
+   "links": [],
+   "fine": [
+    "Screenshot of a public screen. No one is signed in."
+   ],
+   "shots": [
+    {
+     "id": "kar-grid",
+     "alt": "Kar Page grid scan, a public browse screen for spots and cars. No one is signed in.",
+     "w": 390,
+     "h": 844,
+     "x2": true,
+     "avif": true,
+     "cap": "GRID SCAN"
+    }
+   ]
+  },
+  {
+   "slug": "launcher",
+   "name": "Kar Page Launcher",
+   "mark": "launch",
+   "status": "public",
+   "license": "MIT",
+   "short": "Kar Page as a desktop app on Omarchy, in its own Chromium app window.",
+   "tag": "OMARCHY · CHROMIUM APP · MIT",
+   "tagline": "Kar Page as a desktop app on Omarchy",
+   "lede": "It adds a launcher entry and an icon, and opens karpage.app in its own Chromium app window. The install script is short and readable, and the command opens it in less before it runs.",
+   "seo": {
+    "title": "Kar Page Launcher: Kar Page as a desktop app on Omarchy",
+    "description": "Kar Page Launcher adds Kar Page to the Omarchy launcher with an icon, and opens karpage.app in its own Chromium app window. No sudo, no network, no packages.",
+    "keywords": "Kar Page, Omarchy launcher, Omarchy app, Chromium app window, Hyprland"
+   },
+   "features": [
+    [
+     "ONE ENTRY",
+     "Copies a launcher entry and an icon into your home folder. That is the whole install."
+    ],
+    [
+     "OWN WINDOW",
+     "Opens karpage.app in its own Chromium app window, sized like a phone."
+    ],
+    [
+     "NO SUDO",
+     "No sudo, no network and no packages. If Chromium is missing it stops and says how to get it."
+    ],
+    [
+     "READ IT FIRST",
+     "less shows the install script before it runs. Press q to install, or Ctrl-C to stop."
+    ]
+   ],
+   "install": [
+    [
+     "INSTALL",
+     "git clone https://github.com/KarPage/karpage-omarchy.git && cd karpage-omarchy && less install && ./install"
+    ],
+    [
+     "LAUNCH BY HAND",
+     "chromium --app=https://karpage.app --class=KarPage --window-size=480,960"
+    ]
+   ],
+   "installNote": "The window uses the same Chromium profile as the browser, so a Kar Page sign-in is shared. ./uninstall removes the two files.",
+   "links": [
+    [
+     "SOURCE",
+     "https://github.com/KarPage/karpage-omarchy"
+    ]
+   ],
+   "fine": [
+    "The launcher is MIT licensed. The Kar Page app itself is a private codebase and is not in this repo."
+   ],
+   "shots": [],
+   "repo": "KarPage/karpage-omarchy",
+   "installFiles": [
+    "karpage.desktop",
+    "karpage.png"
+   ],
+   "facts": {
+    "files": 84,
+    "repoBytes": 5800268,
+    "downloadBytes": 5731345,
+    "appBytes": 5800268,
+    "commit": "d93cd33",
+    "commitDate": "2026-10-30",
+    "installBytes": 170753,
+    "license": "MIT",
+    "measured": "2026-10-30"
+   }
+  },
+  {
+   "slug": "omakardash",
+   "name": "OmaKarDash",
+   "mark": "car",
+   "status": "coming soon",
+   "short": "A Tesla dashboard for Omarchy. Coming soon.",
+   "tag": "OMARCHY · COMING SOON",
+   "tagline": "Your car on your desktop",
+   "lede": "A Tesla dashboard for Omarchy: charge and range, climate, tires, lock state and software updates. Not released yet. Every screen here uses demo data for a fictional car.",
+   "seo": {
+    "title": "OmaKarDash: a Tesla dashboard for Omarchy (coming soon)",
+    "description": "OmaKarDash is a coming-soon Tesla dashboard for Omarchy: charge and range, climate, tires, lock state and software updates. Unofficial, not affiliated with Tesla.",
+    "keywords": "Omarchy, Tesla dashboard, Linux car dashboard, Hyprland, OmaKarDash"
+   },
+   "features": [
+    [
+     "CHARGE · RANGE",
+     "Battery level, range and charging state at a glance."
+    ],
+    [
+     "CLIMATE · TIRES",
+     "Cabin temperature, climate state and the pressure of each tire."
+    ],
+    [
+     "LOCK · UPDATES",
+     "Lock state and pending software updates."
+    ],
+    [
+     "LETS IT SLEEP",
+     "Reads cached data without waking the car."
+    ],
+    [
+     "ASKS FIRST",
+     "A confirm on every command. No unlock, no location and no remote start."
+    ],
+    [
+     "YOUR OWN APP",
+     "Uses each owner's own Tesla developer app."
+    ],
+    [
+     "THEMES",
+     "Jade, Red, Purple and Clear."
+    ]
+   ],
+   "soon": "OmaKarDash is not released yet. There is no download and no source link for now.",
+   "links": [],
+   "fine": [
+    "Screenshots use demo data for the fictional car Northwind.",
+    "Unofficial. Not affiliated with or endorsed by Tesla."
+   ],
+   "shots": [
+    {
+     "id": "okd-jade",
+     "alt": "OmaKarDash Jade theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "JADE"
+    },
+    {
+     "id": "okd-red",
+     "alt": "OmaKarDash Red theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "RED"
+    },
+    {
+     "id": "okd-purple",
+     "alt": "OmaKarDash Purple theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "PURPLE"
+    },
+    {
+     "id": "okd-clear-1",
+     "alt": "OmaKarDash Clear theme in a narrow window, with the car above and the controls along the bottom. Northwind is asleep and unplugged, at 78 percent and 251 miles, with the rear-right tire at 26 psi.",
+     "w": 590,
+     "h": 640,
+     "x2": true,
+     "avif": true,
+     "cap": "CLEAR · TALL"
+    },
+    {
+     "id": "okd-clear-3",
+     "alt": "OmaKarDash Clear theme in a narrow window, with controls along both sides of the car. Northwind is asleep and unplugged, at 78 percent and 251 miles, with the rear-right tire at 26 psi.",
+     "w": 520,
+     "h": 450,
+     "x2": true,
+     "avif": true,
+     "cap": "CLEAR · COMPACT"
+    }
+   ]
+  }
+ ]
 }
