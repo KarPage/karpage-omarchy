@@ -4,7 +4,7 @@ Static list for [apps.karpage.com](https://apps.karpage.com). One HTML page, one
 
 ## Add an app
 
-Edit `apps.json`. `since` is the day this page started (`2026-10-27`). Each app is one object in `apps`. Keep the commas valid:
+Edit `apps.json`. Each app is one object in `apps`. Keep the commas valid:
 
 ```json
 {"name":"Example","description":"One line, taken from that repo.","status":"coming soon","mark":"year","shots":[]}
@@ -16,27 +16,32 @@ The page reads only these fields:
 
 | Field | What it shows |
 | --- | --- |
-| `since` | Calendar date `YYYY-MM-DD`. Days up uses America/Los_Angeles dates and counts that day as day 1, so `2026-10-27` reads 1. A bad or missing date falls back to `2026-10-27`. |
 | `name` | The row title. Required. |
 | `description` | One line. |
-| `status` | Badge text. `web`, `web app`, `marketplace`, and `public` count as live. `private beta` and `coming soon` have their own counters. |
+| `notes` | Extra paragraphs under the description. |
+| `status` | Badge text. `marketplace` means listed on the Omarchy plugin marketplace, `in review` means submitted and waiting, and `coming soon` is not released yet. Each of those has its own counter. |
+| `license` | License name, such as `MIT`. An app with a `license` and a `source` link counts as open source. |
 | `open` | An `https` link. The button reads `open` and is the solid button when it is present. |
+| `site` | An `https` link to the app's own website. The button reads `website`. |
 | `install` | One shell line. The button reads `install`, copies the line, and is the solid button when there is no Open link. |
 | `launch` | One local shell line. The button reads `launch` and copies the line. The page cannot start the app. It is solid only when it is the only action. |
 | `source` | A public `https` link. The button reads `source` and opens in a new tab. |
-| `mark` | Logo. `kp`, `year`, `watch`, `car`, or `launch`. Anything else becomes a two-letter monogram. |
+| `mark` | Logo. `kp`, `year`, `raptor`, `car`, or `launch`. Anything else becomes a two-letter monogram. |
 | `frame` | `phone` or `wide`. Sets the gallery slide width. |
 | `shots` | Gallery list. Two or more entries scroll as a gallery. One entry is a single window. An empty list leaves the preview slot ready and shows no picture. |
+| `rail` | Extra shots in a narrow column beside the main picture. Same shot fields. On a narrow window the column stacks under the main picture. |
 | `shot` | Older single-picture id, used only when `shots` is absent. |
 | `shotAlt` | Description for that older single picture. |
 
-Each shot is `{"id","alt","w","h","x2"}`. `id` is letters, numbers, and hyphens. The page loads `img/<id>.webp` and falls back to `img/<id>.png`. `"x2": true` also loads `img/<id>-2x.webp` for sharp screens. The first picture on the page loads immediately. The rest wait until they are near the screen.
+Each shot is `{"id","alt","w","h","x2","avif"}`. `id` is letters, numbers, and hyphens. The page loads `img/<id>.webp` and falls back to `img/<id>.png`. `"x2": true` also loads `img/<id>-2x.webp` for sharp screens. `"avif": true` also loads `img/<id>.avif`, and with `x2` it loads `img/<id>-2x.avif`. Add an AVIF file only when `avif` is true, so a missing file is never requested. The first picture on the page loads immediately. The rest wait until they are near the screen.
 
-A shot's `w` and `h` are the CSS pixel size of the 1x file. Keep each WebP and each PNG under about 250 KB. Logos are drawn in the page. They are original glyphs, not trademarked marks. The GitHub button uses the mark-github path from GitHub's MIT-licensed octicons.
+`w` and `h` are the CSS pixel size of the 1x file. A 2x file is twice that on each side. New Kar Page shots use the names `img/kar-page-<slug>.png`, `img/kar-page-<slug>.webp`, and `img/kar-page-<slug>.avif`, plus optional `img/kar-page-<slug>-2x.webp` and `img/kar-page-<slug>-2x.avif`. List each one in `shots`. The shot on the card now is `kar-grid`. Add the next public screens under that `kar-page-<slug>` pattern and the existing gallery will scroll them.
+
+Keep each WebP, each AVIF, and each PNG under about 250 KB. Logos are drawn in the page. The Kar Page mark is this repo's app icon, drawn in one color. The other marks are original glyphs. The GitHub button uses the mark-github path from GitHub's MIT-licensed octicons.
 
 Buttons appear only for actions the app has. Install and Launch copy on click and show a toast that reads `copied ✓`. If the copy fails, the command is shown instead. Open and Source open in a new tab.
 
-Do not put keys, tokens, VINs, domain key paths, account names, email addresses, or license plates in this file or in the pictures. OmaKarDash has no install, launch, or source button. Its one picture is the demo dashboard for the fictional car Northwind, and the screen says the car was not contacted. OmaAgentWatch has a launch button and an empty `shots` list: there is no public demo image in this repo yet. Add sharp demo frames there when they exist. Do not fill that slot with a capture of a live session, an account, a name, or a key path. Kar Page's own codebase stays private, so that card has no source link.
+Do not put keys, tokens, VINs, domain key paths, account names, email addresses, or license plates in this file or in the pictures. OmaKarDash has no install, launch, or source button. Its pictures are a demo of the fictional car Northwind (Jade, Red, and Purple in the gallery, Clear in the narrow column). The screen says the read is unofficial and not affiliated with Tesla. OmaRaptor's pictures use open-licensed launch footage, credited in its notes. Kar Page's own codebase stays private, so that card has no source link.
 
 ## Preview
 
@@ -48,7 +53,7 @@ python3 -m http.server 8080
 
 Then open http://127.0.0.1:8080/.
 
-The counters (apps, live, private beta, coming soon, days up) are computed in the browser from `apps.json`. Days up follows the America/Los_Angeles calendar.
+The counters (apps, open source, on the marketplace, in review, coming soon) are computed in the browser from `apps.json`. A counter that would read 0 is not shown.
 
 ## Deploy on Vercel
 

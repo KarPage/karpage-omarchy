@@ -1,40 +1,54 @@
 {
-  "since": "2026-10-27",
   "apps": [
     {
-      "name": "Kar Page",
-      "description": "Your cars. Your story.",
-      "status": "WEB APP",
-      "open": "https://karpage.app",
-      "mark": "kp",
-      "frame": "phone",
+      "name": "OmaRaptor Player",
+      "description": "A free, super-light player for almost any video link, with a working HUD inspired by the F-22 Raptor. Copy a link, press Super+Alt+Y, and it plays in a pinned 16:9 window.",
+      "notes": [
+        "CRUISE is a bare player, COMBAT is the full cockpit. Live time, seek, volume and audio-signal gauges, keyboard first, many players at once. mpv and yt-dlp underneath, no login and no browser.",
+        "Demo footage: Falcon Heavy / Roman Space Telescope launch drone video, SpaceX (CC0) via NASA, and launch high-speed footage, NASA/Cory S Huston (public domain).",
+        "Unofficial fan project. Not affiliated with or endorsed by the U.S. Air Force, Lockheed Martin, SpaceX or NASA."
+      ],
+      "status": "in review",
+      "site": "https://omaraptor.vercel.app",
+      "install": "omarchy plugin add https://github.com/KarPage/omaraptor-player --enable",
+      "source": "https://github.com/KarPage/omaraptor-player",
+      "license": "MIT",
+      "mark": "raptor",
+      "frame": "wide",
       "shots": [
         {
-          "id": "kar-grid",
-          "alt": "Kar Page grid scan, a public browse screen for spots and cars. No one is signed in.",
-          "w": 390,
-          "h": 844,
+          "id": "omr-hero",
+          "alt": "OmaRaptor Player in fullscreen COMBAT mode: the scope locked on the rocket, heading tape, VOL and REM tapes and the control bar.",
+          "w": 960,
+          "h": 540,
           "x2": true
         },
         {
-          "id": "kar-spot",
-          "alt": "The private-beta sheet Kar Page shows when Spot is opened while logged out. The page behind it is blurred.",
-          "w": 390,
-          "h": 844,
+          "id": "omr-master-arm",
+          "alt": "The MASTER ARM panel, switching between CRUISE and COMBAT over launch footage.",
+          "w": 960,
+          "h": 540,
           "x2": true
         },
         {
-          "id": "kar-invite",
-          "alt": "Kar Page request-access form. The email and handle fields show placeholders, and no one is signed in.",
-          "w": 390,
-          "h": 844,
+          "id": "omr-end-ramp",
+          "alt": "End of video: the timers turn amber and red and a NEXT card shows what plays next.",
+          "w": 960,
+          "h": 540,
           "x2": true
         },
         {
-          "id": "kar-lane",
-          "alt": "Kar Page pit lane before anyone is signed in. It offers an invite and shows no account.",
-          "w": 390,
-          "h": 844,
+          "id": "omr-sizes",
+          "alt": "Small, medium and large OmaRaptor players side by side.",
+          "w": 960,
+          "h": 540,
+          "x2": true
+        },
+        {
+          "id": "omr-help",
+          "alt": "The keyboard and mouse panel that opens with the ? key.",
+          "w": 960,
+          "h": 540,
           "x2": true
         }
       ]
@@ -84,40 +98,98 @@
           "h": 720,
           "x2": true
         }
+      ],
+      "license": "MIT",
+      "notes": [
+        "Add plans, filter the year by name, and float it as a translucent window over your desktop."
       ]
     },
     {
-      "name": "Kar Page launcher for Omarchy",
-      "description": "Launcher for Kar Page on Omarchy. It opens the live site in a Chromium app window.",
+      "name": "Kar Page",
+      "description": "Your cars. Your story.",
+      "notes": [
+        "An app for car enthusiasts to show off their cars and connect with like-minded people around the world."
+      ],
+      "status": "web app",
+      "open": "https://karpage.app",
+      "mark": "kp",
+      "frame": "phone",
+      "shots": [
+        {
+          "id": "kar-grid",
+          "alt": "Kar Page grid scan, a public browse screen for spots and cars. No one is signed in.",
+          "w": 390,
+          "h": 844,
+          "x2": true,
+          "avif": true
+        }
+      ]
+    },
+    {
+      "name": "Kar Page Launcher",
+      "description": "Kar Page as a desktop app on Omarchy. It adds a launcher entry and an icon, and opens karpage.app in its own Chromium app window.",
       "status": "public",
       "install": "git clone https://github.com/KarPage/karpage-omarchy.git && cd karpage-omarchy && less install && ./install",
       "launch": "chromium --app=https://karpage.app --class=KarPage --window-size=480,960",
       "source": "https://github.com/KarPage/karpage-omarchy",
       "mark": "launch",
-      "shot": "kar-page-launcher",
-      "shotAlt": "Placeholder for the Kar Page launcher. It opens karpage.app in a Chromium window."
-    },
-    {
-      "name": "OmaAgentWatch",
-      "description": "Watch your Cursor cloud agents cook, live on your Omarchy desktop.",
-      "status": "private beta",
-      "launch": "oma-agent-watch open",
-      "mark": "watch",
-      "frame": "wide",
-      "shots": []
+      "notes": [
+        "The install script is short and readable. The command below opens it in less before it runs."
+      ],
+      "license": "MIT"
     },
     {
       "name": "OmaKarDash",
-      "description": "A Tesla dashboard for Omarchy.",
-      "status": "private beta",
+      "description": "A Tesla dashboard for Omarchy: charge and range, climate, tires, lock state and software updates.",
+      "notes": [
+        "It will use each owner's own Tesla developer app, read Tesla's cached data without waking the car, and ask for a confirm on every command. No unlock, no location and no remote start.",
+        "Preview screenshots use demo data for a fictional car. Unofficial. Not affiliated with Tesla."
+      ],
+      "status": "coming soon",
       "mark": "car",
       "frame": "wide",
       "shots": [
         {
-          "id": "omakar-dash",
-          "alt": "OmaKarDash demo dashboard for a fictional car named Northwind. The screen says the car was not contacted.",
-          "w": 1280,
-          "h": 720
+          "id": "okd-jade",
+          "alt": "OmaKarDash Jade theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+          "w": 960,
+          "h": 540,
+          "x2": true,
+          "avif": true
+        },
+        {
+          "id": "okd-red",
+          "alt": "OmaKarDash Red theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+          "w": 960,
+          "h": 540,
+          "x2": true,
+          "avif": true
+        },
+        {
+          "id": "okd-purple",
+          "alt": "OmaKarDash Purple theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+          "w": 960,
+          "h": 540,
+          "x2": true,
+          "avif": true
+        }
+      ],
+      "rail": [
+        {
+          "id": "okd-clear-1",
+          "alt": "OmaKarDash Clear theme in a narrow window, with the car above and the controls along the bottom. Northwind is asleep and unplugged, at 78 percent and 251 miles, with the rear-right tire at 26 psi.",
+          "w": 590,
+          "h": 640,
+          "x2": true,
+          "avif": true
+        },
+        {
+          "id": "okd-clear-3",
+          "alt": "OmaKarDash Clear theme in a narrow window, with controls along both sides of the car. Northwind is asleep and unplugged, at 78 percent and 251 miles, with the rear-right tire at 26 psi.",
+          "w": 520,
+          "h": 450,
+          "x2": true,
+          "avif": true
         }
       ]
     }

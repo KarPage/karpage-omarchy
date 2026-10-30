@@ -9,7 +9,7 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <title>Kar Page Apps</title>
-  <meta name="description" content="Kar Page apps for Omarchy.">
+  <meta name="description" content="Kar Page apps for Omarchy: OmaRaptor Player, Oma Year Planner, the Kar Page launcher and more.">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -19,19 +19,16 @@
       <h1>Kar Page Apps<span class="cursor" aria-hidden="true"></span></h1>
       <p class="lede" id="lede"></p>
       <noscript><p class="lede">open tools for people who drive their computers</p></noscript>
-      <dl class="stats" id="stats" aria-label="Counts" aria-busy="true">
-        <div class="stat"><dt>apps</dt><dd id="stat-total">–</dd></div>
-        <div class="stat"><dt>live</dt><dd id="stat-live">–</dd></div>
-        <div class="stat"><dt>private beta</dt><dd id="stat-beta">–</dd></div>
-        <div class="stat"><dt>coming soon</dt><dd id="stat-soon">–</dd></div>
-        <div class="stat"><dt>days up</dt><dd id="stat-days">–</dd></div>
-      </dl>
+      <dl class="stats" id="stats" aria-label="At a glance" aria-busy="true"></dl>
+      <nav class="index" id="index" aria-label="Apps"></nav>
     </header>
     <main id="apps" tabindex="-1">
       <noscript><p>This list is read from apps.json. Enable JavaScript to see it.</p></noscript>
     </main>
     <footer>
-      <p>KarPage · built for Omarchy</p>
+      <p class="foot-brand">KarPage · built for Omarchy</p>
+      <p>Open-source apps are MIT licensed and link to their source. Kar Page itself is a private codebase.</p>
+      <p>Unofficial. Not affiliated with Omarchy, Tesla, SpaceX or NASA. Screenshots use demo data or open-licensed footage.</p>
     </footer>
   </div>
   <p id="copy-status" class="visually-hidden" role="status"></p>

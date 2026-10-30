@@ -1,7 +1,5 @@
 (function () {
   var NS = "http://www.w3.org/2000/svg";
-  var DEFAULT_SINCE = "2026-10-27";
-  var ZONE = "America/Los_Angeles";
   var SUBTITLE = "open tools for people who drive their computers";
   var root = document.getElementById("apps");
   var live = document.getElementById("copy-status");
@@ -25,19 +23,10 @@
   }
 
   function markKp() {
-    var s = svgRoot();
-    s.appendChild(svgEl("path", {
-      d: "M5 5v22M5 16.2 14 5M5 16.2 14 27",
-      stroke: "currentColor",
-      "stroke-width": "2.2",
-      "stroke-linecap": "square",
-      "stroke-linejoin": "miter"
-    }));
-    s.appendChild(svgEl("path", {
-      d: "M18 27V5h7.2a6.2 6.2 0 0 1 0 12.4H18",
-      stroke: "currentColor",
-      "stroke-width": "2.2"
-    }));
+    var s = svgEl("svg", { viewBox: "0 0 512 512", fill: "currentColor" });
+    var g = svgEl("g", { transform: "translate(0,512) scale(0.1,-0.1)" });
+    g.appendChild(svgEl("path", { d: "M840 4159 c0 -637 3 -958 10 -954 5 3 10 12 10 19 0 28 153 315 210 394 l60 83 0 710 0 709 -145 0 -145 0 0 -961z M1420 4560 c0 -308 2 -560 5 -560 3 0 29 18 58 39 65 48 201 131 216 131 8 0 11 130 11 475 l0 475 -145 0 -145 0 0 -560z M2310 4264 c-623 -99 -1128 -505 -1354 -1091 -40 -103 -68 -209 -93 -348 -19 -109 -18 36 -14 -1977 l1 -848 140 0 139 0 4 1388 c3 1287 4 1392 21 1462 68 291 193 524 386 721 192 196 451 336 730 396 67 14 130 18 300 18 200 0 222 -2 320 -27 587 -149 991 -585 1091 -1178 7 -41 13 -140 13 -220 -1 -238 -44 -423 -149 -635 -311 -627 -1021 -934 -1697 -734 -57 17 -145 50 -197 75 -51 24 -98 44 -103 44 -7 0 -6 -273 1 -297 3 -10 116 -57 208 -87 186 -60 268 -71 518 -71 188 1 234 4 320 23 374 81 709 275 948 547 464 529 565 1261 262 1890 -198 411 -567 733 -1005 879 -183 61 -282 77 -500 81 -142 3 -221 0 -290 -11z M2366 3684 c-464 -84 -814 -426 -923 -904 -16 -68 -17 -170 -18 -1125 0 -577 1 -1186 3 -1352 l3 -303 133 0 133 0 7 37 c3 21 6 620 6 1331 0 1431 -3 1368 65 1525 18 43 48 103 67 134 78 131 269 293 344 293 32 0 34 -2 34 -34 0 -19 -7 -39 -17 -47 -9 -8 -24 -32 -34 -54 -17 -37 -19 -82 -19 -667 l0 -628 33 0 c43 1 105 30 143 68 55 54 65 91 71 244 l6 139 33 -3 c28 -3 70 -39 268 -231 l236 -229 0 -43 0 -43 -72 -26 c-187 -68 -376 -74 -553 -19 -82 25 -185 75 -185 89 0 8 -9 14 -21 14 -40 0 -143 91 -248 220 l-20 25 0 -205 -1 -205 42 -30 c134 -97 264 -157 426 -197 73 -19 115 -22 262 -22 159 0 184 3 275 28 202 55 409 177 543 321 467 499 396 1284 -151 1691 -244 182 -577 261 -871 208z m419 -294 c44 -12 119 -42 167 -67 85 -44 88 -46 88 -80 l0 -36 -67 7 c-125 12 -143 1 -338 -194 -150 -151 -174 -170 -202 -170 l-33 0 0 236 c0 227 -1 236 -20 241 -15 4 -20 14 -20 38 0 33 0 34 58 40 31 4 62 8 67 11 25 10 227 -7 300 -26z m429 -271 c94 -105 164 -253 191 -404 19 -111 19 -189 0 -301 -31 -176 -115 -333 -248 -461 -66 -64 -79 -73 -112 -73 l-38 0 8 53 c13 90 10 159 -10 197 -10 19 -105 123 -211 231 -175 176 -194 198 -194 229 0 37 -26 8 353 397 81 83 147 159 147 167 0 11 10 16 34 16 28 0 42 -9 80 -51z" }));
+    s.appendChild(g);
     return s;
   }
 
@@ -62,12 +51,17 @@
     return s;
   }
 
-  function markWatch() {
+  function markRaptor() {
     var s = svgRoot();
-    s.appendChild(svgEl("circle", { cx: "16", cy: "16", r: "10.2", stroke: "currentColor", "stroke-width": "1.4" }));
-    s.appendChild(svgEl("circle", { cx: "16", cy: "16", r: "5.6", stroke: "currentColor", "stroke-width": "1.2" }));
-    s.appendChild(svgEl("circle", { cx: "16", cy: "16", r: "1.5", fill: "currentColor" }));
-    s.appendChild(svgEl("path", { d: "M16 16 16 6.1A9.9 9.9 0 0 1 24.6 13.4Z", fill: "currentColor" }));
+    s.appendChild(svgEl("path", {
+      d: "M4 10V4h6M22 4h6v6M28 22v6h-6M10 28H4v-6",
+      stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "square"
+    }));
+    s.appendChild(svgEl("path", {
+      d: "M16 8v5M16 19v5M8 16h5M19 16h5",
+      stroke: "currentColor", "stroke-width": "1.4", "stroke-linecap": "square"
+    }));
+    s.appendChild(svgEl("rect", { x: "14.6", y: "14.6", width: "2.8", height: "2.8", fill: "currentColor" }));
     return s;
   }
 
@@ -117,7 +111,7 @@
   var marks = {
     kp: markKp,
     year: markYear,
-    watch: markWatch,
+    raptor: markRaptor,
     car: markCar,
     launch: markLaunch
   };
@@ -134,49 +128,6 @@
       if (index < SUBTITLE.length) window.setTimeout(step, 46);
     }
     step();
-  }
-
-  function parseDay(iso) {
-    var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
-    if (!match) return null;
-    var year = Number(match[1]);
-    var month = Number(match[2]);
-    var day = Number(match[3]);
-    var utc = Date.UTC(year, month - 1, day);
-    var check = new Date(utc);
-    if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
-    return utc;
-  }
-
-  function zoneToday(now) {
-    try {
-      var parts = new Intl.DateTimeFormat("en-US", {
-        timeZone: ZONE,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).formatToParts(now);
-      var year = 0;
-      var month = 0;
-      var day = 0;
-      parts.forEach(function (part) {
-        if (part.type === "year") year = Number(part.value);
-        if (part.type === "month") month = Number(part.value);
-        if (part.type === "day") day = Number(part.value);
-      });
-      if (year && month && day) return Date.UTC(year, month - 1, day);
-    } catch (error) {
-      return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    }
-    return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  }
-
-  function daysUp(iso) {
-    var start = parseDay(iso);
-    if (start === null) start = parseDay(DEFAULT_SINCE);
-    var diff = Math.round((zoneToday(new Date()) - start) / 86400000);
-    if (diff < 0) return 0;
-    return diff + 1;
   }
 
   function httpsUrl(value) {
@@ -357,19 +308,23 @@
       alt: typeof raw.alt === "string" ? raw.alt.trim() : "",
       w: w > 0 && w < 8000 ? Math.round(w) : 0,
       h: h > 0 && h < 8000 ? Math.round(h) : 0,
-      x2: raw.x2 === true
+      x2: raw.x2 === true,
+      avif: raw.avif === true
     };
   }
 
+  function shotList(rawList) {
+    if (!Array.isArray(rawList)) return [];
+    var listed = [];
+    rawList.forEach(function (raw) {
+      var shot = shotRecord(raw);
+      if (shot) listed.push(shot);
+    });
+    return listed;
+  }
+
   function shotsFrom(app) {
-    if (Array.isArray(app.shots)) {
-      var listed = [];
-      app.shots.forEach(function (raw) {
-        var shot = shotRecord(raw);
-        if (shot) listed.push(shot);
-      });
-      return listed;
-    }
+    if (Array.isArray(app.shots)) return shotList(app.shots);
     var id = shotId(app.shot);
     if (!id) return [];
     return [{
@@ -389,8 +344,14 @@
 
   function pictureFor(shot, name, eager) {
     var picture = document.createElement("picture");
-    var source = document.createElement("source");
     var base = "img/" + shot.id;
+    if (shot.avif) {
+      var avif = document.createElement("source");
+      avif.type = "image/avif";
+      avif.srcset = shot.x2 ? base + ".avif 1x, " + base + "-2x.avif 2x" : base + ".avif";
+      picture.appendChild(avif);
+    }
+    var source = document.createElement("source");
     source.type = "image/webp";
     source.srcset = shot.x2 ? base + ".webp 1x, " + base + "-2x.webp 2x" : base + ".webp";
     var img = document.createElement("img");
@@ -618,15 +579,36 @@
     return gallery;
   }
 
-  function mountMedia(app, name, article) {
-    var shots = shotsFrom(app);
-    if (!shots.length) return;
+  function mainMedia(app, name, shots) {
+    if (!shots.length) return null;
     if (shots.length === 1) {
-      article.appendChild(windowFrame(name, shots[0], true));
-      return;
+      var figure = windowFrame(name, shots[0], true);
+      if (frameKind(app, shots) === "phone") figure.classList.add("frame-phone");
+      return figure;
     }
     shots.frame = frameKind(app, shots);
-    article.appendChild(galleryFor(name, shots));
+    return galleryFor(name, shots);
+  }
+
+  function mountMedia(app, name, article) {
+    var shots = shotsFrom(app);
+    var railShots = shotList(app.rail);
+    if (!shots.length && !railShots.length) return;
+    var main = mainMedia(app, name, shots);
+    if (!railShots.length) {
+      if (main) article.appendChild(main);
+      return;
+    }
+    var row = document.createElement("div");
+    row.className = "media-row";
+    if (main) row.appendChild(main);
+    var rail = document.createElement("div");
+    rail.className = "rail";
+    railShots.forEach(function (shot) {
+      rail.appendChild(windowFrame(name, shot, false));
+    });
+    row.appendChild(rail);
+    article.appendChild(row);
   }
 
   function showCommand(box, command) {
@@ -641,6 +623,7 @@
     var name = app.name.trim();
     var article = document.createElement("article");
     article.className = "app";
+    article.id = slugFor(name);
     var titleId = "app-" + index + "-title";
     article.setAttribute("aria-labelledby", titleId);
 
@@ -651,13 +634,18 @@
     idText.className = "id-text";
     var head = document.createElement("div");
     head.className = "head";
+    var num = document.createElement("span");
+    num.className = "num";
+    num.setAttribute("aria-hidden", "true");
+    num.textContent = String(index + 1).padStart(2, "0");
+    head.appendChild(num);
     var title = document.createElement("h2");
     title.id = titleId;
     title.textContent = name;
     head.appendChild(title);
     if (typeof app.status === "string" && app.status.trim() !== "") {
       var badge = document.createElement("span");
-      badge.className = "badge";
+      badge.className = "badge state-" + slugFor(app.status);
       badge.textContent = app.status.trim();
       head.appendChild(badge);
     }
@@ -668,6 +656,15 @@
       desc.textContent = app.description.trim();
       idText.appendChild(desc);
     }
+    if (Array.isArray(app.notes)) {
+      app.notes.forEach(function (raw) {
+        if (typeof raw !== "string" || raw.trim() === "") return;
+        var note = document.createElement("p");
+        note.className = "note";
+        note.textContent = raw.trim();
+        idText.appendChild(note);
+      });
+    }
     identity.appendChild(idText);
     article.appendChild(identity);
     mountMedia(app, name, article);
@@ -675,6 +672,8 @@
     var items = [];
     var openUrl = httpsUrl(app.open);
     if (openUrl) items.push({ kind: "open", href: openUrl });
+    var site = httpsUrl(app.site);
+    if (site) items.push({ kind: "site", href: site });
     var install = commandText(app.install);
     if (install) items.push({ kind: "install", command: install });
     var launch = commandText(app.launch);
@@ -719,6 +718,14 @@
         el.setAttribute("aria-label", "Open " + name);
         el.appendChild(iconExternal());
         label.textContent = "open";
+      } else if (item.kind === "site") {
+        el = document.createElement("a");
+        el.href = item.href;
+        el.target = "_blank";
+        el.rel = "noopener noreferrer";
+        el.setAttribute("aria-label", "Website for " + name);
+        el.appendChild(iconExternal());
+        label.textContent = "website";
       } else if (item.kind === "source") {
         el = document.createElement("a");
         el.href = item.href;
@@ -771,35 +778,68 @@
     if (hasCommand) article.appendChild(fallback);
     return article;
   }
-  function setCount(id, value) {
-    document.getElementById(id).textContent = String(value);
+
+  function statusOf(app) {
+    return typeof app.status === "string" ? app.status.trim().toLowerCase() : "";
   }
 
-  function renderStats(since, apps) {
-    var counts = { total: 0, live: 0, beta: 0, soon: 0 };
+  function renderStats(apps) {
+    var counts = { total: 0, open: 0, listed: 0, review: 0, soon: 0 };
     apps.forEach(function (app) {
       if (!app || typeof app.name !== "string" || app.name.trim() === "") return;
       counts.total += 1;
-      var status = typeof app.status === "string" ? app.status.trim().toLowerCase() : "";
-      if (status === "web" || status === "web app" || status === "marketplace" || status === "public") counts.live += 1;
-      else if (status === "private beta") counts.beta += 1;
+      if (typeof app.license === "string" && app.license.trim() !== "" && httpsUrl(app.source)) counts.open += 1;
+      var status = statusOf(app);
+      if (status === "marketplace") counts.listed += 1;
+      else if (status === "in review") counts.review += 1;
       else if (status === "coming soon") counts.soon += 1;
     });
-    setCount("stat-total", counts.total);
-    setCount("stat-live", counts.live);
-    setCount("stat-beta", counts.beta);
-    setCount("stat-soon", counts.soon);
-    setCount("stat-days", daysUp(since));
+    [
+      ["apps", counts.total],
+      ["open source · MIT", counts.open],
+      ["on omarchy marketplace", counts.listed],
+      ["marketplace review", counts.review],
+      ["coming soon", counts.soon]
+    ].forEach(function (tile) {
+      if (!tile[1]) return;
+      var wrap = document.createElement("div");
+      wrap.className = "stat";
+      var dt = document.createElement("dt");
+      dt.textContent = tile[0];
+      var dd = document.createElement("dd");
+      dd.textContent = String(tile[1]);
+      wrap.appendChild(dt);
+      wrap.appendChild(dd);
+      stats.appendChild(wrap);
+    });
+    stats.style.setProperty("--tiles", String(stats.children.length));
     stats.setAttribute("aria-busy", "false");
   }
 
+  function slugFor(name) {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function renderIndex(apps) {
+    var nav = document.getElementById("index");
+    if (!nav) return;
+    apps.forEach(function (app, index) {
+      if (!app || typeof app.name !== "string" || app.name.trim() === "") return;
+      var a = document.createElement("a");
+      a.href = "#" + slugFor(app.name.trim());
+      var num = document.createElement("span");
+      num.className = "num";
+      num.textContent = String(index + 1).padStart(2, "0");
+      a.appendChild(num);
+      a.appendChild(document.createTextNode(app.name.trim()));
+      nav.appendChild(a);
+    });
+  }
+
   function normalize(data) {
-    if (Array.isArray(data)) return { since: DEFAULT_SINCE, apps: data };
+    if (Array.isArray(data)) return { apps: data };
     if (data && Array.isArray(data.apps)) {
-      return {
-        since: typeof data.since === "string" ? data.since : DEFAULT_SINCE,
-        apps: data.apps
-      };
+      return { apps: data.apps };
     }
     return null;
   }
@@ -824,7 +864,8 @@
         fail();
         return;
       }
-      renderStats(pack.since, pack.apps);
+      renderStats(pack.apps);
+      renderIndex(pack.apps);
       pack.apps.forEach(function (app, index) {
         var article = renderApp(app, index);
         if (article) root.appendChild(article);
