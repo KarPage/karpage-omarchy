@@ -257,24 +257,6 @@
      "cap": "QUICK ADD · CLICK A DAY"
     },
     {
-     "id": "oyp-filter",
-     "alt": "The demo year filtered by typing workshop into search: only the three Workshop plans stay lit and the counts drop to 3.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "avif": true,
-     "cap": "SEARCH · / TO FILTER"
-    },
-    {
-     "id": "oyp-rolling",
-     "alt": "Rolling 12 turned on: the board starts at the current month, October 2026, and runs twelve months into 2027 with the 2027 divider and the Year-end break wrapping into January.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "avif": true,
-     "cap": "ROLLING 12"
-    },
-    {
      "id": "oyp-help",
      "alt": "The How it works panel opened with ?, showing add a plan, one day, move and resize, quick edit, scroll months and jump to today, plus the keyboard shortcuts.",
      "w": 960,
