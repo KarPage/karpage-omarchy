@@ -133,6 +133,89 @@
     sync();
   }
 
+  /* Screenshot lightbox: a real <a href> to the full image stays as the no-JS fallback; with JS a click opens
+     the shot in a see-through glass overlay. Esc, the X or a click outside closes; Left/Right step through. */
+  var shotLinks = Array.prototype.filter.call(document.querySelectorAll("figure.frame > a[href]"), function (a) {
+    return a.querySelector("img");
+  });
+  if (shotLinks.length) {
+    var lb = document.createElement("div");
+    lb.className = "lb";
+    lb.hidden = true;
+    lb.setAttribute("role", "dialog");
+    lb.setAttribute("aria-modal", "true");
+    lb.setAttribute("aria-label", "Screenshot viewer");
+    lb.innerHTML = '<figure class="frame lb-frame"><img class="lb-img" alt=""><figcaption class="lb-cap"><span class="lb-n"></span><span class="lb-t"></span></figcaption></figure>' +
+      '<button class="lb-btn lb-x" type="button" aria-label="Close">\u2715</button>' +
+      '<button class="lb-btn lb-prev" type="button" aria-label="Previous screenshot">\u2190</button>' +
+      '<button class="lb-btn lb-next" type="button" aria-label="Next screenshot">\u2192</button>';
+    document.body.appendChild(lb);
+    var lbImg = lb.querySelector(".lb-img"), lbN = lb.querySelector(".lb-n"), lbT = lb.querySelector(".lb-t");
+    var lbX = lb.querySelector(".lb-x"), lbPrev = lb.querySelector(".lb-prev"), lbNext = lb.querySelector(".lb-next");
+    var lbAt = -1, lbBack = null;
+    if (shotLinks.length < 2) { lbPrev.hidden = true; lbNext.hidden = true; }
+    var lbShow = function (i) {
+      lbAt = (i + shotLinks.length) % shotLinks.length;
+      var a = shotLinks[lbAt], img = a.querySelector("img"), cap = a.parentNode.querySelector("figcaption");
+      lbImg.src = a.getAttribute("href");
+      lbImg.alt = img.getAttribute("alt") || "";
+      lbImg.width = img.getAttribute("width") || 0;
+      lbImg.height = img.getAttribute("height") || 0;
+      lbN.textContent = (lbAt + 1) + " / " + shotLinks.length;
+      lbT.textContent = cap ? cap.textContent : (img.getAttribute("alt") || "");
+    };
+    var lbOpen = function (i) {
+      lbBack = document.activeElement;
+      lbShow(i);
+      var sw = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.style.setProperty("--sbw", sw + "px");
+      document.documentElement.classList.add("lb-on");
+      lb.hidden = false;
+      lbX.focus({ preventScroll: true });
+    };
+    var lbClose = function () {
+      if (lb.hidden) return;
+      lb.hidden = true;
+      document.documentElement.classList.remove("lb-on");
+      lbImg.removeAttribute("src");
+      if (lbBack && lbBack.focus) lbBack.focus({ preventScroll: true });
+      lbBack = null;
+    };
+    shotLinks.forEach(function (a, i) {
+      a.addEventListener("click", function (ev) {
+        if (ev.button || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+        ev.preventDefault();
+        lbOpen(i);
+      });
+    });
+    lbX.addEventListener("click", lbClose);
+    lbPrev.addEventListener("click", function () { lbShow(lbAt - 1); });
+    lbNext.addEventListener("click", function () { lbShow(lbAt + 1); });
+    lb.addEventListener("click", function (ev) {
+      if (ev.target === lb) lbClose();
+    });
+    window.addEventListener("keydown", function (ev) {
+      if (lb.hidden) return;
+      var k = ev.key;
+      if (k === "Escape") { ev.preventDefault(); ev.stopPropagation(); lbClose(); }
+      else if (k === "ArrowLeft" && shotLinks.length > 1) { ev.preventDefault(); ev.stopPropagation(); lbShow(lbAt - 1); }
+      else if (k === "ArrowRight" && shotLinks.length > 1) { ev.preventDefault(); ev.stopPropagation(); lbShow(lbAt + 1); }
+      else if (k === "Tab") {
+        var f = [lbX, lbPrev, lbNext].filter(function (b) { return !b.hidden; });
+        var at = f.indexOf(document.activeElement);
+        ev.preventDefault();
+        f[(at + (ev.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+      } else {
+        /* Keep the page cursor and its Esc/Backspace shortcuts quiet while the viewer is open. */
+        if (k === "ArrowUp" || k === "ArrowDown" || k === "Backspace") ev.preventDefault();
+        ev.stopPropagation();
+      }
+    }, true);
+    document.addEventListener("focusin", function (ev) {
+      if (!lb.hidden && !lb.contains(ev.target)) lbX.focus({ preventScroll: true });
+    });
+  }
+
   /* Selection cursor: one box that follows the mouse and the arrow keys. */
   var home = document.body.classList.contains("home");
   var SPEC = home
