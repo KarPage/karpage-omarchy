@@ -625,3 +625,9 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 @media (prefers-reduced-motion: reduce) {
   .kpl-sw, .kpl-led, .kpl-paddle, .kpl-hold { transition: none; }
 }
+/* Launch switches take focus in place: no outline or cursor ring, the switch body and label light up instead. */
+.kpl-sw:focus-visible, .kc .kpl-sw:focus-visible { outline: none; }
+.kpl-sw:focus-visible, .kpl-sw:hover { background: rgba(0, 168, 107, 0.09); color: var(--jade-hi); }
+.kpl-sw:focus-visible .kpl-lab, .kpl-sw:hover .kpl-lab { text-shadow: 0 0 8px rgba(63, 224, 164, 0.75); }
+.kpl-sw:focus-visible .kpl-switch, .kpl-sw:hover .kpl-switch { border-color: var(--jade-hi); box-shadow: inset 0 0 0 3px #000, 0 0 12px rgba(63, 224, 164, 0.5); }
+.kpl-sw:focus-visible .kpl-paddle { box-shadow: 0 0 0 1px var(--jade-hi), 0 0 8px rgba(63, 224, 164, 0.55); }

@@ -413,13 +413,17 @@
     return null;
   }
   var queued = 0;
+  /* Stops marked data-quiet (the launch switches) highlight in place: the ring fades out where it is and
+     reappears at the next stop without sliding across. */
   function place() {
     queued = 0;
-    if (!cur || !shown(cur)) { box.classList.remove("on"); return; }
-    var r = cur.box.getBoundingClientRect(), pad = 5;
+    if (!cur || !shown(cur) || cur.box.hasAttribute("data-quiet")) { box.classList.remove("on"); return; }
+    var r = cur.box.getBoundingClientRect(), pad = 5, jump = !box.classList.contains("on");
+    if (jump) box.classList.remove("go");
     box.style.transform = "translate(" + Math.round(r.left + window.scrollX - pad) + "px," + Math.round(r.top + window.scrollY - pad) + "px)";
     box.style.width = Math.round(r.width + pad * 2) + "px";
     box.style.height = Math.round(r.height + pad * 2) + "px";
+    if (jump) { void box.offsetWidth; box.classList.add("go"); }
     box.classList.add("on");
   }
   function later() { if (!queued) queued = window.requestAnimationFrame(place); }
