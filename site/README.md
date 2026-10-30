@@ -18,7 +18,10 @@ The page reads only these fields:
 | --- | --- |
 | `name` | The row title. Required. |
 | `description` | One line. |
+| `tagline` | Optional short subtitle under the name. |
 | `notes` | Extra paragraphs under the description. |
+| `points` | Optional short bullet list under the description. |
+| `fine` | Optional small print at the bottom of the card, for credits and disclaimers. |
 | `status` | Badge text. `marketplace` means listed on the Omarchy plugin marketplace, `in review` means submitted and waiting, and `coming soon` is not released yet. Each of those has its own counter. |
 | `license` | License name, such as `MIT`. An app with a `license` and a `source` link counts as open source. |
 | `open` | An `https` link. The button reads `open` and is the solid button when it is present. |
@@ -41,7 +44,7 @@ Keep each WebP, each AVIF, and each PNG under about 250 KB. Logos are drawn in t
 
 Buttons appear only for actions the app has. Install and Launch copy on click and show a toast that reads `copied ✓`. If the copy fails, the command is shown instead. Open and Source open in a new tab.
 
-Do not put keys, tokens, VINs, domain key paths, account names, email addresses, or license plates in this file or in the pictures. OmaKarDash has no install, launch, or source button. Its pictures are a demo of the fictional car Northwind (Jade, Red, and Purple in the gallery, Clear in the narrow column). The screen says the read is unofficial and not affiliated with Tesla. OmaRaptor's pictures use open-licensed launch footage, credited in its notes. Kar Page's own codebase stays private, so that card has no source link.
+Do not put keys, tokens, VINs, domain key paths, account names, email addresses, or license plates in this file or in the pictures. OmaKarDash has no install, launch, or source button. Its pictures are a demo of the fictional car Northwind (Jade, Red, and Purple in the gallery, Clear in the narrow column). The screen says the read is unofficial and not affiliated with Tesla. OmaRaptor's pictures use open-licensed launch footage, credited in its fine print (the `fine` field). Kar Page's own codebase stays private, so that card has no source link.
 
 ## Preview
 

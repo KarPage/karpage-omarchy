@@ -350,6 +350,52 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.tagline {
+  margin: 0.15rem 0 0;
+  color: var(--jade-ink);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.points {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  max-width: 68ch;
+  list-style: none;
+}
+
+.points li {
+  position: relative;
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+  overflow-wrap: anywhere;
+}
+
+.points li::before {
+  content: "";
+  position: absolute;
+  left: 0.15rem;
+  top: 0.62em;
+  width: 0.4rem;
+  height: 0.4rem;
+  background: var(--jade);
+}
+
+.fine {
+  margin-top: 0.9rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.fine p {
+  margin: 0.15rem 0 0;
+  max-width: 90ch;
+}
+
 .note {
   margin: 0.55rem 0 0;
   max-width: 68ch;

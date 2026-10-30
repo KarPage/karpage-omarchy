@@ -618,6 +618,20 @@
     selectText(code);
   }
 
+  function appendFine(article, app) {
+    if (!Array.isArray(app.fine)) return article;
+    var box = document.createElement("div");
+    box.className = "fine";
+    app.fine.forEach(function (raw) {
+      if (typeof raw !== "string" || raw.trim() === "") return;
+      var line = document.createElement("p");
+      line.textContent = raw.trim();
+      box.appendChild(line);
+    });
+    if (box.childNodes.length) article.appendChild(box);
+    return article;
+  }
+
   function renderApp(app, index) {
     if (!app || typeof app.name !== "string" || app.name.trim() === "") return null;
     var name = app.name.trim();
@@ -650,6 +664,12 @@
       head.appendChild(badge);
     }
     idText.appendChild(head);
+    if (typeof app.tagline === "string" && app.tagline.trim() !== "") {
+      var tag = document.createElement("p");
+      tag.className = "tagline";
+      tag.textContent = app.tagline.trim();
+      idText.appendChild(tag);
+    }
     if (typeof app.description === "string" && app.description.trim() !== "") {
       var desc = document.createElement("p");
       desc.className = "desc";
@@ -664,6 +684,17 @@
         note.textContent = raw.trim();
         idText.appendChild(note);
       });
+    }
+    if (Array.isArray(app.points)) {
+      var list = document.createElement("ul");
+      list.className = "points";
+      app.points.forEach(function (raw) {
+        if (typeof raw !== "string" || raw.trim() === "") return;
+        var li = document.createElement("li");
+        li.textContent = raw.trim();
+        list.appendChild(li);
+      });
+      if (list.childNodes.length) idText.appendChild(list);
     }
     identity.appendChild(idText);
     article.appendChild(identity);
@@ -680,7 +711,7 @@
     if (launch) items.push({ kind: "launch", command: launch });
     var source = httpsUrl(app.source);
     if (source) items.push({ kind: "source", href: source });
-    if (!items.length) return article;
+    if (!items.length) return appendFine(article, app);
 
     var primary = "launch";
     var i;
@@ -776,7 +807,7 @@
 
     article.appendChild(actions);
     if (hasCommand) article.appendChild(fallback);
-    return article;
+    return appendFine(article, app);
   }
 
   function statusOf(app) {
