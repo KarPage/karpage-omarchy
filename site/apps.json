@@ -72,10 +72,6 @@
     [
      "SOURCE",
      "https://github.com/KarPage/omaraptor-player"
-    ],
-    [
-     "WEBSITE",
-     "https://omaraptor.vercel.app"
     ]
    ],
    "fine": [
@@ -84,6 +80,15 @@
     "Unofficial fan project. Not affiliated with or endorsed by the U.S. Air Force, Lockheed Martin, SpaceX or NASA."
    ],
    "shots": [
+    {
+     "id": "omr-f22-fs-lock",
+     "alt": "OmaRaptor Player fullscreen: the reticle locks on an F-22 Raptor filling the frame, with the full cockpit HUD, title ticker, heading tape, volume and remaining-time tapes, the control bar and the live audio meter.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "FULLSCREEN · WEAPONS FREE · LOCK"
+    },
     {
      "id": "omr-f22-play",
      "alt": "OmaRaptor Player playing an F-22 Raptor air show pass: the neon title ticker, the live audio meter, volume, seek tape with elapsed and remaining time, the progress ring, speed, repeat and link gauges.",
@@ -110,6 +115,24 @@
      "x2": true,
      "avif": true,
      "cap": "WEAPONS FREE · LOCK"
+    },
+    {
+     "id": "omr-new-window",
+     "alt": "A second OmaRaptor window opened with + over a playing F-22 flight: the new window waits on NO SIGNAL with PASTE LINK while the parent keeps playing under the HUD and live audio meter.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "+ NEW WINDOW · PASTE LINK"
+    },
+    {
+     "id": "omr-keys",
+     "alt": "The OmaRaptor keyboard panel opened with ? over F-22 playback, listing the player's keys while the HUD gauges and live audio meter keep running.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "? · KEYBOARD PANEL"
     }
    ],
    "repo": "KarPage/omaraptor-player",
@@ -131,7 +154,8 @@
     "w": 1280,
     "h": 720,
     "label": "Screen recording of the real OmaRaptor Player in mpv: a DVIDS link comes up ARMED, FIRE counts down 3-2-1, then the F-22 demo flight plays under the live HUD gauges and audio meter.",
-    "cap": "Real screen recording: OmaRaptor in mpv, muted · footage U.S. Air Force / Staff Sgt. Mary Bowers (DVIDS), public domain · unofficial, not affiliated"
+    "cap": "Real screen recording: OmaRaptor in mpv, muted · footage U.S. Air Force / Staff Sgt. Mary Bowers (DVIDS), public domain · unofficial, not affiliated",
+    "poster": "img/omr-reel-poster.webp"
    }
   },
   {
