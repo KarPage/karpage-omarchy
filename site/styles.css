@@ -525,6 +525,10 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
 .kcur.on.idle { opacity: 0.35; }
 .kcur::before { content: ""; position: absolute; top: -2px; left: -2px; width: 8px; height: 8px; background: var(--jade-hi); box-shadow: 0 0 8px var(--jade-hi); }
 .act, .hero-shot, .gallery > figure, .others > li { scroll-margin: 76px 0 24px; }
+/* app pages centre each stop in the viewport (site.js scrollIntoView block:center), so no lopsided margin */
+.app [data-k], .app .reel-frame, .app .shots > figure, .app .hero-shot, .app .act, .app .others > li { scroll-margin: 0; }
+[data-k]:focus { outline: none; }
+[data-k]:focus-visible { outline: 2px solid var(--jade-hi); outline-offset: 3px; }
 .stat, .rows > li, #grid > li { scroll-margin: 24px 0; }
 @media (hover: hover) {
   .kc [data-k]:focus-visible { outline: none; }
