@@ -342,7 +342,6 @@ span.row-ext { color: var(--muted); }
 .frame::before { top: -4px; left: -4px; border-right: 0; border-bottom: 0; }
 .frame::after { bottom: -4px; right: -4px; border-left: 0; border-top: 0; }
 .frame img { width: 100%; }
-.hero-shot.phone { max-width: 420px; padding: 0; }
 
 section { padding-top: 72px; }
 section h2 {
@@ -585,80 +584,23 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 }
 @media (prefers-reduced-motion: reduce) { .lb { animation: none; } }
 
-/* Kar Page launch panel: three arm switches in order, then a hold bar. Square everywhere, jade on black. */
-.kpl { --led-off: 196, 108, 86; --led-on: 63, 224, 164; --hold-radius: 0; margin: 28px 0 36px; max-width: 460px; }
-.kpl-panel { position: relative; border: 1px solid var(--line); padding: 14px 16px 16px; background: linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 100% 12px, var(--well); }
-.kpl-panel[hidden] { display: none; }
-.kpl-panel::before, .kpl-panel::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid var(--jade-hi); pointer-events: none; }
-.kpl-panel::before { top: -4px; left: -4px; border-right: 0; border-bottom: 0; }
-.kpl-panel::after { bottom: -4px; right: -4px; border-left: 0; border-top: 0; }
-.kpl-head { display: flex; justify-content: space-between; gap: 12px; font: 12px/1.4 var(--mono); letter-spacing: 0.18em; text-transform: uppercase; }
-.kpl-k { color: var(--jade-hi); }
-.kpl-state { color: var(--muted); text-align: right; }
-.kpl.is-armed .kpl-state { color: var(--jade-hi); }
-.kpl-bank { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
-.kpl-sw { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0 8px; border: 1px solid var(--line-dim); background: rgba(0, 0, 0, 0.45); color: var(--muted); font: 12px/1 var(--mono); letter-spacing: 0.18em; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: border-color 0.16s, color 0.16s; }
-.kpl-sw:hover, .kpl-sw.is-on { border-color: var(--line); }
-.kpl-sw.is-on { color: var(--fg); }
-.kpl-led { width: 8px; height: 8px; transform: rotate(45deg); background: rgb(var(--led-off)); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7), 0 0 5px rgba(var(--led-off), 0.45); opacity: 0.75; transition: background 0.16s, box-shadow 0.16s, opacity 0.16s; }
-.kpl-sw.is-on .kpl-led { background: rgb(var(--led-on)); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7), 0 0 9px rgba(var(--led-on), 0.85); opacity: 1; }
-.kpl-switch { position: relative; width: 40px; height: 56px; border: 1px solid rgba(0, 168, 107, 0.35); background: linear-gradient(180deg, #0b1410, #020604); box-shadow: inset 0 0 0 3px #000; }
-.kpl-well { position: absolute; left: 9px; right: 9px; top: 6px; bottom: 6px; background: #000; box-shadow: inset 0 0 0 1px rgba(0, 168, 107, 0.18); }
-.kpl-sw.is-on .kpl-well { box-shadow: inset 0 0 0 1px rgba(63, 224, 164, 0.55), inset 0 0 10px rgba(63, 224, 164, 0.25); }
-.kpl-paddle { position: absolute; left: 6px; right: 6px; height: 22px; top: 28px; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 4px), linear-gradient(180deg, #56645d, #1d2622); border: 1px solid rgba(0, 0, 0, 0.85); box-shadow: 0 0 0 1px rgba(63, 224, 164, 0.25); transition: top 0.14s; }
-.kpl-sw.is-up .kpl-paddle { top: 4px; }
-.kpl-sw.is-on .kpl-paddle { box-shadow: 0 0 0 1px rgba(63, 224, 164, 0.7); }
-.kpl-hold { position: relative; display: block; width: 100%; height: 52px; margin-top: 14px; padding: 0; overflow: hidden; container-type: inline-size; border: 1px solid var(--line-dim); border-radius: var(--hold-radius); background: repeating-linear-gradient(0deg, rgba(0, 168, 107, 0.06) 0 1px, transparent 1px 3px), #020805; color: var(--muted); font: 13px/1 var(--mono); letter-spacing: 0.2em; cursor: not-allowed; opacity: 0.5; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; transition: opacity 0.16s, border-color 0.16s, box-shadow 0.16s; }
-.kpl.is-armed .kpl-hold { opacity: 1; cursor: pointer; border-color: var(--jade); color: var(--fg); box-shadow: var(--glow); }
-.kpl-hold.is-holding, .kpl-hold.is-done { border-color: var(--jade-hi); color: var(--jade-hi); }
-.kpl-hex, .kpl-fill { position: absolute; top: 0; bottom: 0; left: 0; pointer-events: none; }
-.kpl-hex { right: 0; }
-.kpl-fill { width: 0; overflow: hidden; background: rgba(0, 168, 107, 0.24); box-shadow: inset -2px 0 0 var(--jade-hi); }
-.kpl-hold.is-done .kpl-fill { box-shadow: none; }
-.kpl-hex svg, .kpl-fill svg { display: block; height: 100%; width: 100cqi; }
-.kpl-copy { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; height: 100%; text-transform: uppercase; }
-.kpl-dot { width: 7px; height: 7px; background: currentColor; opacity: 0.6; }
-.kpl.is-armed .kpl-dot { background: var(--jade-hi); opacity: 1; box-shadow: 0 0 8px var(--jade-hi); }
-.kpl-alt { margin: 12px 0 0; font: 13px/1.4 var(--mono); letter-spacing: 0.06em; }
-.kpl-alt a { color: var(--jade-hi); text-decoration: underline; text-underline-offset: 3px; }
-.kpl-alt i { font-style: normal; color: var(--muted); }
-@media (prefers-reduced-motion: reduce) {
-  .kpl-sw, .kpl-led, .kpl-paddle, .kpl-hold { transition: none; }
-}
-/* Launch switches take focus in place: no outline or cursor ring, the switch body and label light up instead. */
-.kpl-sw:focus-visible, .kc .kpl-sw:focus-visible { outline: none; }
-.kpl-sw:focus-visible, .kpl-sw:hover { background: rgba(0, 168, 107, 0.09); color: var(--jade-hi); }
-.kpl-sw:focus-visible .kpl-lab, .kpl-sw:hover .kpl-lab { text-shadow: 0 0 8px rgba(63, 224, 164, 0.75); }
-.kpl-sw:focus-visible .kpl-switch, .kpl-sw:hover .kpl-switch { border-color: var(--jade-hi); box-shadow: inset 0 0 0 3px #000, 0 0 12px rgba(63, 224, 164, 0.5); }
-.kpl-sw:focus-visible .kpl-paddle { box-shadow: 0 0 0 1px var(--jade-hi), 0 0 8px rgba(63, 224, 164, 0.55); }
-
-/* Live app panel: a square HUD browser around the public karpage.app homepage. */
-.kpb { position: relative; max-width: 1100px; margin: -12px 0 40px; border: 1px solid var(--jade); background: #000; box-shadow: var(--glow); }
-.kpb[hidden] { display: none; }
-.kpb::before, .kpb::after { content: ""; position: absolute; width: 16px; height: 16px; border: 2px solid var(--jade-hi); pointer-events: none; z-index: 1; }
-.kpb::before { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
-.kpb::after { bottom: -5px; right: -5px; border-left: 0; border-top: 0; }
-.kpb-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 8px 6px 12px; border-bottom: 1px solid var(--line); background: linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 100% 6px, var(--well); font: 12px/1 var(--mono); letter-spacing: 0.18em; }
-.kpb-addr { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--jade-hi); white-space: nowrap; overflow: hidden; }
-.kpb-dot { flex: none; width: 7px; height: 7px; background: var(--muted); }
-.kpb.is-live .kpb-dot { background: var(--jade-hi); box-shadow: 0 0 8px var(--jade-hi); }
-.kpb-ctl { display: flex; flex: none; gap: 6px; }
-.kpb-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--line-dim); border-radius: 0; background: rgba(0, 0, 0, 0.5); color: var(--fg); font: 12px/1 var(--mono); letter-spacing: 0.16em; text-decoration: none; cursor: pointer; }
-.kpb-btn:hover { border-color: var(--jade-hi); color: var(--jade-hi); }
-.kpb-btn i { font-style: normal; color: var(--muted); }
-.kpb-view { position: relative; display: block; height: min(80vh, 960px); min-height: 420px; }
-.kpb-view:focus-visible { outline: none; }
-.kpb-frame { display: block; width: 100%; height: 100%; border: 0; background: #000; }
-.kpb-status { position: absolute; left: 12px; top: 10px; color: var(--jade-hi); font: 12px/1 var(--mono); letter-spacing: 0.18em; pointer-events: none; }
-.kpb-fail { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: #000; font: 13px/1.4 var(--mono); letter-spacing: 0.16em; color: var(--muted); text-align: center; }
-.kpb-fail[hidden] { display: none; }
-.kpb-fail p { margin: 0; }
-.kpb-fail a { padding: 12px 16px; border: 1px solid var(--jade); color: var(--jade-hi); text-decoration: none; }
-.kpb-note { margin: 0; padding: 8px 12px; border-top: 1px solid var(--line-dim); color: var(--muted); font: 12px/1.4 var(--mono); letter-spacing: 0.08em; }
-@media (max-width: 760px) {
-  .kpb-bar { flex-wrap: wrap; padding: 8px; }
-  .kpb-ctl { width: 100%; }
-  .kpb-btn { flex: 1; justify-content: center; padding: 11px 6px; }
-  /* Tall, but leaves page above and below the frame so a swipe can still scroll past it. */
-  .kpb-view { height: 70svh; min-height: 360px; }
+/* Kar Page live: a short line, then the public app in a phone-shaped frame (390:844) sized to the viewport
+   height, so the whole phone and the link under it fit without scrolling. --live-off is everything else on screen:
+   sticky bar, title, line, link and margins. */
+.hero-live { --live-off: 178px; padding-top: 14px; text-align: center; }
+.hero-live .title-row { justify-content: center; gap: 12px; }
+.hero-live h1 { font-size: 30px; }
+.hero-live .mark.big { width: 32px; height: 32px; padding: 5px; }
+.live-desc { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+.live { --h: min(844px, calc(100vh - var(--live-off))); display: flex; flex-direction: column; align-items: center; margin-top: 14px; }
+@supports (height: 100dvh) { .live { --h: min(844px, calc(100dvh - var(--live-off))); } }
+.live-phone { position: relative; height: var(--h); width: min(calc(var(--h) * 390 / 844), 100%); min-height: 320px; border: 1px solid var(--jade); border-radius: 1px; background: #000; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 22px rgba(0, 168, 107, 0.22); }
+.live-phone:focus-visible { outline: none; }
+.live-frame { display: block; width: 100%; height: 100%; border: 0; background: #000; }
+.live-open { margin-top: 10px; color: var(--jade-hi); font: 12px/16px var(--mono); letter-spacing: 0.18em; }
+.live-open i { font-style: normal; color: var(--muted); }
+.live-open:hover { color: #fff; }
+/* Narrow touch screens: the app runs full width and tall; the line above and the link below still scroll the page. */
+@media (max-width: 500px) and (pointer: coarse) {
+  .live-phone { width: 100vw; height: 88vh; height: 88dvh; border-left: 0; border-right: 0; }
 }
