@@ -134,7 +134,7 @@
   }
 
   /* Screenshot lightbox: a real <a href> to the full image stays as the no-JS fallback; with JS a click opens
-     the shot in a see-through glass overlay. Esc, the X or a click outside closes; Left/Right step through. */
+     the shot in a see-through glass overlay. Esc, the X, a click outside or a vertical swipe closes; Left/Right or a sideways swipe step through. */
   var shotLinks = Array.prototype.filter.call(document.querySelectorAll("figure.frame > a[href]"), function (a) {
     return a.querySelector("img");
   });
@@ -178,6 +178,7 @@
       lb.hidden = true;
       document.documentElement.classList.remove("lb-on");
       lbImg.removeAttribute("src");
+      lbFrame.style.transition = lbFrame.style.transform = lbFrame.style.opacity = "";
       if (lbBack && lbBack.focus) lbBack.focus({ preventScroll: true });
       lbBack = null;
     };
@@ -214,6 +215,59 @@
     document.addEventListener("focusin", function (ev) {
       if (!lb.hidden && !lb.contains(ev.target)) lbX.focus({ preventScroll: true });
     });
+
+    /* Touch swipes: left/right steps (wrapping like the arrows), up/down closes. One finger only; a second
+       finger cancels. The frame follows the finger and snaps back under the threshold, unless reduced motion. */
+    var lbFrame = lb.querySelector(".lb-frame"), lbCalm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var lbPtrs = {}, lbPtrN = 0, lbDrag = null, lbSwipedAt = 0;
+    var lbMove = function (x, y, fade, ease) {
+      if (lbCalm.matches) return;
+      lbFrame.style.transition = ease ? "transform 160ms ease-out, opacity 160ms ease-out" : "none";
+      lbFrame.style.transform = x || y ? "translate3d(" + x + "px," + y + "px,0)" : "";
+      lbFrame.style.opacity = fade < 1 ? String(fade) : "";
+    };
+    var lbDragEnd = function (snap) {
+      lbDrag = null;
+      if (snap) lbMove(0, 0, 1, true); else lbMove(0, 0, 1, false);
+    };
+    lb.addEventListener("pointerdown", function (ev) {
+      if (ev.pointerType === "mouse") return;
+      lbPtrs[ev.pointerId] = 1; lbPtrN++;
+      if (lbPtrN > 1) { if (lbDrag) lbDragEnd(true); return; }
+      if (ev.target.closest && ev.target.closest(".lb-btn")) return;
+      lbDrag = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, t: ev.timeStamp, axis: "" };
+    });
+    lb.addEventListener("pointermove", function (ev) {
+      if (!lbDrag || ev.pointerId !== lbDrag.id) return;
+      var dx = ev.clientX - lbDrag.x, dy = ev.clientY - lbDrag.y;
+      if (!lbDrag.axis && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+        lbDrag.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        try { lb.setPointerCapture(ev.pointerId); } catch (e) {}
+      }
+      if (lbDrag.axis === "x") lbMove(shotLinks.length > 1 ? dx * 0.6 : dx * 0.2, 0, 1, false);
+      else if (lbDrag.axis === "y") lbMove(0, dy * 0.6, Math.max(0.35, 1 - Math.abs(dy) / 400), false);
+    });
+    var lbPtrUp = function (ev) {
+      if (lbPtrs[ev.pointerId]) { delete lbPtrs[ev.pointerId]; lbPtrN = Math.max(0, lbPtrN - 1); }
+      if (!lbDrag || ev.pointerId !== lbDrag.id) return;
+      var d = lbDrag, dx = ev.clientX - d.x, dy = ev.clientY - d.y, ax = Math.abs(dx), ay = Math.abs(dy);
+      var dt = Math.max(1, ev.timeStamp - d.t), flick = dt < 250;
+      if (ev.type === "pointercancel" || !d.axis) { lbDragEnd(true); return; }
+      lbSwipedAt = Date.now();
+      if (d.axis === "x" && shotLinks.length > 1 && ax > ay * 1.5 && (ax >= 50 || (flick && ax >= 25))) {
+        lbDragEnd(false);
+        lbShow(lbAt + (dx < 0 ? 1 : -1));
+      } else if (d.axis === "y" && ay > ax && (ay >= 80 || (flick && ay >= 40))) {
+        lbDragEnd(false);
+        lbClose();
+      } else lbDragEnd(true);
+    };
+    lb.addEventListener("pointerup", lbPtrUp);
+    lb.addEventListener("pointercancel", lbPtrUp);
+    /* A drag is not a tap: swallow the click a swipe leaves behind so it can't close the viewer. */
+    lb.addEventListener("click", function (ev) {
+      if (Date.now() - lbSwipedAt < 400) { ev.stopPropagation(); ev.preventDefault(); }
+    }, true);
   }
 
   /* Selection cursor: one box that follows the mouse and the arrow keys. */
