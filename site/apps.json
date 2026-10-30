@@ -326,6 +326,7 @@
     "OPEN KARPAGE.APP",
     "https://karpage.app"
    ],
+   "launch": true,
    "related": [
     "ON OMARCHY",
     "Kar Page Launcher adds Kar Page to your launcher as its own app window.",
