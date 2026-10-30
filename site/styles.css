@@ -502,3 +502,51 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
 @media (prefers-reduced-motion: reduce) {
   .kcur.go { transition: none; }
 }
+
+/* demo player: HUD-framed click-to-play YouTube embed */
+.demo { margin: 22px 0 6px; }
+.demo-tick { display: flex; align-items: center; height: 30px; overflow: hidden; border: 1px solid var(--line); border-bottom: 0; background: var(--well); font-size: 12px; letter-spacing: 0.14em; color: var(--jade-hi); }
+.demo-live { position: relative; z-index: 1; flex: none; align-self: stretch; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--jade); color: var(--ink); letter-spacing: 0.24em; }
+.demo-live::before { content: ""; width: 7px; height: 7px; background: var(--ink); animation: blink 1.6s steps(1) infinite; }
+.demo-run { display: flex; flex: none; white-space: nowrap; padding-left: 14px; animation: demo-tick 32s linear infinite; }
+.demo-run span { padding-right: 2em; }
+@keyframes demo-tick { to { transform: translateX(-50%); } }
+.demo-screen { display: block; aspect-ratio: 16 / 9; cursor: pointer; overflow: visible; scroll-margin: 90px; }
+.demo-screen picture, .demo-screen img { display: block; width: 100%; height: 100%; }
+.demo-screen img { object-fit: cover; filter: brightness(0.42) saturate(0.85); transition: filter 0.2s; }
+.demo-screen:hover img, .demo-screen:focus-visible img { filter: brightness(0.55); }
+.demo-screen iframe { display: block; width: 100%; height: 100%; border: 0; }
+.demo-screen.playing { cursor: default; }
+.demo-btn { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 16px 26px; border: 2px solid var(--jade-hi); background: rgba(2, 20, 12, 0.72); color: var(--jade-hi); font-size: 20px; letter-spacing: 0.24em; box-shadow: var(--glow); white-space: nowrap; transition: background 0.15s, color 0.15s; }
+.demo-screen:hover .demo-btn, .demo-screen:focus-visible .demo-btn { background: var(--jade-hi); color: var(--ink); }
+.demo-cap { position: absolute; left: 14px; bottom: 12px; right: 14px; color: var(--fg); font-size: 13px; letter-spacing: 0.1em; text-shadow: 0 1px 2px #000; }
+.demo-hud { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 7px 12px; border: 1px solid var(--line-dim); border-top: 0; color: var(--muted); font-size: 11px; letter-spacing: 0.16em; }
+.demo-hud b { font-weight: 400; color: var(--jade-hi); }
+.demo-bar { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 16px; }
+.demo-in { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 14px; border: 1px solid var(--line); background: var(--well); cursor: text; scroll-margin: 90px; }
+.demo-in:focus-within { border-color: var(--jade-hi); box-shadow: var(--glow); }
+.demo-p { color: var(--jade-hi); }
+.demo-in input { flex: 1; min-width: 0; padding: 13px 0; border: 0; outline: 0; background: transparent; color: var(--fg); font: 15px var(--mono); caret-color: var(--jade-hi); }
+.demo-in input::placeholder { color: var(--muted); }
+.demo-go { padding: 0 22px; border: 1px solid var(--jade); border-radius: 0; background: var(--jade); color: var(--ink); font: 14px var(--mono); letter-spacing: 0.2em; cursor: pointer; scroll-margin: 90px; }
+.demo-go:hover, .demo-go:focus-visible { background: var(--jade-hi); border-color: var(--jade-hi); }
+.demo-hint { margin: 8px 0 0; color: var(--jade); font-size: 12px; letter-spacing: 0.16em; }
+.demo-msg { min-height: 1.4em; margin: 6px 0 0; color: var(--jade-hi); font-size: 13px; }
+.demo-msg.bad { color: #ffb454; }
+.demo-note { margin: 2px 0 0; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 760px) {
+  .demo { margin-top: 22px; }
+  .demo-bar { grid-template-columns: 1fr; }
+  .demo-go { padding: 13px 0; }
+  .demo-btn { padding: 12px 18px; font-size: 16px; }
+  .demo-cap { font-size: 11px; }
+  .demo-hud { font-size: 10px; gap: 4px 14px; }
+}
+@media (hover: none), (pointer: coarse) {
+  .demo-hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .demo-run, .demo-live::before { animation: none; }
+  .demo-screen img, .demo-btn { transition: none; }
+}

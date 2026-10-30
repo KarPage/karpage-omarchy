@@ -80,16 +80,91 @@
     });
   });
 
+  /* Demo player: click-to-play YouTube facade; nothing loads from YouTube until the visitor plays. */
+  var screen = document.querySelector(".demo-screen");
+  if (screen) {
+    var urlIn = document.getElementById("demo-url");
+    var msg = document.querySelector(".demo-msg");
+    var stateEl = document.querySelector(".demo-state");
+    var idEl = document.querySelector(".demo-id");
+    var runs = document.querySelectorAll(".demo-run span");
+    var VID = /^[A-Za-z0-9_-]{11}$/;
+    var YT = ["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"];
+    var parseLink = function (raw) {
+      var s = String(raw || "").trim(), u, id = null, m;
+      if (!s) return { err: "Paste a YouTube link first." };
+      if (s.length > 2048 || /\s/.test(s)) return { err: "That doesn't look like a link." };
+      if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) s = "https://" + s;
+      try { u = new URL(s); } catch (x) { return { err: "That doesn't look like a link." }; }
+      if ((u.protocol !== "https:" && u.protocol !== "http:") || u.username || u.password || u.port) return { err: "That doesn't look like a link." };
+      var h = u.hostname.toLowerCase().replace(/\.$/, ""), path = u.pathname;
+      if (h === "youtu.be") {
+        m = path.match(/^\/([A-Za-z0-9_-]{11})\/?$/);
+        id = m && m[1];
+      } else if (YT.indexOf(h) >= 0) {
+        if (/^\/watch\/?$/.test(path)) id = u.searchParams.get("v");
+        else { m = path.match(/^\/(?:shorts|live|embed)\/([A-Za-z0-9_-]{11})\/?$/); id = m && m[1]; }
+      } else {
+        return { err: "Only YouTube links play in this web demo. X, Twitch and the other sites work in the real app." };
+      }
+      if (!id || !VID.test(id)) return { err: "That YouTube link has no valid video ID." };
+      var t = u.searchParams.get("t") || u.searchParams.get("start") || "", start = 0;
+      m = t.match(/^(\d{1,6})s?$/) || null;
+      if (m) start = +m[1];
+      else if ((m = t.match(/^(?:(\d{1,2})h)?(?:(\d{1,3})m)?(?:(\d{1,3})s)?$/)) && t) start = (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0);
+      return { id: id, start: start };
+    };
+    var say = function (text, bad) {
+      msg.textContent = text;
+      msg.classList.toggle("bad", !!bad);
+    };
+    var play = function (id, start, label) {
+      var f = document.createElement("iframe");
+      f.src = "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1&rel=0&playsinline=1" + (start ? "&start=" + start : "");
+      f.title = "Demo player: " + label;
+      f.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+      f.referrerPolicy = "strict-origin-when-cross-origin";
+      screen.replaceChildren(f);
+      screen.classList.add("playing");
+      screen.removeAttribute("role");
+      screen.setAttribute("aria-label", "Demo player: " + label + ". Press Enter to control the video.");
+      stateEl.textContent = "PLAYING";
+      idEl.textContent = id;
+      var line = "▶ NOW · " + label + " // privacy-enhanced embed // the real app plays it in mpv with the full HUD // ";
+      Array.prototype.forEach.call(runs, function (r) { r.textContent = line; });
+    };
+    var fromInput = function () {
+      var r = parseLink(urlIn.value);
+      if (r.err) { say(r.err, true); return; }
+      say("");
+      play(r.id, r.start, r.id === screen.getAttribute("data-id") ? screen.getAttribute("data-label") : "youtu.be/" + r.id);
+    };
+    screen.addEventListener("click", function () {
+      var f = screen.querySelector("iframe");
+      if (f) { f.focus(); return; }
+      var r = parseLink(urlIn.value);
+      if (r.err) { r = { id: screen.getAttribute("data-id"), start: 0 }; urlIn.value = "https://www.youtube.com/watch?v=" + r.id; }
+      say("");
+      play(r.id, r.start, r.id === screen.getAttribute("data-id") ? screen.getAttribute("data-label") : "youtu.be/" + r.id);
+    });
+    document.querySelector(".demo-go").addEventListener("click", fromInput);
+    urlIn.addEventListener("keydown", function (ev) {
+      if (ev.isComposing) return;
+      if (ev.key === "Enter") { ev.preventDefault(); fromInput(); }
+      else if (ev.key === "Escape") { ev.preventDefault(); urlIn.blur(); }
+    });
+  }
+
   /* Selection cursor: one box that follows the mouse and the arrow keys. */
   var home = document.body.classList.contains("home");
   var SPEC = home
     ? [".board .stat", "#panel .rows > li", "#grid > li"]
-    : [".acts > .act", ".hero-shot", ".gallery > figure", ".others > li"];
+    : [".demo-screen", ".demo-in", ".demo-go", ".acts > .act", ".hero-shot", ".gallery > figure", ".others > li"];
   var groups = [], all = [], cur = null, lastStat = null;
   SPEC.forEach(function (sel, g) {
     var list = [];
     Array.prototype.forEach.call(document.querySelectorAll(sel), function (box) {
-      var f = box.matches("a[href], button") ? box : box.querySelector("a[href], button");
+      var f = box.matches("a[href], button, [data-kf]") ? box : box.querySelector("a[href], button, input");
       if (!f) return;
       f.setAttribute("data-k", "");
       f.tabIndex = list.length ? -1 : 0;
@@ -199,7 +274,8 @@
   document.addEventListener("keydown", function (ev) {
     if (ev.defaultPrevented || ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.isComposing) return;
     var t = ev.target;
-    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    var pass = t && t.id === "demo-url" && (ev.key === "ArrowUp" || ev.key === "ArrowDown");
+    if (t && !pass && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
     var k = ev.key, active = document.activeElement;
     var idle = !active || active === document.body || active === document.documentElement;
     if (!cur || !shown(cur)) cur = firstShown(all);
@@ -220,6 +296,9 @@
     } else if (k === "Backspace" && !home) {
       ev.preventDefault();
       window.location.href = "/";
+    } else if ((k === "Enter" || k === " ") && active === cur.f && cur.f.hasAttribute("data-kf")) {
+      ev.preventDefault();
+      cur.f.click();
     } else if ((k === "Enter" && idle) || (k === " " && (idle || (active === cur.f && cur.f.tagName === "A")))) {
       ev.preventDefault();
       setCur(cur, true);
