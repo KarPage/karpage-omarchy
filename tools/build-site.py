@@ -13,6 +13,8 @@ BASE = "https://apps.karpage.com"
 SUBTITLE = "open tools for people who drive computers"
 CSP = ("default-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'; "
        "font-src 'self'; frame-src https://www.youtube-nocookie.com; base-uri 'none'; form-action 'none'; object-src 'none'")
+# pages with the demo player also load YouTube's IFrame Player API loader and the widget script it pulls in
+CSP_DEMO = CSP.replace("script-src 'self';", "script-src 'self' https://www.youtube.com/iframe_api https://www.youtube.com/s/player/;")
 
 MARKS = {
     "kp": '<svg viewBox="0 0 512 512" fill="currentColor"><g transform="translate(0,512) scale(0.1,-0.1)"><path d="M840 4159 c0 -637 3 -958 10 -954 5 3 10 12 10 19 0 28 153 315 210 394 l60 83 0 710 0 709 -145 0 -145 0 0 -961z M1420 4560 c0 -308 2 -560 5 -560 3 0 29 18 58 39 65 48 201 131 216 131 8 0 11 130 11 475 l0 475 -145 0 -145 0 0 -560z M2310 4264 c-623 -99 -1128 -505 -1354 -1091 -40 -103 -68 -209 -93 -348 -19 -109 -18 36 -14 -1977 l1 -848 140 0 139 0 4 1388 c3 1287 4 1392 21 1462 68 291 193 524 386 721 192 196 451 336 730 396 67 14 130 18 300 18 200 0 222 -2 320 -27 587 -149 991 -585 1091 -1178 7 -41 13 -140 13 -220 -1 -238 -44 -423 -149 -635 -311 -627 -1021 -934 -1697 -734 -57 17 -145 50 -197 75 -51 24 -98 44 -103 44 -7 0 -6 -273 1 -297 3 -10 116 -57 208 -87 186 -60 268 -71 518 -71 188 1 234 4 320 23 374 81 709 275 948 547 464 529 565 1261 262 1890 -198 411 -567 733 -1005 879 -183 61 -282 77 -500 81 -142 3 -221 0 -290 -11z M2366 3684 c-464 -84 -814 -426 -923 -904 -16 -68 -17 -170 -18 -1125 0 -577 1 -1186 3 -1352 l3 -303 133 0 133 0 7 37 c3 21 6 620 6 1331 0 1431 -3 1368 65 1525 18 43 48 103 67 134 78 131 269 293 344 293 32 0 34 -2 34 -34 0 -19 -7 -39 -17 -47 -9 -8 -24 -32 -34 -54 -17 -37 -19 -82 -19 -667 l0 -628 33 0 c43 1 105 30 143 68 55 54 65 91 71 244 l6 139 33 -3 c28 -3 70 -39 268 -231 l236 -229 0 -43 0 -43 -72 -26 c-187 -68 -376 -74 -553 -19 -82 25 -185 75 -185 89 0 8 -9 14 -21 14 -40 0 -143 91 -248 220 l-20 25 0 -205 -1 -205 42 -30 c134 -97 264 -157 426 -197 73 -19 115 -22 262 -22 159 0 184 3 275 28 202 55 409 177 543 321 467 499 396 1284 -151 1691 -244 182 -577 261 -871 208z m419 -294 c44 -12 119 -42 167 -67 85 -44 88 -46 88 -80 l0 -36 -67 7 c-125 12 -143 1 -338 -194 -150 -151 -174 -170 -202 -170 l-33 0 0 236 c0 227 -1 236 -20 241 -15 4 -20 14 -20 38 0 33 0 34 58 40 31 4 62 8 67 11 25 10 227 -7 300 -26z m429 -271 c94 -105 164 -253 191 -404 19 -111 19 -189 0 -301 -31 -176 -115 -333 -248 -461 -66 -64 -79 -73 -112 -73 l-38 0 8 53 c13 90 10 159 -10 197 -10 19 -105 123 -211 231 -175 176 -194 198 -194 229 0 37 -26 8 353 397 81 83 147 159 147 167 0 11 10 16 34 16 28 0 42 -9 80 -51z"/></g></svg>',
@@ -62,7 +64,7 @@ def og_image(app):
     return "%s/%s" % (BASE, full_src(s))
 
 
-def head(title, desc, keywords, path, image):
+def head(title, desc, keywords, path, image, csp=CSP):
     card = "summary_large_image" if image else "summary"
     img = ('<meta property="og:image" content="%s">\n<meta name="twitter:image" content="%s">\n' % (e(image), e(image))) if image else ""
     return """<!DOCTYPE html>
@@ -88,7 +90,7 @@ def head(title, desc, keywords, path, image):
 <link rel="preload" href="fonts/ShareTechMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css">
 </head>
-""" % (CSP, e(title), e(desc), e(keywords), e(BASE + path), e(title), e(desc), e(BASE + path), img, card)
+""" % (csp, e(title), e(desc), e(keywords), e(BASE + path), e(title), e(desc), e(BASE + path), img, card)
 
 
 def size(n):
@@ -280,22 +282,36 @@ def demo_player(app):
     if not d:
         return ""
     label = "%s · %s · YouTube" % (d["title"], d["channel"])
-    run = "▶ NOW · %s // %s on YouTube // privacy-enhanced embed // the real app plays it in mpv with the full HUD // " % (d["title"], d["channel"])
+    run = "".join("%s  //  " % d["title"] for _ in range(8))
     poster = app["shots"][0]
+    seg = "".join("<i></i>" for _ in range(12))
+    keys = ("Space or K play or pause, J and L jump 10 seconds, left and right arrows seek 5 seconds, "
+            "up and down arrows change volume, M mutes, F toggles fullscreen.")
     return """<div class="demo" role="region" aria-label="Interactive demo player">
-<div class="demo-tick"><span class="demo-live">DEMO</span><div class="demo-run" aria-hidden="true"><span>%s</span><span>%s</span></div></div>
-<div class="frame demo-screen" role="button" tabindex="0" data-kf data-id="%s" data-label="%s" aria-label="Play demo video: %s">
-%s<span class="demo-btn" aria-hidden="true">▶ PLAY</span><span class="demo-cap" aria-hidden="true">%s</span>
+<div class="frame demo-screen hud" tabindex="0" data-kf data-id="%s" data-title="%s" data-label="%s" aria-label="OmaRaptor demo player: %s. %s" aria-keyshortcuts="Space K J L ArrowLeft ArrowRight ArrowUp ArrowDown M F">
+<div class="hud-tick" aria-hidden="true"><span class="hud-sq">NEW</span><div class="demo-run"><span>%s</span><span>%s</span></div><span class="hud-sq">?</span></div>
+<div class="hud-top" aria-hidden="true"><span>SRC <b>YOUTUBE</b></span><span>RES <b class="hud-res">--</b></span><span>MODE <b class="hud-mode">WINDOW</b></span><span class="hud-idw">ID <b class="demo-id">%s</b></span><span class="hud-st">STATE <b class="demo-state">READY</b></span></div>
+<div class="hud-view"><div class="hud-poster">%s<span class="hud-ret" aria-hidden="true"><span class="demo-btn">▶ PLAY</span></span><span class="demo-cap" aria-hidden="true">%s</span></div></div>
+<div class="hud-bot">
+<div class="hud-times" aria-hidden="true"><span class="hud-tm">ELP <b class="hud-elp">00:00<small>.0</small></b></span><span class="hud-mid">■ <b class="hud-word">READY</b></span><span class="hud-tm">REM <b class="hud-rem">T-00:00<small>.0</small></b></span></div>
+<div class="hud-scrub" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="0:00 of 0:00"><div class="hud-rail"><span class="hud-fill"></span><span class="hud-head"></span></div><div class="hud-lab" aria-hidden="true"><span>00:00</span><span>--:--</span><span>--:--</span><span>--:--</span><span>--:--</span></div></div>
+<div class="hud-ctl">
+<div class="hud-l"><button class="hud-b hud-mute" type="button" aria-label="Mute" aria-pressed="false">MUTE</button><div class="hud-vol" role="slider" tabindex="0" aria-label="Volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="80" aria-valuetext="80 percent"><span class="hud-vl" aria-hidden="true">VOL</span><span class="hud-seg" aria-hidden="true">%s</span><b class="hud-vn" aria-hidden="true">080</b></div></div>
+<div class="hud-c"><button class="hud-b hud-back" type="button" aria-label="Back 10 seconds">-10</button><button class="hud-b hud-pp" type="button" aria-label="Play">▶</button><button class="hud-b hud-fwd" type="button" aria-label="Forward 10 seconds">+10</button></div>
+<div class="hud-r"><button class="hud-b hud-spd" type="button" aria-label="Playback speed 1x">SPD <b>1.00x</b></button><button class="hud-b hud-fs" type="button" aria-label="Fullscreen" aria-pressed="false">FS</button></div>
 </div>
-<div class="demo-hud" aria-hidden="true"><span>SRC <b>YOUTUBE</b></span><span>MODE <b>EMBED</b></span><span>ID <b class="demo-id">%s</b></span><span>STATE <b class="demo-state">READY</b></span></div>
+</div>
+</div>
 <div class="demo-bar">
 <label class="demo-in" for="demo-url"><span class="demo-p" aria-hidden="true">&gt;</span><span class="sr">Paste a YouTube link</span><input id="demo-url" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="paste a YouTube link" value="%s"></label>
 <button class="demo-go" type="button">PLAY ↵</button>
 </div>
-<p class="demo-hint" aria-hidden="true">Ctrl+V paste · ↵ play</p>
+<p class="demo-hint" aria-hidden="true">space/K play · J/L ±10s · ←/→ ±5s · ↑/↓ vol · M mute · F full · Ctrl+V paste</p>
 <p class="demo-msg" role="status" aria-live="polite"></p>
-<p class="note demo-note">web demo uses YouTube's embed; the real app plays in mpv with the full HUD · demo clip “%s” by %s on YouTube%s · unofficial, not affiliated</p>
-</div>""" % (e(run), e(run), e(d["id"]), e(label), e(label), picture(poster, True), e(label), e(d["id"]), e(d["url"]), e(d["title"]), e(d["channel"]), " (%s)" % e(d["credit"]) if d.get("credit") else "")
+<p class="note demo-note">web demo: YouTube's embedded player inside a recreated OmaRaptor HUD; the real app plays in mpv · demo clip “%s” by %s on YouTube%s · unofficial, not affiliated</p>
+</div>""" % (e(d["id"]), e(d["title"]), e(label), e(label), e(keys), e(run), e(run), e(d["id"]),
+             picture(poster, True), e(label), seg, e(d["url"]), e(d["title"]), e(d["channel"]),
+             " (%s)" % e(d["credit"]) if d.get("credit") else "")
 
 
 def page(app, apps):
@@ -350,7 +366,7 @@ def page(app, apps):
     others = "".join('<li><a href="/%s">%s<span>%s</span></a></li>' % (e(a["slug"]), mark(a), e(a["name"]))
                      for a in apps if a is not app)
     seo = app["seo"]
-    return head(seo["title"], seo["description"], seo["keywords"], "/" + app["slug"], og_image(app)) + """<body class="app">
+    return head(seo["title"], seo["description"], seo["keywords"], "/" + app["slug"], og_image(app), CSP_DEMO if app.get("demo") else CSP) + """<body class="app">
 <a class="skip" href="#top">Skip to content</a>
 <header class="bar">
 <a class="brand" href="/"><span class="back" aria-hidden="true">←</span> KAR PAGE APPS</a>
