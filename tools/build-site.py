@@ -156,7 +156,8 @@ def actions(app):
     f = app.get("facts")
     if f:
         note = '<p class="act-note">Sizes measured %s from a depth-1 clone of github.com/%s.</p>' % (e(f["measured"]), e(app["repo"]))
-    return '<div class="acts">%s</div>%s' % ("".join(out), note)
+    cls = "acts acts-3" if len(out) == 3 and app.get("reel") else "acts"
+    return '<div class="%s">%s</div>%s' % (cls, "".join(out), note)
 
 
 def status_badge(app):
@@ -276,17 +277,20 @@ def code_tile(i, label, cmd, detail=""):
 
 
 def reel(app):
-    """The real-app screen recording (muted loop) above 2-3 real screenshots. No third-party code."""
+    """Hero screenshot on top (eager, sized), then the real-app screen recording (muted loop, poster is its own
+    first frame so the box is never black), then the other real screenshots, lazy-loaded. No third-party code."""
     r, shots = app["reel"], app["shots"]
-    poster = shots[0]
-    video = ('<video class="reel" width="%d" height="%d" poster="%s" muted loop playsinline autoplay preload="metadata" '
+    hero = shots[0]
+    top = ('<figure class="frame hero-shot hero-still"><a href="%s">%s</a><figcaption>%s</figcaption></figure>'
+           % (e(full_src(hero)), picture(hero, True), e(hero.get("cap", ""))))
+    video = ('<video class="reel" width="%d" height="%d" poster="%s" muted loop playsinline preload="metadata" '
              'disablepictureinpicture aria-label="%s">%s</video>' % (
-                 r["w"], r["h"], e(full_src(poster)), e(r["label"]),
+                 r["w"], r["h"], e(r.get("poster") or full_src(hero)), e(r["label"]),
                  "".join('<source src="%s" type="video/%s">' % (e(r[k]), k) for k in ("webm", "mp4") if r.get(k))))
     figs = "".join('<figure class="frame"><a href="%s">%s</a><figcaption>%s</figcaption></figure>'
                    % (e(full_src(s)), picture(s), e(s.get("cap", ""))) for s in shots[1:])
-    return ('<figure class="frame hero-shot reel-frame">%s<figcaption class="reel-cap">%s</figcaption></figure>'
-            '<div class="shots">%s</div>' % (video, e(r["cap"]), figs))
+    return ('%s<figure class="frame reel-frame">%s<figcaption class="reel-cap">%s</figcaption></figure>'
+            '<div class="shots">%s</div>' % (top, video, e(r["cap"]), figs))
 
 
 def page(app, apps):
