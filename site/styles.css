@@ -600,11 +600,11 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .live-phone { position: relative; height: var(--h); width: min(max(420px, calc(var(--h) * 430 / 932)), 100%); min-height: 320px; border: 1px solid var(--jade); border-radius: 1px; background: #000; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 22px rgba(0, 168, 107, 0.22); }
 .live-phone:focus-visible { outline: none; }
 .live-frame { display: block; width: 100%; height: 100%; border: 0; background: #000; }
-.live-open { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; min-width: 220px; margin-top: 22px; padding: 0 22px; border: 1px solid var(--jade); border-radius: 0; background: var(--well); color: var(--jade-hi); font: 13px/1 var(--mono); letter-spacing: 0.18em; transition: border-color 0.15s, box-shadow 0.15s, color 0.15s, background-color 0.15s; }
-.live-open i { font-style: normal; color: var(--muted); }
-.live-open:hover, .live-open:focus-visible { border-color: var(--jade-hi); background: rgba(0, 168, 107, 0.12); color: #fff; box-shadow: var(--glow); }
-.live-open:focus-visible { outline: none; }
-.live-open:active { background: rgba(0, 168, 107, 0.22); }
+.live-open, .btn-open { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; min-width: 220px; margin-top: 22px; padding: 0 22px; border: 1px solid var(--jade); border-radius: 0; background: var(--well); color: var(--jade-hi); font: 13px/1 var(--mono); letter-spacing: 0.18em; transition: border-color 0.15s, box-shadow 0.15s, color 0.15s, background-color 0.15s; }
+.live-open i, .btn-open i { font-style: normal; color: var(--muted); }
+.live-open:hover, .live-open:focus-visible, .btn-open:hover, .btn-open:focus-visible { border-color: var(--jade-hi); background: rgba(0, 168, 107, 0.12); color: #fff; box-shadow: var(--glow); }
+.live-open:focus-visible, .btn-open:focus-visible { outline: none; }
+.live-open:active, .btn-open:active { background: rgba(0, 168, 107, 0.22); }
 /* Install: numbered steps inside the usual square cards. */
 .steps { margin: 4px 0 0; padding: 0; list-style: none; counter-reset: st; }
 .steps li { position: relative; margin-top: 8px; padding-left: 30px; font-size: 14px; line-height: 1.45; counter-increment: st; }
@@ -640,3 +640,6 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .cap .ui { width: 16px; height: 16px; }
 .idesk { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
 .idesk b { margin: 0; }
+.note a { border-bottom: 1px solid var(--line); }
+.note a:hover, .note a:focus-visible { border-bottom-color: #fff; }
+#install .btn-open { margin-top: 18px; }
