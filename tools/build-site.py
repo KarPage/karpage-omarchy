@@ -424,7 +424,9 @@ def page(app, apps):
                         for c in w["cards"])
         d = w["desktop"]
         desk = '<div class="feat icard idesk"><b>%s</b>%s</div>' % (e(d["title"]), step_row(d["steps"]))
-        section("install", "INSTALL", '<div class="igrid">%s</div>%s<p class="note">%s</p>' % (cards, desk, e(w["note"])))
+        note = e(w["note"]).replace("karpage.app", '<a href="https://karpage.app/" target="_blank" rel="noopener">karpage.app</a>', 1)
+        btn = '<a class="btn-open" href="https://karpage.app/" target="_blank" rel="noopener">OPEN KARPAGE.APP <i aria-hidden="true">↗</i></a>'
+        section("install", "INSTALL", '<div class="igrid">%s</div>%s<p class="note">%s</p>%s' % (cards, desk, note, btn))
         nav.append(("install", "INSTALL"))
     rest = [] if media_top(app) else shots[1:]
     if rest:

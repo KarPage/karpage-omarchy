@@ -279,8 +279,8 @@
     var f = v.querySelector("iframe");
     v.addEventListener("click", function (ev) { if (f && ev.target === v) f.focus(); });
   });
-  /* OPEN FULL APP is a link styled as a button, so Space and Shift+Space press it too (Enter already does). */
-  Array.prototype.forEach.call(document.querySelectorAll(".live-open"), function (a) {
+  /* OPEN FULL APP and OPEN KARPAGE.APP are links styled as buttons, so Space and Shift+Space press it too (Enter already does). */
+  Array.prototype.forEach.call(document.querySelectorAll(".live-open, .btn-open"), function (a) {
     a.addEventListener("keydown", function (ev) {
       if (ev.key !== " " || ev.altKey || ev.ctrlKey || ev.metaKey || ev.repeat) return;
       ev.preventDefault();
@@ -293,7 +293,7 @@
   var home = document.body.classList.contains("home");
   var SPEC = home
     ? [".board .stat", "#panel .rows > li", "#grid > li"]
-    : [".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, .grid > .feat, section > .feat, .code, .others > li, .live-phone, .live-open"];
+    : [".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, .grid > .feat, section > .feat, .code, .others > li, .live-phone, .live-open, .btn-open"];
   var groups = [], all = [], cur = null, lastStat = null;
   SPEC.forEach(function (sel, g) {
     var list = [];
