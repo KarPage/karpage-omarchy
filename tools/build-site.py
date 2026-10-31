@@ -176,15 +176,16 @@ def tile_detail(app):
     return "no release yet · demo data"
 
 
-def act(kind, main, detail, href=None, copy_id=None):
+def act(kind, main, detail, href=None, copy_id=None, new_tab=False):
     det = '<small>%s</small>' % e(detail) if detail else ""
     if copy_id is not None:
         return ('<div class="act act-install"><span class="act-k">%s</span><pre><code id="%s">%s</code></pre>%s'
                 '<button class="copy" type="button" data-copy="%s" aria-label="Copy install command">COPY</button></div>'
                 % (e(kind), copy_id, e(main), det, copy_id))
     k = (glyph("omarchy") + e(kind)) if kind.startswith("MARKETPLACE") else e(kind)
-    return ('<a class="act" href="%s" rel="noopener"><span class="act-k">%s <i aria-hidden="true">↗</i></span><span class="act-v">%s</span>%s</a>'
-            % (e(href), k, e(main), det))
+    tgt = ' target="_blank"' if new_tab else ""
+    return ('<a class="act" href="%s"%s rel="noopener"><span class="act-k">%s <i aria-hidden="true">↗</i></span><span class="act-v">%s</span>%s</a>'
+            % (e(href), tgt, k, e(main), det))
 
 
 def live(app):
@@ -217,6 +218,8 @@ def actions(app):
             out.append(act(label, href, detail, href=href))
     if app.get("review"):
         out.append(act("MARKETPLACE REVIEW", app["review"].replace("https://", ""), "submitted to the Omarchy plugin marketplace · open · in review", href=app["review"]))
+    if app.get("listing") and not any(l == "MARKETPLACE" for l, _ in app["links"]):
+        out.append(act("MARKETPLACE", app["listing"].replace("https://", ""), "Omarchy plugin marketplace · listed · " + app["listing"].rsplit("=", 1)[1], href=app["listing"], new_tab=True))
     if not out:
         return ""
     note = ""
