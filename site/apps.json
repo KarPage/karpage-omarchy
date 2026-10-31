@@ -493,6 +493,20 @@
     "installBytes": 170753,
     "license": "MIT",
     "measured": "2026-10-30"
+   },
+   "window": {
+    "title": "Kar Page",
+    "alt": "Kar Page in the Launcher app window",
+    "tile": {
+     "id": "kp-launcher",
+     "w": 111,
+     "h": 200
+    },
+    "hero": {
+     "id": "kp-launcher-hero",
+     "w": 333,
+     "h": 600
+    }
    }
   },
   {
