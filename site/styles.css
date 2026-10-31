@@ -170,6 +170,7 @@ img, video, picture, figure.frame, .lb { -webkit-touch-callout: none; -webkit-us
 .stat:hover .stat-k { color: var(--fg); }
 .stat-k { color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.15s; }
 .stat-v { font-size: 30px; line-height: 1; color: var(--jade-hi); }
+.stat-v .sg { width: 0.74em; height: 0.74em; margin-right: 0.26em; vertical-align: 0; }
 .led {
   position: absolute;
   top: 12px;
@@ -573,12 +574,40 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
   transition: transform 0.08s, background-color 0.08s, box-shadow 0.08s, color 0.08s;
 }
 .keys kbd.w { min-width: 0; padding: 0 7px; font-size: 10px; letter-spacing: 0.14em; }
+/* ENTER is drawn as a retro ISO Enter key (inverted L, sharp jade lines); it trades places with a SPACE bar
+   every few seconds since both select. Both sit in one grid cell, so the row width never changes. */
+.ksw { display: inline-grid; align-items: center; justify-items: start; }
+.ksw > kbd { grid-area: 1 / 1; }
+.keys kbd.ent, .keys kbd.spc { position: relative; width: 84px; padding: 0; border: 0; background: none; box-shadow: none; }
+.keys kbd.ent { height: 28px; align-items: flex-start; justify-content: flex-start; }
+.keys kbd.ent > span { position: relative; padding: 2px 0 0 8px; line-height: 11px; }
+.keys kbd.ent .kl { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: var(--well); stroke: var(--jade); stroke-width: 1px; vector-effect: non-scaling-stroke; filter: drop-shadow(0 2px 0 rgba(0, 168, 107, 0.4)); transition: fill 0.08s; }
+.keys kbd.spc { height: 14px; border: 1px solid var(--jade); background: var(--well); box-shadow: inset 0 1px 0 rgba(63, 224, 164, 0.18), 0 2px 0 rgba(0, 168, 107, 0.4); font-size: 8px; letter-spacing: 0.3em; opacity: 0; }
+.keys kbd.ent.hit, .keys kbd.spc.hit { background: none; box-shadow: none; }
+.keys kbd.ent.hit .kl { fill: var(--jade); filter: drop-shadow(0 0 6px rgba(63, 224, 164, 0.45)); }
+.keys kbd.spc.hit { background: var(--jade); }
+.keys kbd.ent { animation: kswap 9s ease-in-out infinite; }
+.keys kbd.spc { animation: kswap 9s ease-in-out -4.5s infinite; }
+@keyframes kswap { 0%, 44% { opacity: 1; } 50%, 94% { opacity: 0; } 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .keys kbd.ent { animation: none; }
+  .keys kbd.spc { animation: none; visibility: hidden; }
+}
 .keys kbd.hit {
   transform: translateY(2px);
   background: var(--jade);
   color: var(--ink);
   box-shadow: 0 0 10px rgba(63, 224, 164, 0.45);
 }
+/* Home: a one-line terminal tip under the key row. Fades in once; the first arrow press flashes it and lets it settle dim. */
+.ktip { margin: 10px 0 0; overflow: hidden; color: var(--jade); font: 11px/1.4 var(--mono); letter-spacing: 0.06em; white-space: nowrap; text-overflow: ellipsis; opacity: 0.55; animation: ktin 0.6s ease-out 1.4s backwards; }
+.ktip span { color: var(--muted); }
+.ktip b { color: var(--jade-hi); font-weight: inherit; }
+.ktip.got { animation: ktgot 1.6s ease-out forwards; }
+@keyframes ktin { from { opacity: 0; } }
+@keyframes ktgot { 0% { opacity: 1; color: var(--jade-hi); text-shadow: 0 0 8px rgba(63, 224, 164, 0.5); } 100% { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) { .ktip { animation: none; } .ktip.got { animation: none; opacity: 0.3; } }
+@media (pointer: coarse), (hover: none) { .ktip { display: none; } }
 .panel-hint { padding: 12px 16px 0; animation: hint 0.12s ease-out; }
 .panel.hinting .panel-body:not([hidden]) > .panel-h { display: none; }
 .panel.hinting .panel-body { padding-top: 0; animation: none; }
@@ -603,6 +632,76 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
 .kcur.on { opacity: 1; }
 .kcur.on.idle { opacity: 0.35; }
 .kcur::before { content: ""; position: absolute; top: -2px; left: -2px; width: 8px; height: 8px; background: var(--jade-hi); box-shadow: 0 0 8px var(--jade-hi); }
+.kcur.go { transition-duration: 160ms; }
+.kcur.fx { position: fixed; z-index: 6; }
+/* corner brackets like the panel: filled square top-left, open bracket bottom-right */
+.kcur::after { content: ""; position: absolute; right: -7px; bottom: -7px; width: 10px; height: 10px; border-right: 2px solid var(--jade-hi); border-bottom: 2px solid var(--jade-hi); }
+/* focus hint: what Enter does here, shown only while the keyboard drives */
+.kcur-h { position: absolute; top: -2px; right: -2px; padding: 3px 6px; background: var(--jade-hi); color: var(--ink); font: 10px/1.2 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; opacity: 0; transition: opacity 120ms linear; }
+.kcur-h[data-at="r"] { right: auto; left: 100%; top: 50%; margin: -9px 0 0 10px; }
+.kcur-h[data-at="b"] { top: 100%; margin-top: 8px; }
+.kcur-h:empty { display: none; }
+.kcur.hinted .kcur-h { opacity: 1; }
+.mast .clock[data-kf], .mast h1[data-kf], .mast .prompt[data-kf] { cursor: pointer; }
+.mast .prompt .pc { display: inline-block; width: 0.6em; height: 1em; margin-left: 1px; vertical-align: -0.15em; background: var(--jade-hi); box-shadow: 0 0 6px rgba(63, 224, 164, 0.7); }
+/* title glitch: a terminal scramble with a split jade ghost (transform and shadow only, no layout change) */
+.mast h1.glitch { animation: kglitch 0.48s steps(2, end); }
+@keyframes kglitch {
+  0% { text-shadow: 3px 0 rgba(63, 224, 164, 0.85), -3px 0 rgba(233, 243, 238, 0.5); transform: translateX(-2px); }
+  25% { text-shadow: -4px 0 rgba(63, 224, 164, 0.85), 2px 0 rgba(233, 243, 238, 0.45); transform: translateX(2px) skewX(-6deg); }
+  50% { text-shadow: 2px 0 rgba(63, 224, 164, 0.8), -2px 0 rgba(233, 243, 238, 0.4); transform: translateX(-1px); }
+  75% { text-shadow: -1px 0 rgba(63, 224, 164, 0.7), 1px 0 rgba(233, 243, 238, 0.3); transform: none; }
+  100% { text-shadow: var(--glow); transform: none; }
+}
+.mast h1.flash { animation: kflash 0.4s linear; }
+@keyframes kflash { 0%, 100% { filter: none; } 30% { filter: brightness(1.6); } }
+.tile.ls-hit { border-color: var(--jade-hi); box-shadow: var(--glow), inset 0 0 22px rgba(63, 224, 164, 0.2); }
+
+/* big clock and month calendar (home: Enter or click on the clock) */
+.ck { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 20px; background: rgba(2, 20, 12, 0.72); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.ck[hidden] { display: none; }
+.ck-box { position: relative; width: min(440px, 100%); padding: 18px 22px 16px; border: 1px solid var(--line); background: var(--ink); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 20px 60px rgba(0, 0, 0, 0.6), var(--glow); font-family: var(--mono); color: var(--fg); }
+.ck-box::before, .ck-box::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid var(--jade-hi); pointer-events: none; }
+.ck-box::before { top: -4px; left: -4px; border-right: 0; border-bottom: 0; }
+.ck-box::after { bottom: -4px; right: -4px; border-left: 0; border-top: 0; }
+.ck.in { animation: ckfade 0.2s ease-out; }
+.ck.in .ck-box { animation: ckpop 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes ckfade { from { opacity: 0; } }
+@keyframes ckpop { from { opacity: 0.2; transform: translate(var(--ckx, 0), var(--cky, 0)) scale(0.3); } }
+.ck-top { display: flex; justify-content: space-between; align-items: center; color: var(--jade-hi); font-size: 10px; letter-spacing: 0.2em; }
+.keys kbd[data-key="?"] { cursor: pointer; }
+.kx .ck-box { width: min(520px, 100%); }
+.kx-p { margin: 14px 0 10px; color: var(--muted); font-size: 12px; }
+.kx-p span { color: var(--jade-hi); }
+.kx-h { margin: 14px 0 6px; color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
+.kx-l { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 12px; }
+.kx-l dt { color: var(--jade-hi); letter-spacing: 0.06em; white-space: nowrap; }
+.kx-l dd { margin: 0; color: var(--fg); }
+.ck-x { padding: 4px 8px; border: 1px solid var(--line); border-radius: 0; background: none; color: var(--muted); font: 12px/1 var(--mono); cursor: pointer; }
+.ck-x:hover, .ck-x:focus-visible, .ck-nav:hover, .ck-nav:focus-visible { color: var(--jade-hi); border-color: var(--jade-hi); outline: none; }
+.ck-time { margin: 14px 0 2px; color: var(--jade-hi); text-shadow: var(--glow); font-size: clamp(54px, 15vw, 76px); line-height: 1; letter-spacing: 0.02em; white-space: nowrap; }
+.ck-time .cc { animation: ccb 2s steps(1, end) infinite; }
+.ck-s { margin-left: 6px; color: var(--muted); text-shadow: none; font-size: 0.32em; }
+.ck-date { margin: 6px 0 16px; color: var(--muted); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+.ck-mh { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--line-dim); }
+.ck-m { font-weight: 400; font-size: 12px; letter-spacing: 0.2em; color: var(--fg); }
+.ck-nav { width: 30px; height: 26px; border: 1px solid var(--line); border-radius: 0; background: none; color: var(--muted); font: 13px/1 var(--mono); cursor: pointer; }
+.ck-wd, .ck-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.ck-wd { margin: 10px 0 4px; color: var(--muted); font-size: 10px; letter-spacing: 0.12em; text-align: center; text-transform: uppercase; }
+.ck-grid:focus { outline: none; }
+.ck-d { display: grid; place-items: center; height: 30px; border: 1px solid transparent; color: var(--fg); font-size: 13px; cursor: pointer; }
+.ck-d.out { color: rgba(159, 184, 171, 0.4); }
+.ck-d:hover { border-color: var(--line); }
+.ck-d.today { background: var(--jade); color: var(--ink); }
+.ck-d.sel { border-color: var(--jade-hi); box-shadow: 0 0 10px rgba(63, 224, 164, 0.45); }
+.ck-grid:focus-visible .ck-d.sel { outline: 1px solid var(--jade-hi); outline-offset: 1px; }
+.ck-foot { margin: 12px 0 0; color: var(--jade-hi); font-size: 12px; letter-spacing: 0.06em; }
+.ck-keys { margin: 6px 0 0; color: var(--muted); font-size: 10px; letter-spacing: 0.12em; }
+@media (hover: none), (pointer: coarse) { .ck-keys { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .ck.in, .ck.in .ck-box, .ck-time .cc, .mast h1.glitch { animation: none; }
+  .kcur-h { transition: none; }
+}
 .act, .hero-shot, .gallery > figure, .others > li { scroll-margin: 76px 0 24px; }
 /* app pages centre each stop in the viewport (site.js scrollIntoView block:center), so no lopsided margin */
 .app [data-k], .app .reel-frame, .app .shots > figure, .app .gallery > figure, .app .hero-shot, .app .act, .app .others > li { scroll-margin: 0; }
@@ -681,6 +780,11 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 @supports (height: 100dvh) { .live { --h: min(932px, calc(100dvh - var(--live-off))); } }
 .live-phone { position: relative; height: var(--h); width: min(max(420px, calc(var(--h) * 430 / 932)), 100%); min-height: 320px; border: 1px solid var(--jade); border-radius: 1px; background: #000; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 22px rgba(0, 168, 107, 0.22); }
 .live-phone:focus-visible { outline: none; }
+.live-x { position: absolute; left: calc(100% + 14px); top: 0; padding: 3px 8px; border: 1px solid var(--jade); background: var(--ink); color: var(--muted); font: 10px/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; }
+.live-x kbd { color: var(--jade-hi); font: inherit; }
+.live-phone.in-app .live-x { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .live-x { transition: none; } }
+@media (pointer: coarse), (max-width: 760px) { .live-x { display: none; } }
 .live-frame { display: block; width: 100%; height: 100%; border: 0; background: #000; }
 .live-open, .btn-open { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; min-width: 220px; margin-top: 22px; padding: 0 22px; border: 1px solid var(--jade); border-radius: 0; background: var(--well); color: var(--jade-hi); font: 13px/1 var(--mono); letter-spacing: 0.18em; transition: border-color 0.15s, box-shadow 0.15s, color 0.15s, background-color 0.15s; }
 .live-open i, .btn-open i { font-style: normal; color: var(--muted); }
@@ -700,8 +804,6 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 /* Inline logo glyphs beside a word: monochrome jade, sized to the text. */
 .g { display: inline-block; width: 1.05em; height: 1.05em; margin-right: 0.5em; vertical-align: -0.17em; color: var(--jade-hi); fill: currentColor; flex: none; }
 .gt { white-space: nowrap; }
-.badge .g { margin-right: 0.45em; color: inherit; }
-.act-k .g { width: 1.15em; height: 1.15em; }
 
 /* Install v2: two OS cards with key-cap step rows, plus one compact desktop line. */
 .igrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
