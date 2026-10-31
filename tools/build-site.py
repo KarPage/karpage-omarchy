@@ -373,8 +373,8 @@ def page(app, apps):
                      for a in apps if a is not app)
     seo = app["seo"]
     if app.get("embed"):
-        hero = ('<section class="hero hero-live">\n<div class="title-row">%s<h1>%s</h1>%s</div>\n<p class="live-desc">%s</p>\n%s\n</section>'
-                % (mark(app, "mark big"), e(app["name"]), status_badge(app), e(app["short"]), live(app)))
+        hero = ('<section class="hero hero-live">\n<div class="title-row">%s<h1>%s</h1>%s</div>\n<p class="live-sub">%s</p>\n<p class="live-desc">%s</p>\n%s\n</section>'
+                % (mark(app, "mark big"), e(app["name"]), status_badge(app), e(app["tagline"]), e(app["embedLine"]), live(app)))
     else:
         hero = """<section class="hero">
 <p class="tag">%s</p>
