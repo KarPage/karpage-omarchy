@@ -204,11 +204,26 @@
   /* Keycap hints light up while their real key is held. */
   var caps = document.querySelectorAll(".keys kbd[data-key]");
   if (caps.length) {
+    var at = {};
     var lit = function (key, on) {
-      Array.prototype.forEach.call(caps, function (k) { if (k.getAttribute("data-key") === key) k.classList.toggle("hit", on); });
+      Array.prototype.forEach.call(caps, function (k) {
+        if (k.getAttribute("data-key") !== key) return;
+        if (on) { at[key] = Date.now(); k.classList.add("hit"); return; }
+        window.setTimeout(function () { k.classList.remove("hit"); }, Math.max(0, 160 - (Date.now() - (at[key] || 0))));
+      });
     };
-    document.addEventListener("keydown", function (ev) { lit(ev.key, true); });
+    /* The ENTER / SPACE cap shows whichever of the two was pressed last (ENTER until then). */
+    var sw = document.querySelectorAll(".keys .ksw");
+    var typing = function (t) { return t && t.closest && t.closest("input, textarea, select, [contenteditable]"); };
+    document.addEventListener("keydown", function (ev) {
+      if ((ev.key === " " || ev.key === "Enter") && !typing(ev.target)) {
+        Array.prototype.forEach.call(sw, function (w) { w.classList.toggle("sp", ev.key === " "); });
+      }
+      lit(ev.key, true);
+    });
     document.addEventListener("keyup", function (ev) { lit(ev.key, false); });
+    window.addEventListener("keydown", function (ev) { if (ev.key === "?") lit("?", true); }, true);
+    window.addEventListener("keyup", function (ev) { if (ev.key === "?") lit("?", false); }, true);
     window.addEventListener("blur", function () { Array.prototype.forEach.call(caps, function (k) { k.classList.remove("hit"); }); });
   }
 
@@ -583,9 +598,10 @@
      and the key row demos itself. ASCII only and monospace, so nothing changes size (zero layout shift). */
   if (home) (function () {
     var two = function (v) { return (v < 10 ? "0" : "") + v; };
-    var mark = function (el, hint, at) {
+    var mark = function (el, hint, at, labelled) {
       el.setAttribute("data-kf", "");
-      el.setAttribute("data-khint", hint);
+      el.setAttribute("data-khint", labelled ? hint : "\u21b5");
+      el.setAttribute(labelled ? "data-khint-l" : "data-khint-q", "");
       el.setAttribute("data-khint-at", at);
     };
 
@@ -608,7 +624,7 @@
       ov.setAttribute("aria-label", "Local time and calendar");
       var cells = "";
       for (var c = 0; c < 42; c++) cells += '<span class="ck-d" role="gridcell" id="ckd' + c + '"></span>';
-      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span>LOCAL TIME</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="60 60 392 392" width="26" height="26" fill="none" stroke-linecap="square" aria-hidden="true" focusable="false"><path stroke="#00a86b" vector-effect="non-scaling-stroke" d="M64 160V64h96M352 64h96v96M448 352v96h-96M160 448H64v-96"/><path stroke="#3fe0a4" vector-effect="non-scaling-stroke" d="M170 120V392M204 120V196A88 88 0 1 1 268 344H204V392M246 214V300M304 214L250 258L306 300"/></svg>LOCAL TIME</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
         '<p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p>' +
         '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><b class="ck-m" aria-live="polite"></b><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
         '<div class="ck-wd" aria-hidden="true"><span>su</span><span>mo</span><span>tu</span><span>we</span><span>th</span><span>fr</span><span>sa</span></div>' +
@@ -755,19 +771,21 @@
       });
     }
 
-    /* 3. Prompt: re-types `ls`, then the listing sweeps across the app cards. */
+    /* 3. Prompt: a tiny preset terminal. Enter runs the next command (ls, uname -a, then a sudo that fails),
+       Backspace erases them one step at a time, Esc (or leaving the row) closes it. The output is an
+       overlay below the prompt, so nothing on the page moves (zero layout shift). */
     var pr = document.querySelector(".mast .prompt");
     if (pr) {
       pr.tabIndex = -1;
-      mark(pr, "\u21b5 run", "r");
-      var dollar = pr.querySelector("span"), pT = 0, sweepT = [];
-      var paint = function (typed, cursor) {
+      mark(pr, "\u21b5 run", "r", true);
+      var dollar = pr.querySelector("span"), sweepT = [], timers = [];
+      var paint = function (el, typed, cursor) {
         /* Fresh nodes each frame, so the moving cursor never counts as a layout shift. */
-        while (pr.firstChild) pr.removeChild(pr.firstChild);
-        pr.appendChild(document.createTextNode("~/apps "));
-        pr.appendChild(dollar.cloneNode(true));
-        pr.appendChild(document.createTextNode(" " + typed));
-        if (cursor) { var cu = document.createElement("span"); cu.className = "pc"; pr.appendChild(cu); }
+        while (el.firstChild) el.removeChild(el.firstChild);
+        el.appendChild(document.createTextNode("~/apps "));
+        el.appendChild(dollar.cloneNode(true));
+        el.appendChild(document.createTextNode(" " + typed));
+        if (cursor) { var cu = document.createElement("span"); cu.className = "pc"; el.appendChild(cu); }
       };
       var sweep = function () {
         sweepT.forEach(window.clearTimeout);
@@ -779,20 +797,136 @@
           sweepT.push(window.setTimeout(function () { t.classList.remove("ls-hit"); }, at + (still.matches ? 700 : 420)));
         });
       };
-      pr.addEventListener("click", function () {
-        window.clearTimeout(pT);
-        if (still.matches) { paint("ls", false); sweep(); return; }
-        var n = 0, W = "ls";
-        pr.setAttribute("aria-label", "~/apps $ ls");
-        paint("", true);
-        var type = function () {
-          n++;
-          paint(W.slice(0, n), true);
-          if (n < W.length) pT = window.setTimeout(type, 110);
-          else pT = window.setTimeout(function () { paint(W, false); pr.removeAttribute("aria-label"); sweep(); }, 260);
+      var apps = Array.prototype.map.call(document.querySelectorAll("#grid .tile[href]"), function (t) {
+        return t.getAttribute("href").replace(/^\/+|\/+$/g, "") + "/";
+      }).join("  ");
+      var CMDS = [
+        { c: "ls", out: [[apps, ""]] },
+        { c: "uname -a", out: [["KarPage apps 1.0-omarchy #1 SMP PREEMPT jade-on-ink x86_64 keyboard/Linux", ""]] },
+        { c: "sudo rm -rf boredom", out: [["[sudo] password for guest: ********", "dim"], ["rm: cannot remove 'boredom': permission denied. nice try.", "err"]] }
+      ];
+      var term = document.createElement("div");
+      term.className = "pterm";
+      term.setAttribute("role", "log");
+      term.setAttribute("aria-live", "polite");
+      term.setAttribute("aria-label", "Terminal output");
+      var tin = document.createElement("div");
+      tin.className = "pterm-in";
+      term.appendChild(tin);
+      pr.parentNode.insertBefore(term, pr.nextSibling);
+      var n = 0, busy = false, queue = [], idleLine = null;
+      var hint = function () {
+        var h = n >= CMDS.length ? "\u232b delete|esc exit" : n ? "\u21b5 run again|\u232b delete|esc exit" : "\u21b5 run";
+        pr.setAttribute("data-khint", h);
+        pr.setAttribute("data-term", String(n));
+        document.dispatchEvent(new Event("kp:hint"));
+      };
+      var fit = function () {
+        term.style.height = tin.children.length ? tin.offsetHeight + "px" : "0px";
+        term.classList.toggle("on", tin.children.length > 0);
+      };
+      var wait = function (ms, fn) { timers.push(window.setTimeout(fn, still.matches ? 0 : ms)); };
+      var typeInto = function (el, word, done) {
+        if (still.matches) { paint(el, word, false); done(); return; }
+        var i = 0;
+        paint(el, "", true);
+        var step = function () {
+          i++;
+          paint(el, word.slice(0, i), true);
+          if (i < word.length) wait(i === 1 ? 90 : 55 + Math.random() * 45, step);
+          else wait(200, function () { paint(el, word, false); done(); });
         };
-        pT = window.setTimeout(type, 220);
+        wait(160, step);
+      };
+      var eraseFrom = function (el, word, done) {
+        if (still.matches) { paint(el, "", true); done(); return; }
+        var i = word.length;
+        var step = function () {
+          i--;
+          paint(el, word.slice(0, i), true);
+          if (i > 0) wait(28, step); else wait(90, done);
+        };
+        step();
+      };
+      var outLines = function (k) {
+        return CMDS[k].out.map(function (o) {
+          var d = document.createElement("div");
+          d.className = "pt-o" + (o[1] ? " pt-" + o[1] : "");
+          d.setAttribute("data-step", String(k + 1));
+          d.textContent = o[0];
+          return d;
+        });
+      };
+      var newIdle = function () {
+        idleLine = document.createElement("div");
+        idleLine.className = "pt-p";
+        paint(idleLine, "", true);
+        tin.appendChild(idleLine);
+      };
+      var forward = function (done) {
+        if (n >= CMDS.length) { done(); return; }
+        var k = n, line = k ? idleLine : pr;
+        typeInto(line, CMDS[k].c, function () {
+          if (k) line.setAttribute("data-step", String(k + 1));
+          else { sweep(); pr.removeAttribute("aria-label"); }
+          var os = outLines(k), j = 0;
+          idleLine = null;
+          var add = function () {
+            tin.appendChild(os[j++]);
+            fit();
+            if (j < os.length) wait(320, add);
+            else { n = k + 1; newIdle(); fit(); hint(); done(); }
+          };
+          add();
+        });
+      };
+      var back = function (done) {
+        if (n <= 0) { done(); return; }
+        var k = n - 1;
+        Array.prototype.forEach.call(tin.querySelectorAll('.pt-o[data-step="' + (k + 1) + '"]'), function (o) { tin.removeChild(o); });
+        if (idleLine && idleLine.parentNode) tin.removeChild(idleLine);
+        idleLine = null;
+        fit();
+        if (k === 0) { n = 0; paint(pr, "ls", false); hint(); done(); return; }
+        var line = tin.querySelector('.pt-p[data-step="' + (k + 1) + '"]');
+        line.removeAttribute("data-step");
+        eraseFrom(line, CMDS[k].c, function () { idleLine = line; n = k; fit(); hint(); done(); });
+      };
+      var pump = function () {
+        if (busy || !queue.length) return;
+        busy = true;
+        var fn = queue.shift();
+        fn(function () { busy = false; pump(); });
+      };
+      var reset = function () {
+        timers.forEach(window.clearTimeout);
+        timers = [];
+        queue = [];
+        busy = false;
+        n = 0;
+        idleLine = null;
+        while (tin.firstChild) tin.removeChild(tin.firstChild);
+        paint(pr, "ls", false);
+        fit();
+        hint();
+      };
+      pr.addEventListener("click", function () {
+        if (queue.length < 3) queue.push(forward);
+        pump();
       });
+      document.addEventListener("keydown", function (ev) {
+        if (ev.key !== "Backspace" || ev.defaultPrevented || ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+        var t = ev.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        if (!pr.hasAttribute("data-kcur") || (!n && !busy && !queue.length)) return;
+        ev.preventDefault();
+        if (queue.length < 3) queue.push(back);
+        pump();
+      });
+      /* Leaving the row (arrows, Esc, a click elsewhere) closes the terminal. */
+      new MutationObserver(function () { if (!pr.hasAttribute("data-kcur") && (n || busy)) reset(); }).observe(pr, { attributes: true, attributeFilter: ["data-kcur"] });
+      document.addEventListener("pointerdown", function (ev) { if ((n || busy) && !pr.contains(ev.target) && !term.contains(ev.target)) reset(); });
+      hint();
     }
 
     /* 4. Key row: lights its own keycaps in order. */
@@ -832,7 +966,7 @@
     if (document.querySelector(".live-phone")) rows.push(["CLICK", "outside the live app to leave it"]);
     if (document.querySelector(".lb, .shots, .gallery, .hero-shot")) rows.push(["\u2190 \u2192 + / \u2212", "in the viewer: next shot, zoom"]);
     rows.push(["PGUP PGDN", "scroll; the next arrow starts on screen"], ["TAB", "plain tab order still works"], ["?", "this sheet"]);
-    var eggs = home ? [["CLOCK", "\u21b5 a full clock and month"], ["TITLE", "\u21b5 glitch it"], ["~/apps $", "\u21b5 run ls again"], ["KEY ROW", "\u21b5 a key demo"]] : [];
+    var eggs = home ? [["CLOCK", "\u21b5 try it"], ["TITLE", "\u21b5 try it"], ["~/apps $", "\u21b5 try it"], ["KEY ROW", "\u21b5 try it"]] : [];
     var ov = document.createElement("div");
     ov.className = "ck kx";
     ov.hidden = true;
@@ -869,7 +1003,12 @@
     };
     x.addEventListener("click", close);
     Array.prototype.forEach.call(document.querySelectorAll('.keys kbd[data-key="?"]'), function (k) {
-      k.addEventListener("click", function (ev) { ev.stopPropagation(); open(); });
+      k.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        k.classList.add("hit");
+        window.setTimeout(function () { k.classList.remove("hit"); }, 160);
+        open();
+      });
     });
     ov.addEventListener("click", function (ev) { if (ev.target === ov) close(); });
     window.addEventListener("keydown", function (ev) {
@@ -910,7 +1049,7 @@
     var virt = !!box.closest("[aria-hidden='true']");
     var f = virt ? null : act || box;
     var it = { box: box, f: f, act: !!act, virt: virt, g: null, hov: box.matches(HOV) || (!!act && !virt && box.tagName === "A"),
-      tight: box.matches(TIGHT), bar: !!box.closest(".bar"), hint: box.getAttribute("data-khint"), at: box.getAttribute("data-khint-at") || "i" };
+      tight: box.matches(TIGHT), bar: !!box.closest(".bar"), hint: box.getAttribute("data-khint"), at: box.getAttribute("data-khint-at") || "i", q: box.hasAttribute("data-khint-q") };
     if (!it.hint && box.matches("figure.frame") && act && act.tagName === "A") it.hint = "\u21b5 view";
     if (!it.hint && act && act.matches && act.matches("video[data-kf]")) it.hint = "\u21b5 play / pause";
     if (f) {
@@ -970,13 +1109,19 @@
     box.style.transform = "translate(" + Math.round(r.left + ox - pad) + "px," + Math.round(r.top + oy - pad) + "px)";
     box.style.width = Math.round(r.width + pad * 2) + "px";
     box.style.height = Math.round(r.height + pad * 2) + "px";
-    hintEl.textContent = cur.hint || "";
+    var hv = cur.box.getAttribute("data-khint") || "", lab = cur.box.hasAttribute("data-khint-l");
+    while (hintEl.firstChild) hintEl.removeChild(hintEl.firstChild);
+    if (lab) hv.split("|").forEach(function (c) { var b = document.createElement("b"); b.textContent = c; hintEl.appendChild(b); });
+    else hintEl.textContent = hv;
     hintEl.setAttribute("data-at", cur.at);
-    box.classList.toggle("hinted", !!cur.hint && byKey);
+    hintEl.classList.toggle("kq", !!cur.q);
+    hintEl.classList.toggle("kl", lab);
+    box.classList.toggle("hinted", !!hv && byKey);
     if (jump) { void box.offsetWidth; box.classList.add("go"); }
     box.classList.add("on");
   }
   function later() { if (!queued) queued = window.requestAnimationFrame(place); }
+  document.addEventListener("kp:hint", later);
   function setCur(it, focus, how) {
     if (cur && cur !== it) cur.box.removeAttribute("data-kcur");
     cur = it;

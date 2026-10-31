@@ -328,9 +328,9 @@ def board(apps):
         if key != "all" and len(hits) <= 2:
             n += ": " + ", ".join(a["name"] for a in hits)
         boxes.append('<button class="stat" type="button" aria-pressed="false" aria-controls="panel" data-filter="%s" data-hint="&gt; %s — %s">'
-                     '<span class="led" aria-hidden="true"></span><span class="stat-k">%s</span><span class="stat-v">%s%d</span></button>'
+                     '<span class="led" aria-hidden="true"></span><span class="stat-k">%s</span><span class="stat-v">%d%s</span></button>'
                      % (key, e("all apps" if key == "all" else label), e(n),
-                        e(label), glyph("omarchy").replace('class="g"', 'class="g sg"', 1) if key == "marketplace" else "", len(hits)))
+                        e(label), len(hits), glyph("omarchy").replace('class="g"', 'class="g sg"', 1) if key == "marketplace" else ""))
         rows = []
         for a in hits:
             line, href = row_line(key, a)
@@ -394,7 +394,7 @@ def index(apps):
 <div class="mhead">
 <p class="prompt">~/apps <span>$</span> ls</p>
 <h1>Kar Page Apps</h1>
-<p class="clock" aria-hidden="true"><b>local</b><time>--- -- --- ---- · --:--</time></p>
+<p class="clock" aria-hidden="true"><b><svg class="kpm" viewBox="60 60 392 392" width="13" height="13" fill="none" stroke-linecap="square" aria-hidden="true" focusable="false"><path stroke="#00a86b" vector-effect="non-scaling-stroke" d="M64 168V64h104M344 64h104v104M448 344v104H344M168 448H64V344"/><path stroke="#3fe0a4" vector-effect="non-scaling-stroke" d="M180 120V392M180 255A86 86 0 1 1 266 341H180M240 210V300M300 210L244 258L302 300"/></svg>local</b><time>--- -- --- ---- · --:--</time></p>
 </div>
 <p class="lede twl" aria-hidden="true"><span class="tw p" data-tw="%s"><span class="sl">#</span>%s<span class="cursor"></span></span></p>
 <p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg ks"><span class="ksw"><kbd class="w ent" data-key="Enter"><svg class="kl" viewBox="0 0 84 28" preserveAspectRatio="none" focusable="false"><path d="M.5 .5H83.5V27.5H16.5V15.5H.5Z"/></svg><span>↲ ENTER</span></kbd><kbd class="w spc" data-key=" "><span>SPACE</span></kbd></span><em>select</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span><span class="kg"><kbd data-key="?">?</kbd><em>keys</em></span></p>

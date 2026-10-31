@@ -170,7 +170,7 @@ img, video, picture, figure.frame, .lb { -webkit-touch-callout: none; -webkit-us
 .stat:hover .stat-k { color: var(--fg); }
 .stat-k { color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.15s; }
 .stat-v { font-size: 30px; line-height: 1; color: var(--jade-hi); }
-.stat-v .sg { width: 0.74em; height: 0.74em; margin-right: 0.26em; vertical-align: 0; }
+.stat-v .sg { width: 0.74em; height: 0.74em; margin-left: 0.26em; vertical-align: 0; }
 .led {
   position: absolute;
   top: 12px;
@@ -586,13 +586,10 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
 .keys kbd.ent.hit, .keys kbd.spc.hit { background: none; box-shadow: none; }
 .keys kbd.ent.hit .kl { fill: var(--jade); filter: drop-shadow(0 0 6px rgba(63, 224, 164, 0.45)); }
 .keys kbd.spc.hit { background: var(--jade); }
-.keys kbd.ent { animation: kswap 9s ease-in-out infinite; }
-.keys kbd.spc { animation: kswap 9s ease-in-out -4.5s infinite; }
-@keyframes kswap { 0%, 44% { opacity: 1; } 50%, 94% { opacity: 0; } 100% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) {
-  .keys kbd.ent { animation: none; }
-  .keys kbd.spc { animation: none; visibility: hidden; }
-}
+.keys kbd.ent, .keys kbd.spc { transition: opacity 0.12s linear; }
+.keys .ksw.sp kbd.ent { opacity: 0; }
+.keys .ksw.sp kbd.spc { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .keys kbd.ent, .keys kbd.spc { transition: none; } }
 .keys kbd.hit {
   transform: translateY(2px);
   background: var(--jade);
@@ -642,6 +639,14 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
 .kcur-h[data-at="b"] { top: 100%; margin-top: 8px; }
 .kcur-h:empty { display: none; }
 .kcur.hinted .kcur-h { opacity: 1; }
+/* Easter-egg stops only show a small retro ENTER cap, so the trick stays a surprise. */
+.kcur-h.kq { width: 22px; height: 15px; padding: 0; background: none; color: var(--jade); font-size: 9px; line-height: 1; letter-spacing: 0; text-align: right; }
+.kcur-h.kq::before, .kcur-h.kq::after { content: ""; position: absolute; inset: 0; z-index: -1; }
+.kcur-h.kq::before { background: var(--jade); opacity: 0.55; clip-path: polygon(0 0, 22px 0, 22px 15px, 6px 15px, 6px 8px, 0 8px); }
+.kcur-h.kq::after { background: var(--ink); clip-path: polygon(1px 1px, 21px 1px, 21px 14px, 7px 14px, 7px 7px, 1px 7px); }
+.kcur-h.kq { isolation: isolate; padding: 4px 4px 0 0; box-sizing: border-box; }
+.kcur.hinted .kcur-h.kq { opacity: 0.8; }
+.kcur-h.kq[data-at="r"] { margin-top: -8px; }
 .mast .clock[data-kf], .mast h1[data-kf], .mast .prompt[data-kf] { cursor: pointer; }
 .mast .prompt .pc { display: inline-block; width: 0.6em; height: 1em; margin-left: 1px; vertical-align: -0.15em; background: var(--jade-hi); box-shadow: 0 0 6px rgba(63, 224, 164, 0.7); }
 /* title glitch: a terminal scramble with a split jade ghost (transform and shadow only, no layout change) */
@@ -828,3 +833,25 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .note a:hover, .note a:focus-visible { border-bottom-color: #fff; }
 #install .btn-open { margin-top: 18px; }
 @media (max-width: 360px) { .clock b { display: none; } }
+/* ~/apps $ mini terminal: an overlay under the prompt (absolute, so the page never moves) */
+.mhead { position: relative; }
+.pterm { position: absolute; grid-area: prompt; top: 100%; left: 0; z-index: 6; width: max-content; max-width: min(680px, calc(100vw - 40px)); height: 0; overflow: hidden; visibility: hidden; opacity: 0; margin-top: -4px; background: var(--bg); border-left: 1px solid var(--line); border-bottom: 1px solid var(--line-dim); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.85); transition: height 0.2s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.12s linear, visibility 0s linear 0.2s; }
+.pterm.on { visibility: visible; opacity: 1; transition: height 0.2s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.12s linear; }
+.pterm-in { padding: 4px 12px 8px; font: 12px/1.6 var(--mono); letter-spacing: 0.04em; color: var(--fg); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pterm .pt-p { color: var(--muted); letter-spacing: 0.08em; }
+.pterm .pt-p span { color: var(--jade-hi); }
+.pterm .pt-p .pc { display: inline-block; width: 0.6em; height: 1em; margin-left: 1px; vertical-align: -0.15em; background: var(--jade-hi); box-shadow: 0 0 6px rgba(63, 224, 164, 0.7); }
+.pterm .pt-dim { color: var(--muted); }
+.pterm .pt-err { color: #ff5f56; text-shadow: 0 0 8px rgba(255, 95, 86, 0.35); }
+/* labelled quirk hints (the terminal): small outlined dim keycaps, never a filled tag */
+.kcur-h.kl { display: flex; gap: 6px; padding: 0; background: none; color: var(--jade); font-size: 9px; letter-spacing: 0.1em; text-transform: none; margin-top: -8px; }
+.kcur-h.kl b { font-weight: 400; padding: 2px 5px 1px; border: 1px solid var(--line); background: var(--bg); line-height: 1.2; }
+.kcur.hinted .kcur-h.kl { opacity: 0.8; }
+@media (prefers-reduced-motion: reduce) { .pterm, .pterm.on { transition: none; } }
+/* Kar Page line mark: hairline strokes (non-scaling, crisp at every DPR) */
+.clock b { display: flex; align-items: center; gap: 6px; }
+.clock .kpm { display: block; flex: none; width: 13px; height: 13px; }
+.ck-l { display: flex; align-items: center; gap: 10px; }
+.ck-l .kpm-l { display: block; flex: none; width: 26px; height: 26px; }
+.kpm path:first-child, .kpm-l path:first-child { stroke: var(--jade); }
+.kpm path:last-child, .kpm-l path:last-child { stroke: var(--jade-hi); }
