@@ -352,6 +352,12 @@ def page(app, apps):
     section("features", "FEATURES", '<div class="grid">%s</div>' % "".join(
         '<div class="feat"><b>%s</b><p>%s</p></div>' % (e(t), e(p)) for t, p in app["features"]))
     nav.append(("features", "FEATURES"))
+    if app.get("pwa"):
+        w = app["pwa"]
+        cards = "".join('<div class="feat steps-card"><b>%s</b><ol class="steps">%s</ol></div>'
+                        % (e(t), "".join("<li>%s</li>" % e(x) for x in steps)) for t, steps in w["cards"])
+        section("install", "INSTALL", '<div class="grid">%s</div><p class="note">%s</p>' % (cards, e(w["note"])))
+        nav.append(("install", "INSTALL"))
     rest = [] if media_top(app) else shots[1:]
     if rest:
         figs = "".join('<figure class="frame"><a href="%s">%s</a><figcaption>%s</figcaption></figure>'
