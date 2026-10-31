@@ -851,6 +851,11 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 
 /* Kar Page mark: the original logo, traced 1:1 from the master file; tint and sheen only */
 .kpm-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
-.clock b .kpm { flex: none; margin-right: 6px; fill: var(--jade-hi); opacity: 0.92; }
+.ckrow { grid-area: clock; display: flex; align-items: flex-start; gap: 6px; }
+.ckrow .clock { grid-area: auto; }
+.kpbox { flex: none; box-sizing: border-box; width: 29px; height: 29px; padding: 1px 0; display: flex; justify-content: center; border: 1px solid var(--line); pointer-events: none; }
+.kpbox .kpm { display: block; height: 100%; width: auto; aspect-ratio: 2500 / 4172; fill: var(--jade-hi); filter: drop-shadow(0 0 3px rgba(63, 224, 164, 0.22)); }
+@media (max-width: 760px) { .ckrow { align-self: center; margin-bottom: 10px; } .ckrow .clock { margin-bottom: 0; } .kpbox { width: 23px; height: 23px; } }
+@media (max-width: 340px) { .kpbox { display: none; } }
 .ck-l { display: inline-flex; align-items: center; gap: 12px; }
 .ck-l .kpm-l { flex: none; fill: url(#kpm-g); filter: drop-shadow(0 0 6px rgba(63, 224, 164, 0.28)); }

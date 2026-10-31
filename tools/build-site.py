@@ -395,7 +395,7 @@ def index(apps):
 <div class="mhead">
 <p class="prompt">~/apps <span>$</span> ls</p>
 <h1>Kar Page Apps</h1>
-<p class="clock" aria-hidden="true"><b><svg class="kpm" viewBox="0 0 2500 4172" width="7.8" height="13" aria-hidden="true" focusable="false"><use href="#kpm"/></svg>local</b><time>--- -- --- ---- · --:--</time></p>
+<div class="ckrow"><span class="kpbox" aria-hidden="true"><svg class="kpm" viewBox="0 0 2500 4172" aria-hidden="true" focusable="false"><use href="#kpm"/></svg></span><p class="clock" aria-hidden="true"><b>local</b><time>--- -- --- ---- · --:--</time></p></div>
 </div>
 <p class="lede twl" aria-hidden="true"><span class="tw p" data-tw="%s"><span class="sl">#</span>%s<span class="cursor"></span></span></p>
 <p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg ks"><span class="ksw"><kbd class="w ent" data-key="Enter"><svg class="kl" viewBox="0 0 84 28" preserveAspectRatio="none" focusable="false"><path d="M.5 .5H83.5V27.5H16.5V15.5H.5Z"/></svg><span>↲ ENTER</span></kbd><kbd class="w spc" data-key=" "><span>SPACE</span></kbd></span><em>select</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span><span class="kg"><kbd data-key="?">?</kbd><em>keys</em></span></p>
