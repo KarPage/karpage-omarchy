@@ -402,6 +402,26 @@
      "avif": true,
      "cap": "GRID SCAN"
     }
+   ],
+   "thumbs": [
+    {
+     "id": "kp-t1-grid",
+     "w": 122,
+     "h": 240,
+     "alt": "Kar Page home grid of car spots"
+    },
+    {
+     "id": "kp-t2-porsche",
+     "w": 122,
+     "h": 240,
+     "alt": "Kar Page post of a green 1956 Porsche"
+    },
+    {
+     "id": "kp-t3-m3",
+     "w": 122,
+     "h": 240,
+     "alt": "Kar Page post of a red BMW M3"
+    }
    ]
   },
   {

@@ -309,7 +309,11 @@ def board(apps):
 def index(apps):
     tiles = []
     for i, a in enumerate(apps):
-        if a["shots"]:
+        if a.get("thumbs"):
+            media = '<div class="tile-shot trio">%s</div>' % "".join(
+                '<img src="img/%s.webp" srcset="img/%s.webp 1x, img/%s-2x.webp 2x" alt="%s" width="%d" height="%d" decoding="async" loading="lazy">'
+                % (t["id"], t["id"], t["id"], e(t["alt"]), t["w"], t["h"]) for t in a["thumbs"])
+        elif a["shots"]:
             s = a["shots"][0]
             media = '<div class="tile-shot%s">%s</div>' % (" phone" if a.get("frame") == "phone" else "", picture(s, i == 0))
         else:
