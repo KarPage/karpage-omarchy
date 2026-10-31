@@ -624,7 +624,7 @@
       ov.setAttribute("aria-label", "Local time and calendar");
       var cells = "";
       for (var c = 0; c < 42; c++) cells += '<span class="ck-d" role="gridcell" id="ckd' + c + '"></span>';
-      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="60 60 392 392" width="26" height="26" fill="none" stroke-linecap="square" aria-hidden="true" focusable="false"><path stroke="#00a86b" vector-effect="non-scaling-stroke" d="M64 160V64h96M352 64h96v96M448 352v96h-96M160 448H64v-96"/><path stroke="#3fe0a4" vector-effect="non-scaling-stroke" d="M170 120V392M204 120V196A88 88 0 1 1 268 344H204V392M246 214V300M304 214L250 258L306 300"/></svg>LOCAL TIME</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span>LOCAL TIME</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
         '<p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p>' +
         '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><b class="ck-m" aria-live="polite"></b><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
         '<div class="ck-wd" aria-hidden="true"><span>su</span><span>mo</span><span>tu</span><span>we</span><span>th</span><span>fr</span><span>sa</span></div>' +

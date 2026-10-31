@@ -848,10 +848,3 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .kcur-h.kl b { font-weight: 400; padding: 2px 5px 1px; border: 1px solid var(--line); background: var(--bg); line-height: 1.2; }
 .kcur.hinted .kcur-h.kl { opacity: 0.8; }
 @media (prefers-reduced-motion: reduce) { .pterm, .pterm.on { transition: none; } }
-/* Kar Page line mark: hairline strokes (non-scaling, crisp at every DPR) */
-.clock b { display: flex; align-items: center; gap: 6px; }
-.clock .kpm { display: block; flex: none; width: 13px; height: 13px; }
-.ck-l { display: flex; align-items: center; gap: 10px; }
-.ck-l .kpm-l { display: block; flex: none; width: 26px; height: 26px; }
-.kpm path:first-child, .kpm-l path:first-child { stroke: var(--jade); }
-.kpm path:last-child, .kpm-l path:last-child { stroke: var(--jade-hi); }
