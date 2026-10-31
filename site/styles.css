@@ -263,6 +263,8 @@ span.row-ext { color: var(--muted); }
 .tile-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
 .tile-shot.phone { background: radial-gradient(var(--grid) 1px, transparent 1px) 0 0 / 14px 14px, #000; }
 .tile-shot.phone img { width: auto; height: 100%; margin: 0 auto; object-fit: contain; border-left: 1px solid var(--line-dim); border-right: 1px solid var(--line-dim); }
+.tile-shot.trio { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px; background: radial-gradient(var(--grid) 1px, transparent 1px) 0 0 / 14px 14px, #000; }
+.tile-shot.trio img { flex: 0 1 auto; width: auto; height: 100%; min-width: 0; max-width: calc((100% - 16px) / 3); object-fit: contain; border: 1px solid var(--line); border-radius: 0; }
 .tile-body { position: relative; padding: 16px 16px 18px; flex: 1; }
 .tile-body h2 { margin: 0 0 6px; font-size: 20px; font-weight: 400; color: var(--fg); }
 .tile-body p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
