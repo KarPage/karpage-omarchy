@@ -4,7 +4,7 @@
    "slug": "omaraptor",
    "name": "OmaRaptor Player",
    "mark": "raptor",
-   "status": "in review",
+   "status": "marketplace",
    "license": "MIT",
    "short": "YouTube video player for Omarchy and Linux.",
    "tag": "OMARCHY · ARCH · LINUX · MPV · YT-DLP · MIT",
@@ -147,7 +147,7 @@
     "release": "v1.0.3",
     "measured": "2026-10-30"
    },
-   "review": "https://github.com/omacom/omarchy-plugin-marketplace/issues/13398",
+   "listing": "https://plugins.omarchy.org/plugin.html?id=io.github.karpage.omaraptor",
    "reel": {
     "webm": "media/omaraptor-reel.webm",
     "mp4": "media/omaraptor-reel.mp4",
