@@ -37,3 +37,10 @@ Each app is one object in `apps`. Only add an app you have a real source for. Sc
 ## Rules
 
 Square corners only. Demo data only in screenshots. No maps, flags, news or politics. Keep the CSP in `vercel.json` and the page meta strict: no inline scripts or styles.
+
+## Icon credits
+
+- Omarchy mark: from the Omarchy project (MIT, github.com/basecamp/omarchy), vector via Simple Icons. Unofficial, not affiliated.
+- Tux silhouette: Simple Icons "linux" glyph, based on Tux by Larry Ewing (lewing@isc.tamu.edu), drawn with The GIMP.
+- OmaRaptor jet: an original drawing for this site.
+- No Arch Linux logo is used: the Arch trademark policy requires the ™ mark with the logo and limits combining it with other marks.
