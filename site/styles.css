@@ -381,6 +381,9 @@ section h2 span { margin-right: 10px; color: var(--jade-hi); }
 .feat.soon { border-style: dashed; }
 
 .gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.gallery.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.gallery.g4 figcaption { padding: 7px 8px; font-size: 11px; letter-spacing: 0.1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gallery.g4 img { display: block; width: 100%; height: auto; aspect-ratio: 320 / 631; border-radius: 0; }
 .gallery figcaption { padding: 8px 10px; border-top: 1px solid var(--line-dim); background: var(--well); color: var(--muted); font-size: 12px; letter-spacing: 0.14em; }
 
 .chips { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; }
@@ -434,6 +437,7 @@ section h2 span { margin-right: 10px; color: var(--jade-hi); }
   .rows li { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
   .row-ext { grid-column: 1 / -1; }
   .tiles, .grid, .gallery, .others { grid-template-columns: minmax(0, 1fr); }
+  .gallery.g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .tiles { gap: 14px; }
   .bar { padding: 10px 16px; }
   .bar nav { display: none; }
