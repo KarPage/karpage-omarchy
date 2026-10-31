@@ -536,6 +536,24 @@
   Array.prototype.forEach.call(document.querySelectorAll(".live-phone"), function (v) {
     var f = v.querySelector("iframe");
     v.addEventListener("click", function (ev) { if (f && ev.target === v) f.focus(); });
+    if (!f) return;
+    /* The app is another origin, so its key presses never reach this page. While it has focus a small tag
+       says how to leave: Shift+Tab lands back on this frame (the next arrow then carries on down the page),
+       and Esc does the same once the app posts {type: "kp:escape"} to its parent. */
+    var tag = document.createElement("span");
+    tag.className = "live-x";
+    tag.setAttribute("aria-hidden", "true");
+    tag.innerHTML = "<kbd>\u21e7 TAB</kbd> back to the page";
+    v.appendChild(tag);
+    var inside = function () { v.classList.toggle("in-app", document.activeElement === f); };
+    window.addEventListener("blur", function () { window.setTimeout(inside, 0); });
+    window.addEventListener("focus", inside);
+    document.addEventListener("focusin", inside);
+    window.addEventListener("message", function (ev) {
+      if (ev.origin !== "https://karpage.app" || ev.source !== f.contentWindow) return;
+      var d = ev.data;
+      if (d === "kp:escape" || (d && d.type === "kp:escape")) { v.focus({ preventScroll: true }); inside(); }
+    });
   });
   /* OPEN FULL APP and OPEN KARPAGE.APP are links styled as buttons, so Space and Shift+Space press it too (Enter already does). */
   Array.prototype.forEach.call(document.querySelectorAll(".live-open, .btn-open"), function (a) {
@@ -547,32 +565,361 @@
     });
   });
 
-  /* Selection cursor: one box that follows the mouse and the arrow keys. */
   var home = document.body.classList.contains("home");
-  var SPEC = home
-    ? [".board .stat", "#panel .rows > li", "#grid > li"]
-    : [".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, .grid > .feat, section > .feat, .code, .others > li, .live-phone, .live-open, .btn-open"];
-  var groups = [], all = [], cur = null, lastStat = null;
-  SPEC.forEach(function (sel, g) {
-    var list = [];
-    Array.prototype.forEach.call(document.querySelectorAll(sel), function (box) {
-      var f = box.matches("a[href], button, [data-kf]") ? box : box.querySelector("a[href], button, input, video[data-kf]");
-      if (!f && !home) { f = box; f.tabIndex = -1; }
-      if (!f) return;
-      f.setAttribute("data-k", "");
-      if (home) f.tabIndex = list.length ? -1 : 0;
-      var it = { box: box, f: f, g: g };
-      list.push(it);
-      all.push(it);
+  var still = matchMedia("(prefers-reduced-motion: reduce)");
+
+  /* Home quirks, all keyboard-discoverable (focus hints on the cursor) and clickable:
+     the clock opens a big clock and month calendar, the title glitches, the prompt re-runs ls,
+     and the key row demos itself. ASCII only and monospace, so nothing changes size (zero layout shift). */
+  if (home) (function () {
+    var two = function (v) { return (v < 10 ? "0" : "") + v; };
+    var mark = function (el, hint, at) {
+      el.setAttribute("data-kf", "");
+      el.setAttribute("data-khint", hint);
+      el.setAttribute("data-khint-at", at);
+    };
+
+    /* 1. Clock -> big clock and month calendar. */
+    var ck = document.querySelector(".mast .clock");
+    if (ck) {
+      ck.removeAttribute("aria-hidden");
+      ck.setAttribute("role", "button");
+      ck.setAttribute("aria-haspopup", "dialog");
+      ck.setAttribute("aria-label", "Local time. Open the clock and calendar");
+      ck.tabIndex = -1;
+      mark(ck, "\u21b5 expand", "b");
+      var DAY = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      var MON = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+      var ov = document.createElement("div");
+      ov.className = "ck";
+      ov.hidden = true;
+      ov.setAttribute("role", "dialog");
+      ov.setAttribute("aria-modal", "true");
+      ov.setAttribute("aria-label", "Local time and calendar");
+      var cells = "";
+      for (var c = 0; c < 42; c++) cells += '<span class="ck-d" role="gridcell" id="ckd' + c + '"></span>';
+      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span>LOCAL TIME</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+        '<p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p>' +
+        '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><b class="ck-m" aria-live="polite"></b><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
+        '<div class="ck-wd" aria-hidden="true"><span>su</span><span>mo</span><span>tu</span><span>we</span><span>th</span><span>fr</span><span>sa</span></div>' +
+        '<div class="ck-grid" role="grid" tabindex="0" aria-label="Month">' + cells + '</div>' +
+        '<p class="ck-foot"></p><p class="ck-keys" aria-hidden="true">\u2190\u2191\u2193\u2192 day \u00b7 PGUP PGDN month \u00b7 T today \u00b7 ESC close</p></div>';
+      document.body.appendChild(ov);
+      var q = function (s) { return ov.querySelector(s); };
+      var oBox = q(".ck-box"), oHM = q(".ck-hm"), oS = q(".ck-s"), oDate = q(".ck-date"), oM = q(".ck-m"), oGrid = q(".ck-grid"), oFoot = q(".ck-foot");
+      var oX = q(".ck-x"), oPrev = q(".ck-prev"), oNext = q(".ck-next"), dCells = ov.querySelectorAll(".ck-d");
+      var sel = null, oT = 0, oBack = null;
+      var same = function (a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); };
+      var isoWeek = function (d) {
+        var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        var n = t.getUTCDay() || 7;
+        t.setUTCDate(t.getUTCDate() + 4 - n);
+        return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7);
+      };
+      var drawCal = function () {
+        var now = new Date(), y = sel.getFullYear(), m = sel.getMonth();
+        var first = new Date(y, m, 1), start = new Date(y, m, 1 - first.getDay());
+        oM.textContent = MON[m].toUpperCase() + " " + y;
+        for (var i = 0; i < 42; i++) {
+          var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i), el = dCells[i];
+          el.textContent = d.getDate();
+          el.className = "ck-d" + (d.getMonth() !== m ? " out" : "") + (same(d, now) ? " today" : "") + (same(d, sel) ? " sel" : "");
+          el.setAttribute("aria-selected", String(same(d, sel)));
+          el.setAttribute("aria-label", DAY[d.getDay()] + " " + d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear() + (same(d, now) ? ", today" : ""));
+          el.setAttribute("data-i", String(i));
+          if (same(d, sel)) oGrid.setAttribute("aria-activedescendant", el.id);
+        }
+        var y0 = new Date(y, 0, 1), doy = Math.round((new Date(y, m, sel.getDate()) - y0) / 864e5) + 1;
+        var len = Math.round((new Date(y + 1, 0, 1) - y0) / 864e5);
+        var gap = Math.round((new Date(y, m, sel.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
+        oFoot.textContent = "> day " + doy + " of " + len + " \u00b7 week " + isoWeek(sel) + " \u00b7 " +
+          (gap === 0 ? "today" : gap > 0 ? "in " + gap + (gap === 1 ? " day" : " days") : -gap + (gap === -1 ? " day ago" : " days ago"));
+      };
+      var tickBig = function () {
+        var d = new Date();
+        var cc = document.createElement("span");
+        cc.className = "cc";
+        cc.textContent = ":";
+        oHM.textContent = two(d.getHours());
+        oHM.appendChild(cc);
+        oHM.appendChild(document.createTextNode(two(d.getMinutes())));
+        oS.textContent = ":" + two(d.getSeconds());
+        oDate.textContent = DAY[d.getDay()] + " \u00b7 " + d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear();
+        window.clearTimeout(oT);
+        oT = window.setTimeout(tickBig, 1000 - d.getMilliseconds() + 20);
+      };
+      var shift = function (days, months) {
+        var y = sel.getFullYear(), m = sel.getMonth() + (months || 0), dd = sel.getDate();
+        if (months) dd = Math.min(dd, new Date(y, m + 1, 0).getDate());
+        sel = new Date(y, m, dd + (days || 0));
+        drawCal();
+      };
+      var ckOpen = function () {
+        if (!ov.hidden) return;
+        oBack = document.activeElement;
+        var now = new Date();
+        sel = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        tickBig();
+        drawCal();
+        var sw = window.innerWidth - document.documentElement.clientWidth;
+        document.documentElement.style.setProperty("--sbw", sw + "px");
+        document.documentElement.classList.add("lb-on");
+        ov.hidden = false;
+        /* Pop out of the small clock: start at its spot and scale, then settle in the centre. */
+        var a = ck.getBoundingClientRect(), b = oBox.getBoundingClientRect();
+        oBox.style.setProperty("--ckx", Math.round(a.left + a.width / 2 - (b.left + b.width / 2)) + "px");
+        oBox.style.setProperty("--cky", Math.round(a.top + a.height / 2 - (b.top + b.height / 2)) + "px");
+        ov.classList.remove("in");
+        void oBox.offsetWidth;
+        if (!still.matches) ov.classList.add("in");
+        oGrid.focus({ preventScroll: true });
+      };
+      var ckClose = function () {
+        if (ov.hidden) return;
+        ov.hidden = true;
+        ov.classList.remove("in");
+        window.clearTimeout(oT);
+        document.documentElement.classList.remove("lb-on");
+        (oBack && oBack !== document.body && oBack.focus ? oBack : ck).focus({ preventScroll: true });
+        oBack = null;
+      };
+      ck.addEventListener("click", ckOpen);
+      oX.addEventListener("click", ckClose);
+      oPrev.addEventListener("click", function () { shift(0, -1); });
+      oNext.addEventListener("click", function () { shift(0, 1); });
+      ov.addEventListener("click", function (ev) {
+        if (ev.target === ov) { ckClose(); return; }
+        var d = ev.target.closest && ev.target.closest(".ck-d");
+        if (d) {
+          var y = sel.getFullYear(), m = sel.getMonth(), first = new Date(y, m, 1);
+          sel = new Date(y, m, 1 - first.getDay() + Number(d.getAttribute("data-i")));
+          drawCal();
+          oGrid.focus({ preventScroll: true });
+        }
+      });
+      window.addEventListener("keydown", function (ev) {
+        if (ov.hidden) return;
+        var k = ev.key, onBtn = document.activeElement && document.activeElement.tagName === "BUTTON";
+        var STEP = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+        ev.stopPropagation();
+        if (k === "Escape") { ev.preventDefault(); ckClose(); }
+        else if (STEP[k]) { ev.preventDefault(); shift(STEP[k], 0); }
+        else if (k === "PageUp" || k === "PageDown") { ev.preventDefault(); shift(0, k === "PageUp" ? -1 : 1); }
+        else if (k === "Home" || k === "t" || k === "T") { ev.preventDefault(); var n = new Date(); sel = new Date(n.getFullYear(), n.getMonth(), n.getDate()); drawCal(); }
+        else if (k === "Tab") {
+          ev.preventDefault();
+          var f = [oX, oPrev, oGrid, oNext], at = f.indexOf(document.activeElement);
+          f[(at + (ev.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+        } else if ((k === "Enter" || k === " ") && !onBtn) ev.preventDefault();
+      }, true);
+      document.addEventListener("focusin", function (ev) {
+        if (!ov.hidden && !ov.contains(ev.target)) oGrid.focus({ preventScroll: true });
+      });
+      document.addEventListener("visibilitychange", function () { if (!ov.hidden && !document.hidden) tickBig(); });
+    }
+
+    /* 2. Title: a quick terminal scramble that resolves back, left to right. */
+    var h1 = document.querySelector(".mast h1");
+    if (h1) {
+      h1.tabIndex = -1;
+      mark(h1, "\u21b5 glitch", "r");
+      var orig = h1.textContent, gT = 0, G = "#%&*+<>/\\=_01$@!?";
+      h1.addEventListener("click", function () {
+        window.clearInterval(gT);
+        h1.classList.remove("glitch", "flash");
+        void h1.offsetWidth;
+        if (still.matches) { h1.classList.add("flash"); return; }
+        var f = 0, N = 16;
+        h1.setAttribute("aria-label", orig);
+        h1.classList.add("glitch");
+        gT = window.setInterval(function () {
+          f++;
+          var s = "";
+          for (var i = 0; i < orig.length; i++) {
+            var ch = orig.charAt(i);
+            s += ch === " " || i < (f / N) * orig.length - 1 ? ch : G.charAt((Math.random() * G.length) | 0);
+          }
+          h1.textContent = f >= N ? orig : s;
+          if (f >= N) { window.clearInterval(gT); h1.classList.remove("glitch"); h1.removeAttribute("aria-label"); }
+        }, 30);
+      });
+    }
+
+    /* 3. Prompt: re-types `ls`, then the listing sweeps across the app cards. */
+    var pr = document.querySelector(".mast .prompt");
+    if (pr) {
+      pr.tabIndex = -1;
+      mark(pr, "\u21b5 run", "r");
+      var dollar = pr.querySelector("span"), pT = 0, sweepT = [];
+      var paint = function (typed, cursor) {
+        /* Fresh nodes each frame, so the moving cursor never counts as a layout shift. */
+        while (pr.firstChild) pr.removeChild(pr.firstChild);
+        pr.appendChild(document.createTextNode("~/apps "));
+        pr.appendChild(dollar.cloneNode(true));
+        pr.appendChild(document.createTextNode(" " + typed));
+        if (cursor) { var cu = document.createElement("span"); cu.className = "pc"; pr.appendChild(cu); }
+      };
+      var sweep = function () {
+        sweepT.forEach(window.clearTimeout);
+        sweepT = [];
+        var ts = Array.prototype.filter.call(document.querySelectorAll("#grid > li:not([hidden]) .tile"), function (t) { return t.getClientRects().length; });
+        ts.forEach(function (t, i) {
+          var at = still.matches ? 0 : i * 80;
+          sweepT.push(window.setTimeout(function () { t.classList.add("ls-hit"); }, at));
+          sweepT.push(window.setTimeout(function () { t.classList.remove("ls-hit"); }, at + (still.matches ? 700 : 420)));
+        });
+      };
+      pr.addEventListener("click", function () {
+        window.clearTimeout(pT);
+        if (still.matches) { paint("ls", false); sweep(); return; }
+        var n = 0, W = "ls";
+        pr.setAttribute("aria-label", "~/apps $ ls");
+        paint("", true);
+        var type = function () {
+          n++;
+          paint(W.slice(0, n), true);
+          if (n < W.length) pT = window.setTimeout(type, 110);
+          else pT = window.setTimeout(function () { paint(W, false); pr.removeAttribute("aria-label"); sweep(); }, 260);
+        };
+        pT = window.setTimeout(type, 220);
+      });
+    }
+
+    /* 4. Key row: lights its own keycaps in order. */
+    var kr = document.querySelector(".mast .keys");
+    if (kr) {
+      mark(kr, "\u21b5 demo", "r");
+      var kT = [];
+      kr.addEventListener("click", function () {
+        kT.forEach(window.clearTimeout);
+        kT = [];
+        var ks = kr.querySelectorAll("kbd");
+        Array.prototype.forEach.call(ks, function (k, i) {
+          var at = still.matches ? 0 : i * 120;
+          kT.push(window.setTimeout(function () { k.classList.add("hit"); }, at));
+          kT.push(window.setTimeout(function () { k.classList.remove("hit"); }, at + (still.matches ? 600 : 220)));
+        });
+      });
+    }
+  })();
+
+  /* The home tip acknowledges the first arrow press, once. */
+  (function () {
+    var tip = document.querySelector(".ktip");
+    if (!tip) return;
+    var seen = function (ev) {
+      if (!/^Arrow/.test(ev.key)) return;
+      tip.classList.add("got");
+      document.removeEventListener("keydown", seen, true);
+    };
+    document.addEventListener("keydown", seen, true);
+  })();
+
+  /* Press ? anywhere: a cheat sheet of every key on this page, in the clock's frame. Esc, ? or a click outside closes. */
+  (function () {
+    var rows = [["\u2190 \u2191 \u2193 \u2192", "move the jade frame, row by row"], ["\u21b5 / SPACE", "open or play what is framed"], ["ESC", home ? "clear the filter, step back" : "back to all apps"]];
+    if (!home) rows.push(["BACKSPACE", "back to all apps"]);
+    if (document.querySelector(".live-phone")) rows.push(["\u21e7 TAB", "leave the live app, back to its frame"]);
+    if (document.querySelector(".lb, .shots, .gallery, .hero-shot")) rows.push(["\u2190 \u2192 + / \u2212", "in the viewer: next shot, zoom"]);
+    rows.push(["PGUP PGDN", "scroll; the next arrow starts on screen"], ["TAB", "plain tab order still works"], ["?", "this sheet"]);
+    var eggs = home ? [["CLOCK", "\u21b5 a full clock and month"], ["TITLE", "\u21b5 glitch it"], ["~/apps $", "\u21b5 run ls again"], ["KEY ROW", "\u21b5 a key demo"]] : [];
+    var ov = document.createElement("div");
+    ov.className = "ck kx";
+    ov.hidden = true;
+    ov.setAttribute("role", "dialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.setAttribute("aria-label", "Keyboard shortcuts");
+    var dl = function (list) {
+      return '<dl class="kx-l">' + list.map(function (r) { return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>"; }).join("") + "</dl>";
+    };
+    ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span>KEYBOARD</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+      '<p class="kx-p">~/apps <span>$</span> man keys</p>' + dl(rows) +
+      (eggs.length ? '<p class="kx-h">// hidden in plain sight</p>' + dl(eggs) : "") +
+      '<p class="ck-keys" aria-hidden="true">ESC or ? to close</p></div>';
+    document.body.appendChild(ov);
+    var x = ov.querySelector(".ck-x"), back = null;
+    var open = function () {
+      if (!ov.hidden || document.documentElement.classList.contains("lb-on")) return;
+      back = document.activeElement;
+      document.documentElement.style.setProperty("--sbw", (window.innerWidth - document.documentElement.clientWidth) + "px");
+      document.documentElement.classList.add("lb-on");
+      ov.hidden = false;
+      ov.classList.remove("in");
+      void ov.offsetWidth;
+      if (!still.matches) ov.classList.add("in");
+      x.focus({ preventScroll: true });
+    };
+    var close = function () {
+      if (ov.hidden) return;
+      ov.hidden = true;
+      ov.classList.remove("in");
+      document.documentElement.classList.remove("lb-on");
+      if (back && back !== document.body && back.focus) back.focus({ preventScroll: true });
+      back = null;
+    };
+    x.addEventListener("click", close);
+    Array.prototype.forEach.call(document.querySelectorAll('.keys kbd[data-key="?"]'), function (k) {
+      k.addEventListener("click", function (ev) { ev.stopPropagation(); open(); });
     });
-    groups.push(list);
+    ov.addEventListener("click", function (ev) { if (ev.target === ov) close(); });
+    window.addEventListener("keydown", function (ev) {
+      var t = ev.target;
+      if (ov.hidden) {
+        if (ev.key === "?" && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !(t && t.closest && t.closest("input, textarea, select, [contenteditable]"))) {
+          ev.preventDefault();
+          open();
+        }
+        return;
+      }
+      ev.stopPropagation();
+      if (ev.key === "Escape" || ev.key === "?") { ev.preventDefault(); close(); }
+      else if (ev.key === "Tab") { ev.preventDefault(); x.focus(); }
+      else if (ev.key !== "Enter" && ev.key !== " ") ev.preventDefault();
+    }, true);
+    document.addEventListener("focusin", function (ev) { if (!ov.hidden && !ov.contains(ev.target)) x.focus({ preventScroll: true }); });
+  })();
+
+  /* Keyboard cursor: one jade frame that follows the arrow keys, the mouse and focus. Every row of every page
+     is a stop. Rows are read from the layout (stops side by side form a row): Up/Down go to the row above or
+     below, keeping the column; Left/Right go along the row, or to the nearest stop that way in the next row.
+     Enter or Space activates a stop that has an action, Esc goes back. Text stops take focus (tabindex -1, so
+     Tab order is unchanged and screen readers read them); decorative aria-hidden rows only move the frame. */
+  var HOV = home
+    ? ".board .stat, #panel .rows > li > a, #grid > li"
+    : ".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, section .feat, .code, .others > li, .live-phone, .live-open, .btn-open";
+  var STOPS = (home
+    ? [".mast .prompt", ".mast h1", ".mast .clock", ".mast .lede", ".mast .keys", ".board .stat", "#panel .reset", "#panel .panel-body > .panel-h", "#panel .rows > li > a"]
+    : [".bar .brand", ".bar nav a", ".hero .tag", ".hero .title-row", ".hero .tagline", ".hero .live-sub", ".hero .live-desc", ".hero .lede", ".hero .keys", ".act-note", "main section > h2", ".chips > li", "main .note", ".fine > p"]
+  ).concat([HOV, ".foot-brand", ".foot-main > p:not(.foot-brand)", ".foot-note", ".foot-legal > span", ".foot-legal a"]);
+  var TIGHT = ".prompt, .mast h1, .keys, .panel-h, .tag, .title-row, .tagline, .live-sub, .live-desc, .hero .lede, .act-note, section > h2, .note, .fine > p, .foot-brand, .foot-main > p, .foot-legal > span";
+  var ROVE = { stat: ".board .stat", row: "#panel .rows > li > a.row-app", tile: "#grid > li" };
+  var groups = { stat: [], row: [], tile: [] }, all = [], cur = null, lastStat = null, stickyX = null;
+  if (home) Array.prototype.forEach.call(document.querySelectorAll("#panel .panel-body > .panel-h"), function (p) { p.setAttribute("data-kf", ""); });
+  Array.prototype.forEach.call(document.querySelectorAll(STOPS.join(",")), function (box) {
+    var act = box.matches("a[href], button, [data-kf]") ? box : box.querySelector("a[href], button, video[data-kf]");
+    var virt = !!box.closest("[aria-hidden='true']");
+    var f = virt ? null : act || box;
+    var it = { box: box, f: f, act: !!act, virt: virt, g: null, hov: box.matches(HOV) || (!!act && !virt && box.tagName === "A"),
+      tight: box.matches(TIGHT), bar: !!box.closest(".bar"), hint: box.getAttribute("data-khint"), at: box.getAttribute("data-khint-at") || "i" };
+    if (!it.hint && box.matches("figure.frame") && act && act.tagName === "A") it.hint = "\u21b5 view";
+    if (!it.hint && act && act.matches && act.matches("video[data-kf]")) it.hint = "\u21b5 play / pause";
+    if (f) {
+      f.setAttribute("data-k", "");
+      if (!f.hasAttribute("tabindex") && !f.matches("a[href], button, video, iframe")) f.tabIndex = -1;
+    }
+    Object.keys(ROVE).forEach(function (g) {
+      if (home && f && (box.matches(ROVE[g]) || f.matches(ROVE[g]))) { it.g = g; f.tabIndex = groups[g].length ? -1 : 0; groups[g].push(it); }
+    });
+    all.push(it);
   });
   if (!all.length) return;
 
-  var still = matchMedia("(prefers-reduced-motion: reduce)");
   var box = document.createElement("div");
   box.className = "kcur";
   box.setAttribute("aria-hidden", "true");
+  var hintEl = document.createElement("span");
+  hintEl.className = "kcur-h";
+  box.appendChild(hintEl);
   document.body.appendChild(box);
   document.documentElement.classList.add("kc");
 
@@ -582,89 +929,142 @@
     return null;
   }
   function owner(node) {
-    for (var i = 0; i < all.length; i++) if (all[i].box === node || all[i].box.contains(node)) return all[i];
-    return null;
+    var best = null;
+    for (var i = 0; i < all.length; i++) {
+      var it = all[i];
+      if (it.f === node) return it;
+      if ((it.box === node || it.box.contains(node)) && (!best || best.box.contains(it.box))) best = it;
+    }
+    return best;
+  }
+  function rect(it) {
+    if (it.tight) {
+      var rg = document.createRange();
+      rg.selectNodeContents(it.box);
+      var r = rg.getBoundingClientRect();
+      if (r.width && r.height) return r;
+    }
+    return it.box.getBoundingClientRect();
   }
   /* The live app frame has its own hairline, so the ring only joins it once the keyboard is in use. */
-  var keyed = false;
-  document.addEventListener("keydown", function () { if (!keyed) { keyed = true; later(); } }, true);
+  var keyed = false, byKey = false;
+  document.addEventListener("keydown", function () { byKey = true; if (!keyed) keyed = true; later(); }, true);
   var queued = 0;
   function place() {
     queued = 0;
     if (!cur || !shown(cur) || (!keyed && cur.box.classList.contains("live-phone"))) { box.classList.remove("on"); return; }
-    var r = cur.box.getBoundingClientRect(), pad = 5, jump = !box.classList.contains("on");
+    var r = rect(cur), pad = cur.tight ? 7 : 5, fx = cur.bar, jump = !box.classList.contains("on") || fx !== box.classList.contains("fx");
     if (jump) box.classList.remove("go");
-    box.style.transform = "translate(" + Math.round(r.left + window.scrollX - pad) + "px," + Math.round(r.top + window.scrollY - pad) + "px)";
+    box.classList.toggle("fx", fx);
+    var ox = fx ? 0 : window.scrollX, oy = fx ? 0 : window.scrollY;
+    box.style.transform = "translate(" + Math.round(r.left + ox - pad) + "px," + Math.round(r.top + oy - pad) + "px)";
     box.style.width = Math.round(r.width + pad * 2) + "px";
     box.style.height = Math.round(r.height + pad * 2) + "px";
+    hintEl.textContent = cur.hint || "";
+    hintEl.setAttribute("data-at", cur.at);
+    box.classList.toggle("hinted", !!cur.hint && byKey);
     if (jump) { void box.offsetWidth; box.classList.add("go"); }
     box.classList.add("on");
   }
   function later() { if (!queued) queued = window.requestAnimationFrame(place); }
-  function setCur(it, focus) {
+  function setCur(it, focus, how) {
+    if (cur && cur !== it) cur.box.removeAttribute("data-kcur");
     cur = it;
-    if (home && it.g === 0) lastStat = it;
-    if (home) groups[it.g].forEach(function (x) { x.f.tabIndex = x === it ? 0 : -1; });
-    if (focus && document.activeElement !== it.f) it.f.focus({ preventScroll: true });
+    away = false;
+    it.box.setAttribute("data-kcur", "");
+    if (it.g === "stat") lastStat = it;
+    if (it.g) groups[it.g].forEach(function (x) { x.f.tabIndex = x === it ? 0 : -1; });
+    if (how !== "v") {
+      var r = rect(it);
+      stickyX = r.width > window.innerWidth * 0.5 ? r.left + 60 : (r.left + r.right) / 2;
+    }
+    if (focus) {
+      if (it.f) { if (document.activeElement !== it.f) it.f.focus({ preventScroll: true }); }
+      else if (document.activeElement && document.activeElement !== document.body && owner(document.activeElement)) document.activeElement.blur();
+    }
     box.classList.remove("idle");
     place();
     document.dispatchEvent(new CustomEvent("kp:cur", { detail: it.box }));
   }
   function reveal(it) {
-    if (!home) it.box.scrollIntoView({ block: "center", inline: "nearest", behavior: still.matches ? "auto" : "smooth" });
-    else it.box.scrollIntoView({ block: "nearest", inline: "nearest", behavior: still.matches ? "auto" : "instant" });
+    if (it.bar) return;
+    it.box.scrollIntoView({ block: home ? "nearest" : "center", inline: "nearest", behavior: still.matches ? "auto" : "smooth" });
     place();
   }
-  function gap(a1, a2, b1, b2) { return b2 < a1 ? a1 - b2 : b1 > a2 ? b1 - a2 : 0; }
-  function move(from, dir) {
-    var a = from.box.getBoundingClientRect(), best = null, score = Infinity;
-    all.forEach(function (it) {
-      if (it === from || !shown(it)) return;
-      var b = it.box.getBoundingClientRect(), main, cross, drift;
-      if (dir === "l" || dir === "r") {
-        main = dir === "r" ? b.left - a.right : a.left - b.right;
-        cross = gap(a.top, a.bottom, b.top, b.bottom);
-        if (cross > 0) return;
-        drift = Math.abs(b.top - a.top);
-      } else {
-        main = dir === "d" ? b.top - a.bottom : a.top - b.bottom;
-        cross = gap(a.left, a.right, b.left, b.right);
-        drift = a.width > b.width * 1.5 ? Math.abs(b.left - a.left) : Math.abs(b.left + b.width / 2 - a.left - a.width / 2);
-      }
-      if (main < -4) return;
-      var s = Math.max(main, 0) + cross * 4 + drift * 0.01;
-      if (s < score) { score = s; best = it; }
+  function topEdge() { return home ? 0 : 56; }
+  function inView(it) { var r = rect(it); return it.bar || (r.bottom > topEdge() + 8 && r.top < window.innerHeight - 8); }
+  /* Spatial moves read from the layout. Up/Down: the nearest stop above or below, keeping the column the
+     cursor was in (a sticky x, so a tall or wide stop in between does not drift it). Left/Right: the nearest
+     stop that way on the same line, or on a line just above or below (ls and the title both reach the clock; never a line above). */
+  function stopRects() {
+    return all.filter(shown).map(function (it) {
+      var r = rect(it), o = it.bar ? -1e6 : 0;
+      return { it: it, t: r.top + o, b: r.bottom + o, l: r.left, r: r.right };
     });
-    if (best && best.g === 0 && from.g !== 0 && lastStat && shown(lastStat)) return lastStat;
+  }
+  function hd(x, c) { return x < c.l ? c.l - x : x > c.r ? x - c.r : 0; }
+  function vd(a, c) { return c.b < a.t ? a.t - c.b : c.t > a.b ? c.t - a.b : 0; }
+  var snapped = false;
+  function move(from, dir) {
+    /* Leaving a stat box: drop its panel preview first, so the panel's own rows are measured where they sit. */
+    if (from.g === "stat" && dir === "d") document.dispatchEvent(new CustomEvent("kp:cur", { detail: null }));
+    var list = stopRects(), me = null;
+    list.forEach(function (x) { if (x.it === from) me = x; });
+    if (!me) return null;
+    if (from.bar && dir === "d") return fromScreen("d");
+    var best = null, bd = Infinity;
+    var x0 = stickyX === null ? (me.l + me.r) / 2 : stickyX;
+    list.forEach(function (c) {
+      if (c === me) return;
+      var d;
+      if (dir === "d" || dir === "u") {
+        c.gap = dir === "d" ? c.t - me.b : me.t - c.b;
+        if (c.gap < -2) return;
+        if (c.gap < bd) bd = c.gap;
+        return;
+      }
+      var hg = dir === "r" ? c.l - me.r : me.l - c.r;
+      if (hg < -4) return;
+      var v = vd(me, c);
+      if (v > 0 && (c.t < me.t - 2 || v > 48)) return;
+      d = (v > 0 ? 1e4 : 0) + hg + v * 3 + Math.abs((c.t + c.b) / 2 - (me.t + me.b) / 2) * 0.01;
+      if (d < bd) { bd = d; best = c.it; }
+    });
+    if (dir === "d" || dir === "u") {
+      /* the next line down (or up): every stop that starts within a few px of the nearest one */
+      var lim = bd + 10, bx = Infinity;
+      list.forEach(function (c) {
+        if (c === me || c.gap === undefined || c.gap < -2 || c.gap > lim) return;
+        var s = hd(x0, c) + Math.abs((c.l + c.r) / 2 - x0) * 0.001;
+        if (s < bx) { bx = s; best = c.it; }
+      });
+    }
+    snapped = false;
+    if (best && best.g === "stat" && from.g !== "stat" && lastStat && shown(lastStat)) { snapped = true; return lastStat; }
     return best;
   }
-  /* App pages step in reading order: Down/Up walk every stop one by one (hero, reel, each screenshot, the cards,
-     features...), Left/Right only move to a neighbour in the same visual row. Not engaged yet: start at the screen. */
-  function step(from, dir, engaged) {
-    var list = all.filter(shown), i = list.indexOf(from);
-    if (!engaged || i < 0) {
-      var top = 56, bot = window.innerHeight;
-      if (dir === "d" || dir === "r") { for (i = 0; i < list.length; i++) if (list[i].box.getBoundingClientRect().bottom > top + 24) return list[i]; return list[list.length - 1]; }
-      for (i = list.length - 1; i >= 0; i--) if (list[i].box.getBoundingClientRect().top < bot - 24) return list[i];
-      return list[0];
-    }
-    if (dir === "d") return list[i + 1] || null;
-    if (dir === "u") return list[i - 1] || null;
-    var n = list[i + (dir === "r" ? 1 : -1)];
-    if (!n || n.box.parentNode !== from.box.parentNode) return null;
-    var a = from.box.getBoundingClientRect(), b = n.box.getBoundingClientRect();
-    return gap(a.top, a.bottom, b.top, b.bottom) > 0 ? null : n;
+  /* Scrolled away from the cursor (mouse wheel, Page Down): the next arrow starts from what is on screen. */
+  function fromScreen(dir) {
+    var top = topEdge(), best = null, bd = Infinity, x0 = stickyX || 0;
+    stopRects().forEach(function (c) {
+      if (c.it.bar) return;
+      var d;
+      if (dir === "d" || dir === "r") { if (c.b <= top + 8) return; d = c.t * 10 + hd(x0, c); }
+      else { if (c.t >= window.innerHeight - 24) return; d = -c.b * 10 + hd(x0, c); }
+      if (d < bd) { bd = d; best = c.it; }
+    });
+    return best;
   }
   function refresh() {
-    groups.forEach(function (list) {
-      var on = null;
+    Object.keys(groups).forEach(function (g) {
+      var list = groups[g], on = null;
       list.forEach(function (x) { if (x.f.tabIndex === 0 && shown(x)) on = x; });
       on = on || firstShown(list);
       list.forEach(function (x) { x.f.tabIndex = x === on ? 0 : -1; });
     });
     if (cur && !shown(cur)) {
       var back = lastStat || firstShown(all);
-      if (back) setCur(back, all.some(function (x) { return x.f === document.activeElement; }) || document.activeElement === document.body);
+      if (back) setCur(back, all.some(function (x) { return x.f === document.activeElement; }) || document.activeElement === document.body, "h");
     }
     later();
   }
@@ -678,15 +1078,33 @@
 
   document.addEventListener("pointermove", function (ev) {
     if (ev.pointerType !== "mouse") return;
+    if (byKey) { byKey = false; box.classList.remove("hinted"); }
     var it = owner(ev.target);
-    if (it && it !== cur) setCur(it, true);
+    if (it && it.hov && it !== cur) setCur(it, true, "h");
   });
   document.addEventListener("focusin", function (ev) {
     var it = owner(ev.target);
-    if (it && it.f === ev.target) { if (it !== cur) setCur(it, false); else box.classList.remove("idle"); }
+    if (it && it.f === ev.target) { if (it !== cur) setCur(it, false, "h"); else box.classList.remove("idle"); }
     else box.classList.add("idle");
   });
+  /* Section links in the top bar: the cursor follows to that section's heading. */
+  Array.prototype.forEach.call(document.querySelectorAll(".bar nav a[href^='#']"), function (a) {
+    a.addEventListener("click", function () {
+      var sec = document.getElementById(a.getAttribute("href").slice(1));
+      var h = sec && sec.querySelector("h2");
+      var it = h && owner(h);
+      if (it) window.requestAnimationFrame(function () { setCur(it, true, "h"); });
+    });
+  });
 
+  /* Did the reader scroll on their own since the cursor last moved? (Our own smooth scroll does not count.) */
+  var away = false;
+  var leave = function () { away = true; };
+  window.addEventListener("wheel", leave, { passive: true });
+  window.addEventListener("touchmove", leave, { passive: true });
+  document.addEventListener("keydown", function (ev) {
+    if (/^(PageUp|PageDown|Home|End)$/.test(ev.key) || (ev.key === " " && !cur)) away = true;
+  }, true);
   var DIRS = { ArrowLeft: "l", ArrowRight: "r", ArrowUp: "u", ArrowDown: "d" };
   document.addEventListener("keydown", function (ev) {
     if (ev.defaultPrevented || ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.isComposing) return;
@@ -696,42 +1114,45 @@
     var idle = !active || active === document.body || active === document.documentElement;
     if (!cur || !shown(cur)) cur = firstShown(all);
     if (!cur) return;
-    if (DIRS[k] && !home) {
-      var on = active === cur.f, nx = step(cur, DIRS[k], on);
+    if (DIRS[k]) {
+      var d = DIRS[k], fresh = away && !inView(cur), nx = fresh ? fromScreen(d) : move(cur, d);
+      if (!nx && !fresh && active !== cur.f && cur.f) nx = cur;
       if (!nx) return;
       ev.preventDefault();
-      setCur(nx, true);
+      setCur(nx, true, fresh || snapped || d === "l" || d === "r" ? "h" : "v");
       reveal(nx);
-    } else if (DIRS[k]) {
-      var next = move(cur, DIRS[k]);
-      if (!next && active !== cur.f) next = cur;
-      if (!next) return;
-      ev.preventDefault();
-      setCur(next, true);
-      reveal(next);
     } else if (k === "Escape") {
       ev.preventDefault();
       if (!home) { window.location.href = "/"; return; }
       var reset = document.querySelector(".reset");
       if (reset && !reset.hidden) reset.click();
-      else if (cur.g !== 0) { var s = lastStat || groups[0][0]; setCur(s, true); reveal(s); }
+      if (cur.g !== "stat") { var s = lastStat || groups.stat[0]; if (s) { setCur(s, true, "h"); reveal(s); } }
     } else if (k === "Backspace" && !home) {
       ev.preventDefault();
       window.location.href = "/";
-    } else if ((k === "Enter" || k === " ") && active === cur.f && cur.f.hasAttribute("data-kf")) {
-      ev.preventDefault();
-      cur.f.click();
-    } else if ((k === "Enter" && idle) || (k === " " && (idle || (active === cur.f && cur.f.tagName === "A")))) {
-      ev.preventDefault();
-      setCur(cur, true);
-      cur.f.click();
-    } else if (k === " " && !home && active === cur.f && cur.f.tagName !== "BUTTON") {
-      ev.preventDefault();
+    } else if (k === "Enter" || k === " ") {
+      if (!cur.f) {
+        /* Decorative row (no focus): Enter or Space runs its trick if it has one. */
+        if (idle && cur.box.hasAttribute("data-kf")) { ev.preventDefault(); cur.box.click(); }
+        else if (idle && k === " ") ev.preventDefault();
+      } else if (!cur.act) {
+        if (k === " " && (idle || active === cur.f)) ev.preventDefault();
+      } else if (active === cur.f && cur.f.hasAttribute("data-kf")) {
+        ev.preventDefault();
+        cur.f.click();
+      } else if ((k === "Enter" && idle) || (k === " " && (idle || (active === cur.f && cur.f.tagName === "A")))) {
+        ev.preventDefault();
+        setCur(cur, true, "h");
+        cur.f.click();
+      } else if (k === " " && active === cur.f && cur.f.tagName !== "BUTTON") {
+        ev.preventDefault();
+      }
     }
   });
 
-  cur = firstShown(all);
-  if (home && cur && cur.g === 0) lastStat = cur;
+  cur = home ? (groups.stat[0] || firstShown(all)) : (firstShown(all.filter(function (x) { return x.hov && !x.bar; })) || firstShown(all));
+  if (cur) cur.box.setAttribute("data-kcur", "");
+  if (cur && cur.g === "stat") lastStat = cur;
   place();
   window.requestAnimationFrame(function () { box.classList.add("go"); });
 })();

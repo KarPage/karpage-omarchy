@@ -203,7 +203,7 @@ def act(kind, main, detail, href=None, copy_id=None, new_tab=False):
         return ('<div class="act act-install"><span class="act-k">%s</span><pre><code id="%s">%s</code></pre>%s'
                 '<button class="copy" type="button" data-copy="%s" aria-label="Copy install command">COPY</button></div>'
                 % (e(kind), copy_id, e(main), det, copy_id))
-    k = (glyph("omarchy") + e(kind)) if kind.startswith("MARKETPLACE") else e(kind)
+    k = e(kind)
     tgt = ' target="_blank"' if new_tab else ""
     return ('<a class="act" href="%s"%s rel="noopener"><span class="act-k">%s <i aria-hidden="true">↗</i></span><span class="act-v">%s</span>%s</a>'
             % (e(href), tgt, k, e(main), det))
@@ -216,7 +216,7 @@ def live(app):
     name = e(app["name"])
     return (
         '<div class="live">'
-        '<div class="live-phone" data-kf tabindex="0" aria-label="%s, live. Press Enter to use it.">'
+        '<div class="live-phone" data-kf tabindex="0" aria-label="%s, live. Press Enter to use it, Shift+Tab to leave it.">'
         '<iframe class="live-frame" src="%s" title="%s, live app" loading="eager" '
         'sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" '
         'referrerpolicy="strict-origin-when-cross-origin" allow="fullscreen"></iframe>'
@@ -252,8 +252,7 @@ def actions(app):
 
 
 def status_badge(app):
-    g = glyph("omarchy") if app["status"] == "marketplace" else ""
-    return '<span class="badge s-%s">%s%s</span>' % (e(app["status"].replace(" ", "-")), g, e(app["status"].upper()))
+    return '<span class="badge s-%s">%s</span>' % (e(app["status"].replace(" ", "-")), e(app["status"].upper()))
 
 
 def app_window(app, which):
@@ -329,9 +328,9 @@ def board(apps):
         if key != "all" and len(hits) <= 2:
             n += ": " + ", ".join(a["name"] for a in hits)
         boxes.append('<button class="stat" type="button" aria-pressed="false" aria-controls="panel" data-filter="%s" data-hint="&gt; %s — %s">'
-                     '<span class="led" aria-hidden="true"></span><span class="stat-k">%s</span><span class="stat-v">%d</span></button>'
+                     '<span class="led" aria-hidden="true"></span><span class="stat-k">%s</span><span class="stat-v">%s%d</span></button>'
                      % (key, e("all apps" if key == "all" else label), e(n),
-                        (glyph("omarchy") if "marketplace" in label.lower() else "") + e(label), len(hits)))
+                        e(label), glyph("omarchy").replace('class="g"', 'class="g sg"', 1) if key == "marketplace" else "", len(hits)))
         rows = []
         for a in hits:
             line, href = row_line(key, a)
@@ -398,7 +397,8 @@ def index(apps):
 <p class="clock" aria-hidden="true"><b>local</b><time>--- -- --- ---- · --:--</time></p>
 </div>
 <p class="lede twl" aria-hidden="true"><span class="tw p" data-tw="%s"><span class="sl">#</span>%s<span class="cursor"></span></span></p>
-<p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg"><kbd class="w" data-key="Enter">↲ ENTER</kbd><em>select</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span></p>
+<p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg ks"><span class="ksw"><kbd class="w ent" data-key="Enter"><svg class="kl" viewBox="0 0 84 28" preserveAspectRatio="none" focusable="false"><path d="M.5 .5H83.5V27.5H16.5V15.5H.5Z"/></svg><span>↲ ENTER</span></kbd><kbd class="w spc" data-key=" "><span>SPACE</span></kbd></span><em>select</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span><span class="kg"><kbd data-key="?">?</kbd><em>keys</em></span></p>
+<p class="ktip" aria-hidden="true"><span>// tip:</span> this site runs on your keyboard · arrows to roam, <b>?</b> for the map</p>
 %s
 </header>
 <main id="apps" tabindex="-1">
@@ -539,7 +539,7 @@ def page(app, apps):
 <div class="title-row">%s<h1>%s</h1>%s</div>
 <p class="tagline">%s</p>
 <p class="lede">%s</p>
-<p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg"><kbd class="w" data-key="Enter">↲ ENTER</kbd><em>open</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span></p>
+<p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg ks"><span class="ksw"><kbd class="w ent" data-key="Enter"><svg class="kl" viewBox="0 0 84 28" preserveAspectRatio="none" focusable="false"><path d="M.5 .5H83.5V27.5H16.5V15.5H.5Z"/></svg><span>↲ ENTER</span></kbd><kbd class="w spc" data-key=" "><span>SPACE</span></kbd></span><em>open</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span><span class="kg"><kbd data-key="?">?</kbd><em>keys</em></span></p>
 %s
 %s
 </section>""" % (tag_html(app["tag"]), mark(app, "mark big"), e(app["name"]), status_badge(app), e(app["tagline"]), e(app["lede"]),
