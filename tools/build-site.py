@@ -334,8 +334,8 @@ def index(apps):
 %s
 <div class="tile-body"><h2>%s</h2><p>%s</p><code class="tile-meta">%s</code><span class="go" aria-hidden="true">OPEN →</span></div>
 </a></li>""" % (tags(a), e(a["slug"]), i + 1, mark(a), e(a["slug"]), status_badge(a), media, e(a["name"]), e(a["short"]), e(tile_detail(a))))
-    desc = "Kar Page Apps: %s. OmaRaptor Player, a free YouTube video player for Omarchy and Linux, plus Oma Year Planner, Kar Page, the Kar Page Launcher and OmaKarDash." % SUBTITLE.capitalize()
-    kw = "Omarchy apps, YouTube player, video player, YouTube video player for Omarchy, YouTube video player for Linux, Hyprland, mpv, yt-dlp, OmaRaptor Player, Oma Year Planner, Kar Page"
+    desc = "Kar Page Apps: %s. OmaRaptor Player, a free YouTube video player for Omarchy and Linux, plus Kar Page, Oma Year Planner, the Kar Page Launcher and OmaKarDash." % SUBTITLE.capitalize()
+    kw = "Omarchy apps, YouTube player, video player, YouTube video player for Omarchy, YouTube video player for Linux, Hyprland, mpv, yt-dlp, OmaRaptor Player, Kar Page, Oma Year Planner"
     img = og_image(next(a for a in apps if a["slug"] == "omaraptor"))
     return head("Kar Page Apps", desc, kw, "/", img) + """<body class="home">
 <a class="skip" href="#apps">Skip to apps</a>
