@@ -848,3 +848,9 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .kcur-h.kl b { font-weight: 400; padding: 2px 5px 1px; border: 1px solid var(--line); background: var(--bg); line-height: 1.2; }
 .kcur.hinted .kcur-h.kl { opacity: 0.8; }
 @media (prefers-reduced-motion: reduce) { .pterm, .pterm.on { transition: none; } }
+
+/* Kar Page mark: the original logo, traced 1:1 from the master file; tint and sheen only */
+.kpm-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.clock b .kpm { flex: none; margin-right: 6px; fill: var(--jade-hi); opacity: 0.92; }
+.ck-l { display: inline-flex; align-items: center; gap: 12px; }
+.ck-l .kpm-l { flex: none; fill: url(#kpm-g); filter: drop-shadow(0 0 6px rgba(63, 224, 164, 0.28)); }
