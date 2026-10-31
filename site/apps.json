@@ -551,7 +551,7 @@
    "short": "A Tesla dashboard for Omarchy. Coming soon.",
    "tag": "OMARCHY · COMING SOON",
    "tagline": "Your car on your desktop",
-   "lede": "A Tesla dashboard for Omarchy: charge and range, climate, tires, lock state and software updates. Not released yet. Every screen here uses demo data for a fictional car.",
+   "lede": "A Tesla dashboard for Omarchy: charge and range, climate, tires, lock state and software updates. Not released yet.",
    "seo": {
     "title": "OmaKarDash: a Tesla dashboard for Omarchy (coming soon)",
     "description": "OmaKarDash is a coming-soon Tesla dashboard for Omarchy: charge and range, climate, tires, lock state and software updates. Unofficial, not affiliated with Tesla.",
@@ -590,45 +590,53 @@
    "soon": "OmaKarDash is not released yet. There is no download and no source link for now.",
    "links": [],
    "fine": [
-    "Screenshots use demo data for the fictional car Northwind.",
     "Unofficial. Not affiliated with or endorsed by Tesla."
    ],
    "shots": [
     {
-     "id": "okd5-jade",
-     "alt": "OmaKarDash Jade theme, version 0.5.3, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "id": "okd6-jade",
+     "alt": "OmaKarDash Jade theme on a Model Y: 69 percent charge and 231 miles, unplugged with an 80 percent charge limit, climate off at 77°F inside and 75°F outside, tires at 36 and 37 psi, the car locked, and software 2026.38.5.11 installed. Flash, honk, vent and close controls sit on the panels.",
      "w": 960,
-     "h": 540,
+     "h": 583,
      "x2": true,
      "avif": true,
      "cap": "JADE"
     },
     {
-     "id": "okd5-jade",
-     "alt": "OmaKarDash Jade theme, version 0.5.3, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "id": "okd6-jade",
+     "alt": "OmaKarDash Jade theme on a Model Y: 69 percent charge and 231 miles, unplugged with an 80 percent charge limit, climate off at 77°F inside and 75°F outside, tires at 36 and 37 psi, the car locked, and software 2026.38.5.11 installed. Flash, honk, vent and close controls sit on the panels.",
      "w": 960,
-     "h": 540,
+     "h": 583,
      "x2": true,
      "avif": true,
      "cap": "JADE"
     },
     {
-     "id": "okd5-red",
-     "alt": "OmaKarDash Red theme, version 0.5.3, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "id": "okd6-red",
+     "alt": "OmaKarDash Red theme on a Model Y: 69 percent charge and 231 miles, unplugged with an 80 percent charge limit, climate off at 77°F inside and 75°F outside, tires at 36 and 37 psi, the car locked, and software 2026.38.5.11 installed. Flash, honk, vent and close controls sit on the panels.",
      "w": 960,
-     "h": 540,
+     "h": 583,
      "x2": true,
      "avif": true,
      "cap": "RED"
     },
     {
-     "id": "okd5-purple",
-     "alt": "OmaKarDash Purple theme, version 0.5.3, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "id": "okd6-purple",
+     "alt": "OmaKarDash Purple theme on a Model Y: 69 percent charge and 231 miles, unplugged with an 80 percent charge limit, climate off at 77°F inside and 75°F outside, tires at 36 and 37 psi, the car locked, and software 2026.38.5.11 installed. Flash, honk, vent and close controls sit on the panels.",
      "w": 960,
-     "h": 540,
+     "h": 583,
      "x2": true,
      "avif": true,
      "cap": "PURPLE"
+    },
+    {
+     "id": "okd6-orange",
+     "alt": "OmaKarDash Orange theme on a Model Y: 69 percent charge and 231 miles, unplugged with an 80 percent charge limit, climate off at 77°F inside and 75°F outside, tires at 36 and 37 psi, the car locked, and software 2026.38.5.11 installed. Flash, honk, vent and close controls sit on the panels.",
+     "w": 960,
+     "h": 583,
+     "x2": true,
+     "avif": true,
+     "cap": "ORANGE"
     }
    ]
   }
