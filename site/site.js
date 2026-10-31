@@ -163,6 +163,18 @@
     });
     reset.addEventListener("click", function () { pick(""); });
 
+    /* A tap on the preview panel (not on a link or button in it) hints at the boxes above: one short jade
+       pulse runs across them in order. Reduced motion gets one brief static highlight instead. */
+    var pulseT = 0;
+    panel.addEventListener("click", function (ev) {
+      if (ev.target.closest && ev.target.closest("a, button")) return;
+      board.classList.remove("pulse");
+      void board.offsetWidth;
+      board.classList.add("pulse");
+      window.clearTimeout(pulseT);
+      pulseT = window.setTimeout(function () { board.classList.remove("pulse"); }, 1150);
+    });
+
     /* Selection over a stat box previews it in the panel text; Enter, Space or a click commits. */
     var hint = panel.querySelector(".panel-hint");
     var hinted = null;
@@ -279,6 +291,7 @@
     var lbAt = -1, lbBack = null;
     if (shotLinks.length < 2) { lbPrev.hidden = true; lbNext.hidden = true; }
     var lbShow = function (i) {
+      lbZReset(false);
       lbAt = (i + shotLinks.length) % shotLinks.length;
       var a = shotLinks[lbAt], img = a.querySelector("img"), cap = a.parentNode.querySelector("figcaption");
       lbImg.src = a.getAttribute("href");
@@ -301,6 +314,7 @@
       if (lb.hidden) return;
       lb.hidden = true;
       document.documentElement.classList.remove("lb-on");
+      lbZReset(false);
       lbImg.removeAttribute("src");
       lbFrame.style.transition = lbFrame.style.transform = lbFrame.style.opacity = "";
       if (lbBack && lbBack.focus) lbBack.focus({ preventScroll: true });
@@ -359,6 +373,7 @@
       lbPtrs[ev.pointerId] = 1; lbPtrN++;
       if (lbPtrN > 1) { if (lbDrag) lbDragEnd(true); return; }
       if (ev.target.closest && ev.target.closest(".lb-btn")) return;
+      if (lbZ.s > 1) return;
       lbDrag = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, t: ev.timeStamp, axis: "" };
     });
     lb.addEventListener("pointermove", function (ev) {
@@ -392,7 +407,130 @@
     lb.addEventListener("click", function (ev) {
       if (Date.now() - lbSwipedAt < 400) { ev.stopPropagation(); ev.preventDefault(); }
     }, true);
+
+    /* Zoom on the open shot only: two fingers pinch around their midpoint (1x to 5x), one finger pans while
+       zoomed, a double-tap (or a mouse double-click) zooms in at that point or back out. Swipes step or close
+       only at 1x. A slide change or closing resets to 1x. The image stays inside the screen edges. */
+    lbImg.draggable = false;
+    var lbZ = { s: 1, x: 0, y: 0 }, lbZP = {}, lbZG = null, lbZMulti = false, lbTap = null, lbTapZoomAt = 0;
+    var lbZApply = function (ease) {
+      lbImg.style.transition = ease && !lbCalm.matches ? "transform 200ms ease-out" : "none";
+      lbImg.style.transform = lbZ.s > 1 ? "translate3d(" + lbZ.x + "px," + lbZ.y + "px,0) scale(" + lbZ.s + ")" : "";
+      lb.classList.toggle("lb-zoomed", lbZ.s > 1);
+    };
+    var lbZReset = function (ease) {
+      lbZ.s = 1; lbZ.x = 0; lbZ.y = 0; lbZP = {}; lbZG = null; lbZMulti = false; lbTap = null;
+      lbZApply(ease);
+    };
+    var lbBase = function () {
+      var r = lbImg.getBoundingClientRect();
+      return { l: r.left - lbZ.x, t: r.top - lbZ.y, w: r.width / lbZ.s, h: r.height / lbZ.s };
+    };
+    var lbFit = function (pos, size, room) {
+      return size > room ? Math.min(0, Math.max(room - size, pos)) : Math.min(room - size, Math.max(0, pos));
+    };
+    var lbClamp = function (b) {
+      if (lbZ.s <= 1) { lbZ.s = 1; lbZ.x = 0; lbZ.y = 0; return; }
+      var vw = document.documentElement.clientWidth, vh = window.innerHeight;
+      lbZ.x = lbFit(b.l + lbZ.x, b.w * lbZ.s, vw) - b.l;
+      lbZ.y = lbFit(b.t + lbZ.y, b.h * lbZ.s, vh) - b.t;
+    };
+    /* Scale to s keeping the image point that sat under (cx, cy) at (mx, my), from the state in g. */
+    var lbZTo = function (g, s, cx, cy, mx, my) {
+      var px = (cx - g.b.l - g.x) / g.s, py = (cy - g.b.t - g.y) / g.s;
+      lbZ.s = Math.max(1, Math.min(5, s));
+      lbZ.x = mx - g.b.l - lbZ.s * px;
+      lbZ.y = my - g.b.t - lbZ.s * py;
+      lbClamp(g.b);
+    };
+    var lbZStart = function () {
+      var ids = Object.keys(lbZP), b = lbBase();
+      if (ids.length >= 2) {
+        var p = lbZP[ids[0]], q = lbZP[ids[1]];
+        lbZMulti = true;
+        lbZG = { pinch: true, a: ids[0], c: ids[1], d: Math.max(1, Math.hypot(q.x - p.x, q.y - p.y)), mx: (p.x + q.x) / 2, my: (p.y + q.y) / 2, s: lbZ.s, x: lbZ.x, y: lbZ.y, b: b };
+      } else if (ids.length === 1 && lbZ.s > 1) {
+        var o = lbZP[ids[0]];
+        lbZG = { pinch: false, a: ids[0], px: o.x, py: o.y, s: lbZ.s, x: lbZ.x, y: lbZ.y, b: b };
+      } else lbZG = null;
+    };
+    var lbZToggle = function (cx, cy) {
+      if (lbZ.s > 1) { lbZ.s = 1; lbZ.x = 0; lbZ.y = 0; }
+      else lbZTo({ s: 1, x: 0, y: 0, b: lbBase() }, 2.5, cx, cy, cx, cy);
+      lbZApply(true);
+    };
+    lb.addEventListener("pointerdown", function (ev) {
+      if (ev.pointerType === "mouse" && (ev.button || lbZ.s <= 1)) return;
+      if (ev.target.closest && ev.target.closest(".lb-btn")) return;
+      lbZP[ev.pointerId] = { x: ev.clientX, y: ev.clientY, x0: ev.clientX, y0: ev.clientY, t0: ev.timeStamp };
+      lbZStart();
+      if (lbZG) { try { lb.setPointerCapture(ev.pointerId); } catch (e) {} }
+    });
+    lb.addEventListener("pointermove", function (ev) {
+      var o = lbZP[ev.pointerId];
+      if (!o) return;
+      o.x = ev.clientX; o.y = ev.clientY;
+      var g = lbZG;
+      if (!g) return;
+      if (g.pinch) {
+        var p = lbZP[g.a], q = lbZP[g.c];
+        if (!p || !q) return;
+        lbZTo(g, g.s * Math.hypot(q.x - p.x, q.y - p.y) / g.d, g.mx, g.my, (p.x + q.x) / 2, (p.y + q.y) / 2);
+      } else {
+        lbZ.x = g.x + o.x - g.px; lbZ.y = g.y + o.y - g.py;
+        lbClamp(g.b);
+      }
+      if (Math.abs(o.x - o.x0) > 6 || Math.abs(o.y - o.y0) > 6) lbSwipedAt = Date.now();
+      lbZApply(false);
+    });
+    var lbZUp = function (ev) {
+      var o = lbZP[ev.pointerId];
+      if (!o) return;
+      delete lbZP[ev.pointerId];
+      var left = Object.keys(lbZP).length;
+      if (ev.type === "pointerup" && ev.pointerType !== "mouse" && !lbZMulti && !left && ev.target === lbImg &&
+          Math.abs(o.x - o.x0) < 10 && Math.abs(o.y - o.y0) < 10 && ev.timeStamp - o.t0 < 300) {
+        if (lbTap && ev.timeStamp - lbTap.t < 320 && Math.abs(o.x - lbTap.x) < 30 && Math.abs(o.y - lbTap.y) < 30) {
+          lbTap = null; lbTapZoomAt = Date.now();
+          lbZToggle(o.x, o.y);
+        } else lbTap = { t: ev.timeStamp, x: o.x, y: o.y };
+      }
+      if (!left) lbZMulti = false;
+      if (lbZ.s < 1.05 && lbZ.s > 1) { lbZ.s = 1; lbZ.x = 0; lbZ.y = 0; lbZApply(true); }
+      lbZStart();
+    };
+    lb.addEventListener("pointerup", lbZUp);
+    lb.addEventListener("pointercancel", lbZUp);
+    lbImg.addEventListener("dblclick", function (ev) {
+      ev.preventDefault();
+      if (Date.now() - lbTapZoomAt < 600) return;
+      lbZToggle(ev.clientX, ev.clientY);
+    });
   }
+
+  /* No page zoom: the viewport meta covers most browsers, but iOS Safari ignores user-scalable, so its pinch
+     gestures and any multi-finger move are cancelled here (the screenshot viewer zooms itself with pointer events).
+     Images can't be dragged out or long-pressed to save. Deterrence only: a screenshot can't be blocked. */
+  ["gesturestart", "gesturechange", "gestureend"].forEach(function (t) {
+    document.addEventListener(t, function (ev) { ev.preventDefault(); }, { passive: false });
+  });
+  document.addEventListener("touchmove", function (ev) { if (ev.touches && ev.touches.length > 1) ev.preventDefault(); }, { passive: false });
+  /* Casual copy lockdown, site-wide: no text selection, copy, cut, long-press menu or drag. Links, buttons,
+     keyboard steps and focus outlines are untouched. The install commands stay copyable (their COPY button and
+     selecting inside the code block) because copying them is the point. */
+  var inCode = function (n) {
+    var el = n && (n.nodeType === 1 ? n : n.parentElement);
+    return !!(el && el.closest && el.closest(".code pre"));
+  };
+  var noCopy = function (ev) {
+    if (ev.type === "copy" || ev.type === "cut") {
+      var sel = window.getSelection && window.getSelection();
+      if (sel && sel.rangeCount && inCode(sel.anchorNode) && inCode(sel.focusNode)) return;
+    } else if (ev.type === "contextmenu" && inCode(ev.target)) return;
+    ev.preventDefault();
+  };
+  ["copy", "cut", "contextmenu", "dragstart"].forEach(function (t) { document.addEventListener(t, noCopy); });
+  Array.prototype.forEach.call(document.querySelectorAll("img"), function (i) { i.draggable = false; });
 
   /* Kar Page live frame: the frame is one cursor stop; Enter (or a click on its edge) moves focus into the app. */
   Array.prototype.forEach.call(document.querySelectorAll(".live-phone"), function (v) {

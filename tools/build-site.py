@@ -137,7 +137,7 @@ def head(title, desc, keywords, path, image, image_meta=""):
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#000000">
 <meta name="referrer" content="no-referrer">
@@ -560,9 +560,11 @@ def page(app, apps):
 
 def main():
     apps = json.loads((ROOT / "apps.json").read_text())["apps"]
-    (ROOT / "index.html").write_text(index(apps))
+    # Images are not draggable out of the page (save deterrence only; screenshots can't be blocked).
+    nodrag = lambda h: h.replace("<img ", '<img draggable="false" ')
+    (ROOT / "index.html").write_text(nodrag(index(apps)))
     for a in apps:
-        (ROOT / (a["slug"] + ".html")).write_text(page(a, apps))
+        (ROOT / (a["slug"] + ".html")).write_text(nodrag(page(a, apps)))
     urls = [BASE + "/"] + [BASE + "/" + a["slug"] for a in apps]
     (ROOT / "site.webmanifest").write_text(json.dumps(MANIFEST, indent=2) + "\n")
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n%s\n</urlset>\n'
