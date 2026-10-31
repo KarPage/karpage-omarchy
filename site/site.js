@@ -279,6 +279,15 @@
     var f = v.querySelector("iframe");
     v.addEventListener("click", function (ev) { if (f && ev.target === v) f.focus(); });
   });
+  /* OPEN FULL APP is a link styled as a button, so Space and Shift+Space press it too (Enter already does). */
+  Array.prototype.forEach.call(document.querySelectorAll(".live-open"), function (a) {
+    a.addEventListener("keydown", function (ev) {
+      if (ev.key !== " " || ev.altKey || ev.ctrlKey || ev.metaKey || ev.repeat) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      a.click();
+    });
+  });
 
   /* Selection cursor: one box that follows the mouse and the arrow keys. */
   var home = document.body.classList.contains("home");
