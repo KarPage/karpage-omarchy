@@ -537,22 +537,32 @@
     var f = v.querySelector("iframe");
     v.addEventListener("click", function (ev) { if (f && ev.target === v) f.focus(); });
     if (!f) return;
-    /* The app is another origin, so its key presses never reach this page. While it has focus a small tag
-       says how to leave: Shift+Tab lands back on this frame (the next arrow then carries on down the page),
-       and Esc does the same once the app posts {type: "kp:escape"} to its parent. */
+    /* The app is another origin, so its key presses never reach this page and Tab only walks the app's own
+       controls. While it has focus a small tag says how to leave: a click outside it. Once the app posts
+       {type: "kp:escape"} to its parent, Esc lands back on this frame and the tag says ESC from then on. */
     var tag = document.createElement("span");
     tag.className = "live-x";
     tag.setAttribute("aria-hidden", "true");
-    tag.innerHTML = "<kbd>\u21e7 TAB</kbd> back to the page";
+    tag.innerHTML = "<kbd>CLICK</kbd> outside to leave the app";
     v.appendChild(tag);
     var inside = function () { v.classList.toggle("in-app", document.activeElement === f); };
     window.addEventListener("blur", function () { window.setTimeout(inside, 0); });
-    window.addEventListener("focus", inside);
+    /* A click on empty page space after using the app lands back on this frame, so the arrows carry on from it. */
+    var back = function () {
+      var was = v.classList.contains("in-app");
+      inside();
+      if (was && document.activeElement === document.body) v.focus({ preventScroll: true });
+    };
+    window.addEventListener("focus", back);
+    document.addEventListener("pointerdown", function () { if (v.classList.contains("in-app")) window.setTimeout(back, 0); });
     document.addEventListener("focusin", inside);
     window.addEventListener("message", function (ev) {
       if (ev.origin !== "https://karpage.app" || ev.source !== f.contentWindow) return;
       var d = ev.data;
-      if (d === "kp:escape" || (d && d.type === "kp:escape")) { v.focus({ preventScroll: true }); inside(); }
+      if (d === "kp:escape" || (d && d.type === "kp:escape")) {
+        tag.innerHTML = "<kbd>ESC</kbd> back to the page";
+        v.focus({ preventScroll: true }); inside();
+      }
     });
   });
   /* OPEN FULL APP and OPEN KARPAGE.APP are links styled as buttons, so Space and Shift+Space press it too (Enter already does). */
@@ -819,7 +829,7 @@
   (function () {
     var rows = [["\u2190 \u2191 \u2193 \u2192", "move the jade frame, row by row"], ["\u21b5 / SPACE", "open or play what is framed"], ["ESC", home ? "clear the filter, step back" : "back to all apps"]];
     if (!home) rows.push(["BACKSPACE", "back to all apps"]);
-    if (document.querySelector(".live-phone")) rows.push(["\u21e7 TAB", "leave the live app, back to its frame"]);
+    if (document.querySelector(".live-phone")) rows.push(["CLICK", "outside the live app to leave it"]);
     if (document.querySelector(".lb, .shots, .gallery, .hero-shot")) rows.push(["\u2190 \u2192 + / \u2212", "in the viewer: next shot, zoom"]);
     rows.push(["PGUP PGDN", "scroll; the next arrow starts on screen"], ["TAB", "plain tab order still works"], ["?", "this sheet"]);
     var eggs = home ? [["CLOCK", "\u21b5 a full clock and month"], ["TITLE", "\u21b5 glitch it"], ["~/apps $", "\u21b5 run ls again"], ["KEY ROW", "\u21b5 a key demo"]] : [];

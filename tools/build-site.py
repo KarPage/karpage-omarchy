@@ -216,7 +216,7 @@ def live(app):
     name = e(app["name"])
     return (
         '<div class="live">'
-        '<div class="live-phone" data-kf tabindex="0" aria-label="%s, live. Press Enter to use it, Shift+Tab to leave it.">'
+        '<div class="live-phone" data-kf tabindex="0" aria-label="%s, live. Press Enter to use it, click outside it to leave.">'
         '<iframe class="live-frame" src="%s" title="%s, live app" loading="eager" '
         'sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" '
         'referrerpolicy="strict-origin-when-cross-origin" allow="fullscreen"></iframe>'
