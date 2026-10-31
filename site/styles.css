@@ -614,3 +614,9 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 @media (max-width: 500px) and (pointer: coarse) {
   .live-phone { width: 100vw; height: 88vh; height: 88dvh; border-left: 0; border-right: 0; }
 }
+
+/* Inline logo glyphs beside a word: monochrome jade, sized to the text. */
+.g { display: inline-block; width: 1.05em; height: 1.05em; margin-right: 0.5em; vertical-align: -0.17em; color: var(--jade-hi); fill: currentColor; flex: none; }
+.gt { white-space: nowrap; }
+.badge .g { margin-right: 0.45em; color: inherit; }
+.act-k .g { width: 1.15em; height: 1.15em; }
