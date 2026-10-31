@@ -237,8 +237,8 @@ def app_window(app, which):
     t = w[which]
     img = ('<img src="img/%s.webp" srcset="img/%s.webp 1x, img/%s-2x.webp 2x" alt="%s" width="%d" height="%d" decoding="async" loading="lazy">'
            % (t["id"], t["id"], t["id"], e(w["alt"]), t["w"], t["h"]))
-    return ('<div class="win"><div class="win-bar"><span class="win-ctl" aria-hidden="true"><i></i><i></i><i></i></span><b>%s</b></div>'
-            '<div class="win-body">%s</div></div>' % (e(w["title"]), img))
+    return ('<div class="win"><div class="win-bar"><span class="win-ctl" aria-hidden="true"><i></i><i></i><i></i></span><b>%s%s</b></div>'
+            '<div class="win-body">%s</div></div>' % (glyph("kp"), e(w["title"]), img))
 
 
 def placeholder(app, small=False):
