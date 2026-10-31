@@ -316,8 +316,8 @@ def board(apps):
 
 
 # Hero subtitle type loop: one short terminal-style line per app, in grid order, then
-# the visitor's local date (added in site.js). Each line is cut down from that app's
-# own tagline in apps.json (no new claims). The kar-page line is the static fallback.
+# The loop opens with the tagline as a shell comment. Each line is cut down from that app's
+# own tagline in apps.json (no new claims). The tagline is the static fallback.
 TW = {
     "kar-page": "/kar-page \u2014 your cars. your story.",
     "omaraptor": "/omaraptor \u2014 youtube player for omarchy",
@@ -326,8 +326,9 @@ TW = {
 }
 
 
+TAG = "# " + SUBTITLE.lower()
 def tw_lines(apps):
-    return "|".join(TW[a["slug"]] for a in apps if a["slug"] in TW)
+    return "|".join([TAG] + [TW[a["slug"]] for a in apps if a["slug"] in TW])
 
 
 def index(apps):
@@ -356,9 +357,12 @@ def index(apps):
 <a class="skip" href="#apps">Skip to apps</a>
 <div class="wrap">
 <header class="mast">
+<div class="mhead">
 <p class="prompt">~/apps <span>$</span> ls</p>
 <h1>Kar Page Apps</h1>
-<p class="lede twl" aria-hidden="true"><span class="tw p" data-tw="%s"><span class="sl">/</span>%s<span class="cursor"></span></span></p>
+<p class="clock" aria-hidden="true"><b>local</b><time>--- -- --- ---- · --:--</time></p>
+</div>
+<p class="lede twl" aria-hidden="true"><span class="tw p" data-tw="%s"><span class="sl">#</span>%s<span class="cursor"></span></span></p>
 <p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg"><kbd class="w" data-key="Enter">↲ ENTER</kbd><em>select</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span></p>
 %s
 </header>
@@ -367,7 +371,7 @@ def index(apps):
 %s
 </ul>
 </main>
-""" % (e(tw_lines(apps)), e(TW["kar-page"][1:]), board(apps), "\n".join(tiles)) + FOOT
+""" % (e(tw_lines(apps)), e(TAG[1:]), board(apps), "\n".join(tiles)) + FOOT
 
 
 def code_tile(i, label, cmd, detail=""):
