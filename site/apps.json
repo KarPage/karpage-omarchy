@@ -159,137 +159,6 @@
    }
   },
   {
-   "slug": "oma-year",
-   "name": "Oma Year Planner",
-   "mark": "year",
-   "status": "marketplace",
-   "license": "MIT",
-   "short": "Your whole year on one screen. A local-first year calendar for Omarchy.",
-   "tag": "OMARCHY PLUGIN · LOCAL-FIRST · MIT",
-   "tagline": "Your whole year on one screen",
-   "lede": "A local-first year calendar for Omarchy, with no backend, no account and no build step. Add plans, filter the year by name, and float it as a translucent window over your desktop.",
-   "seo": {
-    "title": "Oma Year Planner: a local-first year calendar for Omarchy",
-    "description": "Oma Year Planner puts your whole year on one screen. A free, open-source, local-first year calendar plugin for Omarchy, with no backend, no account and no tracking.",
-    "keywords": "year planner, year calendar, Omarchy plugin, Omarchy, Hyprland, local-first calendar, Linux calendar"
-   },
-   "features": [
-    [
-     "WHOLE YEAR",
-     "Months run down one scrolling board. The day header stays pinned, and Today brings the current month back to the middle."
-    ],
-    [
-     "PAST FADES BACK",
-     "Past months and finished plans dim, so what is ahead stands out."
-    ],
-    [
-     "FAST PLANNING",
-     "Click a day, name the plan, pick Plan or Trip. Drag a bar to move it, or drag its ends to resize it."
-    ],
-    [
-     "TRIPS · DAYS AWAY",
-     "Trips add up to a days-away count per month and for the year. Next, Up next and Last sit on the strip."
-    ],
-    [
-     "PIN TO DESKTOP",
-     "A still picture of your year laid over your wallpaper, painted again at midnight."
-    ],
-    [
-     "YOUR THEME",
-     "Reads the colours from your active Omarchy theme each time it opens."
-    ],
-    [
-     "PRIVATE",
-     "Plans stay in your browser. No server, no account, no analytics and no tracking."
-    ],
-    [
-     "KEYBOARD",
-     "Search with /, undo with Ctrl+Z, and full keyboard navigation. Press ? for the list."
-    ]
-   ],
-   "install": [
-    [
-     "OMARCHY PLUGIN",
-     "omarchy plugin add https://github.com/KarPage/oma-year-planner --enable"
-    ],
-    [
-     "OPEN IT",
-     "~/.config/omarchy/plugins/io.github.karpage.oma-year/year-planner/open"
-    ],
-    [
-     "OR WITHOUT THE PLUGIN",
-     "git clone https://github.com/KarPage/oma-year-planner.git && cd oma-year-planner/year-planner && ./open"
-    ]
-   ],
-   "installNote": "The plugin adds a calendar button to your bar. You need Chromium (it ships with Omarchy), Python 3 and curl, plus ImageMagick for wallpaper mode.",
-   "links": [
-    [
-     "SOURCE",
-     "https://github.com/KarPage/oma-year-planner"
-    ],
-    [
-     "MARKETPLACE",
-     "https://plugins.omarchy.org/plugin.html?id=io.github.karpage.oma-year"
-    ]
-   ],
-   "fine": [
-    "All plans in these screenshots are the planner's built-in demo year. Captured in a sandbox browser from the public repo at bd1c117.",
-    "The floating-window shot draws the window at 86% opacity over a plain generated backdrop, the way a translucent Hyprland window looks.",
-    "Unofficial. Not affiliated with Omarchy."
-   ],
-   "shots": [
-    {
-     "id": "oyp-board",
-     "alt": "Oma Year Planner with the full 2026 year on one board: the built-in demo plans Ski week, City break, Wedding weekend, Workshop, Coast week, Lake week, Autumn hike and Year-end break, with plans, trips and days-away counts on the strip and today marked in October.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "avif": true,
-     "cap": "FULL YEAR · ONE SCREEN"
-    },
-    {
-     "id": "oyp-quickadd",
-     "alt": "The quick add popover opened on November 12 in the demo year, with an empty name field, Add plan, Attach photo, Add tag, Plan or Trip and Add note.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "avif": true,
-     "cap": "QUICK ADD · CLICK A DAY"
-    },
-    {
-     "id": "oyp-help",
-     "alt": "The How it works panel opened with ?, showing add a plan, one day, move and resize, quick edit, scroll months and jump to today, plus the keyboard shortcuts.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "avif": true,
-     "cap": "? · HOW IT WORKS"
-    },
-    {
-     "id": "oyp-window",
-     "alt": "Oma Year Planner as a translucent floating window over a plain green desktop backdrop, showing the demo plans from April 2026 into 2027.",
-     "w": 960,
-     "h": 540,
-     "x2": true,
-     "avif": true,
-     "cap": "FLOATING WINDOW · TRANSLUCENT"
-    }
-   ],
-   "repo": "KarPage/oma-year-planner",
-   "facts": {
-    "files": 49,
-    "repoBytes": 6225070,
-    "downloadBytes": 5067825,
-    "appBytes": 525539,
-    "commit": "bd1c117",
-    "commitDate": "2026-10-27",
-    "license": "MIT",
-    "measured": "2026-10-30"
-   },
-   "listing": "https://plugins.omarchy.org/plugin.html?id=io.github.karpage.oma-year",
-   "mediaTop": true
-  },
-  {
    "slug": "kar-page",
    "name": "Kar Page",
    "mark": "kp",
@@ -457,6 +326,137 @@
      "cap": "POST · GTA BUS SPOT"
     }
    ]
+  },
+  {
+   "slug": "oma-year",
+   "name": "Oma Year Planner",
+   "mark": "year",
+   "status": "marketplace",
+   "license": "MIT",
+   "short": "Your whole year on one screen. A local-first year calendar for Omarchy.",
+   "tag": "OMARCHY PLUGIN · LOCAL-FIRST · MIT",
+   "tagline": "Your whole year on one screen",
+   "lede": "A local-first year calendar for Omarchy, with no backend, no account and no build step. Add plans, filter the year by name, and float it as a translucent window over your desktop.",
+   "seo": {
+    "title": "Oma Year Planner: a local-first year calendar for Omarchy",
+    "description": "Oma Year Planner puts your whole year on one screen. A free, open-source, local-first year calendar plugin for Omarchy, with no backend, no account and no tracking.",
+    "keywords": "year planner, year calendar, Omarchy plugin, Omarchy, Hyprland, local-first calendar, Linux calendar"
+   },
+   "features": [
+    [
+     "WHOLE YEAR",
+     "Months run down one scrolling board. The day header stays pinned, and Today brings the current month back to the middle."
+    ],
+    [
+     "PAST FADES BACK",
+     "Past months and finished plans dim, so what is ahead stands out."
+    ],
+    [
+     "FAST PLANNING",
+     "Click a day, name the plan, pick Plan or Trip. Drag a bar to move it, or drag its ends to resize it."
+    ],
+    [
+     "TRIPS · DAYS AWAY",
+     "Trips add up to a days-away count per month and for the year. Next, Up next and Last sit on the strip."
+    ],
+    [
+     "PIN TO DESKTOP",
+     "A still picture of your year laid over your wallpaper, painted again at midnight."
+    ],
+    [
+     "YOUR THEME",
+     "Reads the colours from your active Omarchy theme each time it opens."
+    ],
+    [
+     "PRIVATE",
+     "Plans stay in your browser. No server, no account, no analytics and no tracking."
+    ],
+    [
+     "KEYBOARD",
+     "Search with /, undo with Ctrl+Z, and full keyboard navigation. Press ? for the list."
+    ]
+   ],
+   "install": [
+    [
+     "OMARCHY PLUGIN",
+     "omarchy plugin add https://github.com/KarPage/oma-year-planner --enable"
+    ],
+    [
+     "OPEN IT",
+     "~/.config/omarchy/plugins/io.github.karpage.oma-year/year-planner/open"
+    ],
+    [
+     "OR WITHOUT THE PLUGIN",
+     "git clone https://github.com/KarPage/oma-year-planner.git && cd oma-year-planner/year-planner && ./open"
+    ]
+   ],
+   "installNote": "The plugin adds a calendar button to your bar. You need Chromium (it ships with Omarchy), Python 3 and curl, plus ImageMagick for wallpaper mode.",
+   "links": [
+    [
+     "SOURCE",
+     "https://github.com/KarPage/oma-year-planner"
+    ],
+    [
+     "MARKETPLACE",
+     "https://plugins.omarchy.org/plugin.html?id=io.github.karpage.oma-year"
+    ]
+   ],
+   "fine": [
+    "All plans in these screenshots are the planner's built-in demo year. Captured in a sandbox browser from the public repo at bd1c117.",
+    "The floating-window shot draws the window at 86% opacity over a plain generated backdrop, the way a translucent Hyprland window looks.",
+    "Unofficial. Not affiliated with Omarchy."
+   ],
+   "shots": [
+    {
+     "id": "oyp-board",
+     "alt": "Oma Year Planner with the full 2026 year on one board: the built-in demo plans Ski week, City break, Wedding weekend, Workshop, Coast week, Lake week, Autumn hike and Year-end break, with plans, trips and days-away counts on the strip and today marked in October.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "FULL YEAR · ONE SCREEN"
+    },
+    {
+     "id": "oyp-quickadd",
+     "alt": "The quick add popover opened on November 12 in the demo year, with an empty name field, Add plan, Attach photo, Add tag, Plan or Trip and Add note.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "QUICK ADD · CLICK A DAY"
+    },
+    {
+     "id": "oyp-help",
+     "alt": "The How it works panel opened with ?, showing add a plan, one day, move and resize, quick edit, scroll months and jump to today, plus the keyboard shortcuts.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "? · HOW IT WORKS"
+    },
+    {
+     "id": "oyp-window",
+     "alt": "Oma Year Planner as a translucent floating window over a plain green desktop backdrop, showing the demo plans from April 2026 into 2027.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "FLOATING WINDOW · TRANSLUCENT"
+    }
+   ],
+   "repo": "KarPage/oma-year-planner",
+   "facts": {
+    "files": 49,
+    "repoBytes": 6225070,
+    "downloadBytes": 5067825,
+    "appBytes": 525539,
+    "commit": "bd1c117",
+    "commitDate": "2026-10-27",
+    "license": "MIT",
+    "measured": "2026-10-30"
+   },
+   "listing": "https://plugins.omarchy.org/plugin.html?id=io.github.karpage.oma-year",
+   "mediaTop": true
   },
   {
    "slug": "launcher",
