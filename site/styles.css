@@ -113,6 +113,10 @@ img { display: block; max-width: 100%; height: auto; }
 .mhead h1 { grid-area: h1; min-width: 0; }
 .clock { grid-area: clock; margin: 0; display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 0; font-size: 13px; line-height: 1; white-space: nowrap; visibility: hidden; }
 .clock.on { visibility: visible; }
+/* Only the time colon blinks: a calm 1 s on / 1 s off. Opacity only, so nothing moves. */
+.clock .cc { animation: ccb 2s steps(1, end) infinite; }
+@keyframes ccb { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .clock .cc { animation: none; } }
 .clock b { display: flex; align-items: center; padding: 7px 8px; font-weight: 400; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--jade-hi); border-right: 1px solid var(--line); }
 .clock time { display: inline-block; min-width: 23ch; padding: 7px 10px; color: var(--muted); text-align: right; }
 .lede.twl { height: 1.5em; line-height: 1.5; font-size: 20px; white-space: nowrap; overflow: hidden; }
@@ -395,6 +399,7 @@ section h2 span { margin-right: 10px; color: var(--jade-hi); }
 .feat.soon { border-style: dashed; }
 
 .gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.gallery.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .gallery.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .gallery.g4 figcaption { padding: 7px 8px; font-size: 11px; letter-spacing: 0.1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gallery.g4 img { display: block; width: 100%; height: auto; aspect-ratio: 320 / 631; border-radius: 0; }
@@ -458,6 +463,7 @@ section h2 span { margin-right: 10px; color: var(--jade-hi); }
   .row-ext { grid-column: 1 / -1; }
   .tiles, .grid, .gallery, .others { grid-template-columns: minmax(0, 1fr); }
   .gallery.g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .gallery.g3 { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .tiles { gap: 14px; }
   .bar { padding: 10px 16px; }
   .bar nav { display: none; }
@@ -581,7 +587,7 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
 }
 
 /* real-app media: hero screenshot, one muted screen recording, then real screenshots (square frames, glass lightbox in site.js) */
-.hero-still { margin-top: 30px; }
+.hero-still, .keys + .hero-shot { margin-top: 30px; }
 .hero-still img { display: block; height: auto; aspect-ratio: 16 / 9; }
 .hero-still figcaption, .shots figcaption { padding: 8px 10px; border-top: 1px solid var(--line-dim); background: var(--well); color: var(--muted); font-size: 12px; letter-spacing: 0.14em; }
 .reel-frame { padding: 0; margin-top: 22px; }

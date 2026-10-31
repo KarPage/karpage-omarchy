@@ -595,8 +595,8 @@
    ],
    "shots": [
     {
-     "id": "okd-jade",
-     "alt": "OmaKarDash Jade theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "id": "okd5-jade",
+     "alt": "OmaKarDash Jade theme, version 0.5.3, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
      "w": 960,
      "h": 540,
      "x2": true,
@@ -604,8 +604,17 @@
      "cap": "JADE"
     },
     {
-     "id": "okd-red",
-     "alt": "OmaKarDash Red theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "id": "okd5-jade",
+     "alt": "OmaKarDash Jade theme, version 0.5.3, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "w": 960,
+     "h": 540,
+     "x2": true,
+     "avif": true,
+     "cap": "JADE"
+    },
+    {
+     "id": "okd5-red",
+     "alt": "OmaKarDash Red theme, version 0.5.3, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
      "w": 960,
      "h": 540,
      "x2": true,
@@ -613,31 +622,13 @@
      "cap": "RED"
     },
     {
-     "id": "okd-purple",
-     "alt": "OmaKarDash Purple theme, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
+     "id": "okd5-purple",
+     "alt": "OmaKarDash Purple theme, version 0.5.3, a demo dashboard for the fictional car Northwind. The car is asleep and unplugged, at 78 percent charge and 251 miles, with the rear-right tire at 26 psi. The footer says unofficial and not affiliated with Tesla.",
      "w": 960,
      "h": 540,
      "x2": true,
      "avif": true,
      "cap": "PURPLE"
-    },
-    {
-     "id": "okd-clear-1",
-     "alt": "OmaKarDash Clear theme in a narrow window, with the car above and the controls along the bottom. Northwind is asleep and unplugged, at 78 percent and 251 miles, with the rear-right tire at 26 psi.",
-     "w": 590,
-     "h": 640,
-     "x2": true,
-     "avif": true,
-     "cap": "CLEAR · TALL"
-    },
-    {
-     "id": "okd-clear-3",
-     "alt": "OmaKarDash Clear theme in a narrow window, with controls along both sides of the car. Northwind is asleep and unplugged, at 78 percent and 251 miles, with the rear-right tire at 26 psi.",
-     "w": 520,
-     "h": 450,
-     "x2": true,
-     "avif": true,
-     "cap": "CLEAR · COMPACT"
     }
    ]
   }
