@@ -24,8 +24,14 @@
     var timer = 0;
     var tick = function () {
       var d = new Date();
+      // Rebuilt as nodes so only the colon blinks (CSS); monospace keeps the width fixed.
+      var cc = document.createElement("span");
+      cc.className = "cc";
+      cc.textContent = ":";
       out.textContent = D[d.getDay()] + " " + d.getDate() + " " + M[d.getMonth()] + " " + d.getFullYear() +
-        " \u00b7 " + two(d.getHours()) + ":" + two(d.getMinutes());
+        " \u00b7 " + two(d.getHours());
+      out.appendChild(cc);
+      out.appendChild(document.createTextNode(two(d.getMinutes())));
       out.setAttribute("datetime", d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + "T" + two(d.getHours()) + ":" + two(d.getMinutes()));
       window.clearTimeout(timer);
       timer = window.setTimeout(tick, 60000 - (d.getSeconds() * 1000 + d.getMilliseconds()) + 50);

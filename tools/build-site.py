@@ -473,7 +473,7 @@ def page(app, apps):
     if rest:
         figs = "".join('<figure class="frame"><a href="%s">%s</a><figcaption>%s</figcaption></figure>'
                        % (e(full_src(s)), picture(s), e(s.get("cap", ""))) for s in rest)
-        section("gallery", "GALLERY", '<div class="gallery">%s</div>' % figs)
+        section("gallery", "GALLERY", '<div class="gallery%s">%s</div>' % (" g3" if len(rest) == 3 else "", figs))
         nav.append(("gallery", "GALLERY"))
     if app.get("chips"):
         c = app["chips"]
