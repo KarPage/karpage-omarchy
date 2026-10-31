@@ -4,6 +4,7 @@
 Writes site/index.html, one site/<slug>.html per app and site/sitemap.xml.
 No dependencies beyond Python 3. Run from the repo root: python3 tools/build-site.py
 """
+import re
 import json
 import pathlib
 from html import escape
@@ -35,8 +36,16 @@ MARKS["year"] = mark_year()
 e = lambda s: escape(str(s), quote=True)
 
 
+# Glyph bounds (measured from the rendered SVGs) so a boxed mark can fill its square edge to edge.
+TIGHT = {"kp": "84 0 344 512", "raptor": "3.2 3.2 25.6 25.6", "car": "4.5 10.85 25 10.65",
+         "launch": "4.2 6.2 23.6 19.6", "year": "3.5 5 25.3 20.85"}
+
+
 def mark(app, cls="mark"):
-    return '<span class="%s" aria-hidden="true">%s</span>' % (cls, MARKS.get(app.get("mark"), ""))
+    svg = MARKS.get(app.get("mark"), "")
+    if "big" in cls and app.get("mark") in TIGHT:
+        svg = re.sub(r'viewBox="[^"]*"', 'viewBox="%s"' % TIGHT[app["mark"]], svg, count=1)
+    return '<span class="%s" aria-hidden="true">%s</span>' % (cls, svg)
 
 
 def picture(shot, eager=False):
