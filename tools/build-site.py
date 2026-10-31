@@ -115,6 +115,21 @@ def og_image(app):
     return "%s/%s" % (BASE, full_src(s))
 
 
+MANIFEST = {
+    "name": "Kar Page Apps",
+    "short_name": "Kar Page Apps",
+    "start_url": "/",
+    "scope": "/",
+    "display": "browser",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "icons": [
+        {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
+        {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    ],
+}
+
+
 def head(title, desc, keywords, path, image, image_meta=""):
     card = "summary_large_image" if image else "summary"
     img = ('<meta property="og:image" content="%s">\n%s<meta name="twitter:image" content="%s">\n' % (e(image), image_meta, e(image))) if image else ""
@@ -137,7 +152,10 @@ def head(title, desc, keywords, path, image, image_meta=""):
 <meta property="og:description" content="%s">
 <meta property="og:url" content="%s">
 %s<meta name="twitter:card" content="%s">
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="preload" href="fonts/ShareTechMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -546,6 +564,7 @@ def main():
     for a in apps:
         (ROOT / (a["slug"] + ".html")).write_text(page(a, apps))
     urls = [BASE + "/"] + [BASE + "/" + a["slug"] for a in apps]
+    (ROOT / "site.webmanifest").write_text(json.dumps(MANIFEST, indent=2) + "\n")
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n%s\n</urlset>\n'
                                       % "\n".join("<url><loc>%s</loc></url>" % u for u in urls))
 
