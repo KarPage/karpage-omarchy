@@ -315,8 +315,9 @@ def board(apps):
             % ("".join(boxes), idle, "".join(panels)))
 
 
-# Hero type loop: after "Apps", one short terminal-style line per app, in grid order.
-# Each line is cut down from that app's own tagline in apps.json (no new claims).
+# Hero subtitle type loop: one short terminal-style line per app, in grid order, then
+# the visitor's local date (added in site.js). Each line is cut down from that app's
+# own tagline in apps.json (no new claims). The kar-page line is the static fallback.
 TW = {
     "kar-page": "/kar-page \u2014 your cars. your story.",
     "omaraptor": "/omaraptor \u2014 youtube player for omarchy",
@@ -356,8 +357,8 @@ def index(apps):
 <div class="wrap">
 <header class="mast">
 <p class="prompt">~/apps <span>$</span> ls</p>
-<h1><span class="h1s">Kar Page</span> <span class="sr">Apps</span><span class="twl" aria-hidden="true"><span class="tw" data-tw="%s">Apps<span class="cursor"></span></span></span></h1>
-<p class="lede">%s</p>
+<h1>Kar Page Apps</h1>
+<p class="lede twl" aria-hidden="true"><span class="tw p" data-tw="%s"><span class="sl">/</span>%s<span class="cursor"></span></span></p>
 <p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg"><kbd class="w" data-key="Enter">↲ ENTER</kbd><em>select</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span></p>
 %s
 </header>
@@ -366,7 +367,7 @@ def index(apps):
 %s
 </ul>
 </main>
-""" % (e(tw_lines(apps)), e(SUBTITLE), board(apps), "\n".join(tiles)) + FOOT
+""" % (e(tw_lines(apps)), e(TW["kar-page"][1:]), board(apps), "\n".join(tiles)) + FOOT
 
 
 def code_tile(i, label, cmd, detail=""):

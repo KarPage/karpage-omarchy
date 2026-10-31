@@ -108,11 +108,10 @@ img { display: block; max-width: 100%; height: auto; }
   box-shadow: 0 0 6px rgba(63, 224, 164, 0.7), 0 0 14px rgba(0, 168, 107, 0.45);
   animation: blink 1.2s ease-in-out infinite;
 }
-.mast h1 { white-space: nowrap; }
-.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-.twl { display: inline; }
-.tw.p { font-size: var(--twf, 0.6em); color: var(--muted); text-shadow: none; letter-spacing: 0; }
+.lede.twl { height: 1.5em; line-height: 1.5; font-size: 20px; white-space: nowrap; overflow: hidden; }
+.tw.p { font-size: var(--twf, 1em); color: var(--muted); text-shadow: none; letter-spacing: 0; }
 .tw.p .sl { color: var(--jade-hi); }
+.lede .cursor { width: 0.5em; height: 1em; margin-left: 0.15em; vertical-align: -0.16em; box-shadow: 0 0 6px rgba(63, 224, 164, 0.45); }
 .tw.k .cursor { animation: none; opacity: 1; }
 .tw-m { position: absolute; left: -9999px; top: 0; visibility: hidden; white-space: pre; }
 @keyframes blink { 0%, 40% { opacity: 1; } 55%, 85% { opacity: 0.12; } 100% { opacity: 1; } }
@@ -436,7 +435,7 @@ section h2 span { margin-right: 10px; color: var(--jade-hi); }
 @media (max-width: 760px) {
   .wrap { padding: 0 16px; }
   .mast { padding: 36px 0 24px; }
-  .mast h1 .twl { display: block; min-height: 1.02em; }
+  .lede.twl { font-size: 17px; }
   .lede { font-size: 16px; }
   .board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .stat:first-child { grid-column: 1 / -1; }
