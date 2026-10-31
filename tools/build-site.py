@@ -232,6 +232,15 @@ def status_badge(app):
     return '<span class="badge s-%s">%s%s</span>' % (e(app["status"].replace(" ", "-")), g, e(app["status"].upper()))
 
 
+def app_window(app, which):
+    w = app["window"]
+    t = w[which]
+    img = ('<img src="img/%s.webp" srcset="img/%s.webp 1x, img/%s-2x.webp 2x" alt="%s" width="%d" height="%d" decoding="async" loading="lazy">'
+           % (t["id"], t["id"], t["id"], e(w["alt"]), t["w"], t["h"]))
+    return ('<div class="win"><div class="win-bar"><span class="win-ctl" aria-hidden="true"><i></i><i></i><i></i></span><b>%s</b></div>'
+            '<div class="win-body">%s</div></div>' % (e(w["title"]), img))
+
+
 def placeholder(app, small=False):
     cmd = "" if small else '<code>$ chromium --app=https://karpage.app</code>'
     return ('<div class="placeholder" role="img" aria-label="No screenshot yet for %s">%s<b>%s</b>%s<small>SCREENSHOT COMING SOON</small></div>'
@@ -313,6 +322,8 @@ def index(apps):
             media = '<div class="tile-shot trio">%s</div>' % "".join(
                 '<img src="img/%s.webp" srcset="img/%s.webp 1x, img/%s-2x.webp 2x" alt="%s" width="%d" height="%d" decoding="async" loading="lazy">'
                 % (t["id"], t["id"], t["id"], e(t["alt"]), t["w"], t["h"]) for t in a["thumbs"])
+        elif a.get("window"):
+            media = '<div class="tile-shot winbox">%s</div>' % app_window(a, "tile")
         elif a["shots"]:
             s = a["shots"][0]
             media = '<div class="tile-shot%s">%s</div>' % (" phone" if a.get("frame") == "phone" else "", picture(s, i == 0))
@@ -395,6 +406,8 @@ def page(app, apps):
         s = shots[0]
         cls = "frame hero-shot phone" if app.get("frame") == "phone" else "frame hero-shot"
         hero_media = '<figure class="%s"><a href="%s">%s</a></figure>' % (cls, e(full_src(s)), picture(s, True))
+    elif app.get("window"):
+        hero_media = '<figure class="frame hero-shot winbox">%s</figure>' % app_window(app, "hero")
     else:
         hero_media = '<figure class="frame hero-shot">%s</figure>' % placeholder(app)
 
