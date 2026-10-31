@@ -12,9 +12,32 @@
     if (dest) window.location.replace(dest);
   }
 
-  // Hero subtitle: cycles short terminal-style lines (from data-tw, one per app in grid
-  // order) plus the visitor's local date. The server-rendered /kar-page line is the
-  // static fallback (no JS, or prefers-reduced-motion).
+  // Hero clock: the visitor's own local date and time, beside the H1. Static text
+  // refreshed on each minute (shown with reduced motion too). No network.
+  (function () {
+    var box = document.querySelector(".mast .clock");
+    var out = box && box.querySelector("time");
+    if (!out) return;
+    var D = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+    var M = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    var two = function (v) { return (v < 10 ? "0" : "") + v; };
+    var timer = 0;
+    var tick = function () {
+      var d = new Date();
+      out.textContent = D[d.getDay()] + " " + d.getDate() + " " + M[d.getMonth()] + " " + d.getFullYear() +
+        " \u00b7 " + two(d.getHours()) + ":" + two(d.getMinutes());
+      out.setAttribute("datetime", d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + "T" + two(d.getHours()) + ":" + two(d.getMinutes()));
+      window.clearTimeout(timer);
+      timer = window.setTimeout(tick, 60000 - (d.getSeconds() * 1000 + d.getMilliseconds()) + 50);
+    };
+    tick();
+    box.classList.add("on");
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) tick(); });
+  })();
+
+  // Hero subtitle: cycles short terminal-style lines from data-tw (the tagline as a
+  // shell comment, then one per app in grid order). The server-rendered tagline is
+  // the static fallback (no JS, or prefers-reduced-motion).
   (function () {
     var tw = document.querySelector(".mast .tw[data-tw]");
     var calm = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -22,24 +45,15 @@
     var box = tw.parentNode;
     var cur = tw.querySelector(".cursor");
     var first = tw.textContent;
-    var seq = tw.getAttribute("data-tw").split("|").filter(Boolean).concat([""]);
-    var DATE = seq.length - 1;
-    var now = function () {
-      // Visitor's own clock, read fresh each time the line is typed. No network.
-      var d = new Date();
-      var two = function (v) { return (v < 10 ? "0" : "") + v; };
-      return "/date \u2014 " + ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][d.getDay()] + " " +
-        d.getDate() + " " + ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"][d.getMonth()] +
-        " " + d.getFullYear() + " \u00b7 " + two(d.getHours()) + ":" + two(d.getMinutes());
-    };
+    var seq = tw.getAttribute("data-tw").split("|").filter(Boolean);
     var TYPE = 80, DEL = 40, HOLD = 2800, GAP = 450;
     var idx = Math.max(0, seq.indexOf(first)), n = seq[idx].length, phase = "hold", timer = 0, stopped = false;
     var fit = function () {
-      // Shrink (never grow) so the longest line, date included, stays on one line.
+      // Shrink (never grow) so the longest line stays on one line.
       var m = document.createElement("span");
       m.className = "tw p tw-m";
       m.style.fontSize = "1em";
-      var longest = seq.concat([now()]).reduce(function (a, b) { return b.length > a.length ? b : a; }, "");
+      var longest = seq.reduce(function (a, b) { return b.length > a.length ? b : a; }, "");
       m.textContent = longest + "\u00a0\u00a0";
       box.appendChild(m);
       var w = m.getBoundingClientRect().width;
@@ -53,10 +67,11 @@
       var s = seq[idx].slice(0, n);
       while (tw.firstChild) tw.removeChild(tw.firstChild);
       cur = cur.cloneNode(false);
-      if (s.charAt(0) === "/") {
+      var c0 = s.charAt(0);
+      if (c0 === "/" || c0 === "#") {
         var sl = document.createElement("span");
         sl.className = "sl";
-        sl.textContent = "/";
+        sl.textContent = c0;
         tw.appendChild(sl);
         s = s.slice(1);
       }
@@ -81,7 +96,6 @@
         if (n <= 0) {
           phase = "type";
           idx = (idx + 1) % seq.length;
-          if (idx === DATE) seq[DATE] = now();
           wait = GAP;
         } else {
           wait = DEL;
