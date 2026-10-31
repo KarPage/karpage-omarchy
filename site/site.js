@@ -318,10 +318,13 @@
     for (var i = 0; i < all.length; i++) if (all[i].box === node || all[i].box.contains(node)) return all[i];
     return null;
   }
+  /* The live app frame has its own hairline, so the ring only joins it once the keyboard is in use. */
+  var keyed = false;
+  document.addEventListener("keydown", function () { if (!keyed) { keyed = true; later(); } }, true);
   var queued = 0;
   function place() {
     queued = 0;
-    if (!cur || !shown(cur)) { box.classList.remove("on"); return; }
+    if (!cur || !shown(cur) || (!keyed && cur.box.classList.contains("live-phone"))) { box.classList.remove("on"); return; }
     var r = cur.box.getBoundingClientRect(), pad = 5, jump = !box.classList.contains("on");
     if (jump) box.classList.remove("go");
     box.style.transform = "translate(" + Math.round(r.left + window.scrollX - pad) + "px," + Math.round(r.top + window.scrollY - pad) + "px)";

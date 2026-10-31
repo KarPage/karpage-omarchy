@@ -584,23 +584,25 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 }
 @media (prefers-reduced-motion: reduce) { .lb { animation: none; } }
 
-/* Kar Page live: a short line, then the public app in a phone-shaped frame (390:844) sized to the viewport
-   height, so the whole phone and the link under it fit without scrolling. --live-off is everything else on screen:
-   sticky bar, title, line, link and margins. */
-.hero-live { --live-off: 178px; padding-top: 14px; text-align: center; }
+/* Kar Page live: two short lines, then the public app in a big-phone frame (430:932) sized to the viewport
+   height, so the whole phone and the link under it fit without scrolling. When the height is short the frame keeps
+   at least 420px of width (a real phone layout) and gets a little less tall. --live-off is everything else on
+   screen: sticky bar, title, two lines, link and margins. */
+.hero-live { --live-off: 176px; padding-top: 10px; text-align: center; }
 .hero-live .title-row { justify-content: center; gap: 12px; }
 .hero-live h1 { font-size: 30px; }
 .hero-live .mark.big { width: 32px; height: 32px; padding: 5px; }
-.live-desc { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
-.live { --h: min(844px, calc(100vh - var(--live-off))); display: flex; flex-direction: column; align-items: center; margin-top: 14px; }
-@supports (height: 100dvh) { .live { --h: min(844px, calc(100dvh - var(--live-off))); } }
-.live-phone { position: relative; height: var(--h); width: min(calc(var(--h) * 390 / 844), 100%); min-height: 320px; border: 1px solid var(--jade); border-radius: 1px; background: #000; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 22px rgba(0, 168, 107, 0.22); }
+.live-sub { margin: 4px 0 0; color: var(--fg); font-size: 16px; line-height: 20px; }
+.live-desc { margin: 2px 0 0; color: var(--muted); font-size: 13px; line-height: 18px; }
+.live { --h: min(932px, calc(100vh - var(--live-off))); display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
+@supports (height: 100dvh) { .live { --h: min(932px, calc(100dvh - var(--live-off))); } }
+.live-phone { position: relative; height: var(--h); width: min(max(420px, calc(var(--h) * 430 / 932)), 100%); min-height: 320px; border: 1px solid var(--jade); border-radius: 1px; background: #000; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 22px rgba(0, 168, 107, 0.22); }
 .live-phone:focus-visible { outline: none; }
 .live-frame { display: block; width: 100%; height: 100%; border: 0; background: #000; }
-.live-open { margin-top: 10px; color: var(--jade-hi); font: 12px/16px var(--mono); letter-spacing: 0.18em; }
+.live-open { margin-top: 8px; color: var(--jade-hi); font: 12px/16px var(--mono); letter-spacing: 0.18em; }
 .live-open i { font-style: normal; color: var(--muted); }
 .live-open:hover { color: #fff; }
-/* Narrow touch screens: the app runs full width and tall; the line above and the link below still scroll the page. */
+/* Narrow touch screens: the app runs full width and tall; the lines above and the link below still scroll the page. */
 @media (max-width: 500px) and (pointer: coarse) {
   .live-phone { width: 100vw; height: 88vh; height: 88dvh; border-left: 0; border-right: 0; }
 }
