@@ -12,6 +12,117 @@
     if (dest) window.location.replace(dest);
   }
 
+  // Hero: "Kar Page" stays put; the word after it types, holds, backspaces, then
+  // cycles short terminal-style lines (from data-tw). Static under reduced motion.
+  (function () {
+    var tw = document.querySelector(".mast .tw[data-tw]");
+    var calm = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+    if (tw && !(calm && calm.matches)) {
+      var cur = tw.querySelector(".cursor");
+      var h1 = tw.closest("h1");
+      var twl = tw.parentNode;
+      var lines = tw.getAttribute("data-tw").split("|").filter(Boolean);
+      var seq = ["Apps"].concat(lines, [""]);
+      var DATE = seq.length - 1;
+      var now = function () {
+        // Visitor's own clock, read fresh each time the line is typed. No network.
+        var d = new Date();
+        var two = function (v) { return (v < 10 ? "0" : "") + v; };
+        return "/date \u2014 " + ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][d.getDay()] + " " +
+          d.getDate() + " " + ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"][d.getMonth()] +
+          " " + d.getFullYear() + " \u00b7 " + two(d.getHours()) + ":" + two(d.getMinutes());
+      };
+      var TYPE = 80, DEL = 40, HOLD_A = 3000, HOLD_P = 2800, GAP = 450;
+      var idx = 0, n = 4, phase = "hold", timer = 0, stopped = false;
+      var fit = function () {
+        // Largest prompt size (<= 0.62em) at which the longest line fits beside the static text.
+        var m = document.createElement("span");
+        m.className = "tw p tw-m";
+        m.style.fontSize = "0.6em";
+        var longest = lines.reduce(function (a, b) { return b.length > a.length ? b : a; }, "");
+        m.textContent = longest + "\u00a0";
+        h1.appendChild(m);
+        var w = m.getBoundingClientRect().width;
+        h1.removeChild(m);
+        var room = h1.clientWidth - (twl.offsetLeft - h1.offsetLeft) - 4;
+        if (window.getComputedStyle(twl).display === "block") room = h1.clientWidth - 4;
+        if (w > 0 && room > 0) {
+          var f = Math.min(0.62, 0.6 * room / w);
+          tw.style.setProperty("--twf", f.toFixed(3) + "em");
+        }
+      };
+      var draw = function () {
+        // Rebuild the line each frame (fresh nodes, fresh cursor) so the moving
+        // cursor never registers as a layout shift.
+        var s = seq[idx].slice(0, n);
+        while (tw.firstChild) tw.removeChild(tw.firstChild);
+        cur = cur.cloneNode(false);
+        tw.appendChild(cur);
+        if (idx > 0 && s.charAt(0) === "/") {
+          var sl = document.createElement("span");
+          sl.className = "sl";
+          sl.textContent = "/";
+          tw.insertBefore(sl, cur);
+          s = s.slice(1);
+        }
+        if (s) tw.insertBefore(document.createTextNode(s), cur);
+      };
+      var step = function () {
+        timer = 0;
+        if (stopped || document.hidden) return;
+        var full = seq[idx];
+        var wait;
+        if (phase === "type") {
+          n++;
+          draw();
+          if (n >= full.length) { phase = "hold"; tw.classList.remove("k"); }
+          wait = n >= full.length ? (idx === 0 ? HOLD_A : HOLD_P) : TYPE;
+        } else if (phase === "hold") {
+          phase = "del";
+          tw.classList.add("k");
+          wait = DEL;
+        } else if (phase === "del") {
+          n--;
+          draw();
+          if (n <= 0) {
+            phase = "type";
+            idx = (idx + 1) % seq.length;
+            if (idx === DATE) seq[DATE] = now();
+            tw.classList.toggle("p", idx > 0);
+            wait = GAP;
+          } else {
+            wait = DEL;
+          }
+        }
+        timer = window.setTimeout(step, wait);
+      };
+      var go = function () {
+        if (!timer && !stopped && !document.hidden) timer = window.setTimeout(step, phase === "hold" ? 1200 : TYPE);
+      };
+      fit();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+      window.addEventListener("resize", fit);
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) { window.clearTimeout(timer); timer = 0; } else { go(); }
+      });
+      if (calm && calm.addEventListener) {
+        calm.addEventListener("change", function (ev) {
+          if (!ev.matches) return;
+          stopped = true;
+          window.clearTimeout(timer);
+          timer = 0;
+          idx = 0;
+          n = 4;
+          phase = "hold";
+          tw.classList.remove("p", "k");
+          draw();
+        });
+      }
+      // Start from the server-rendered "Apps", hold it, then begin.
+      timer = window.setTimeout(step, HOLD_A);
+    }
+  })();
+
   var board = document.querySelector(".board");
   if (board) {
     var boxes = board.querySelectorAll(".stat");
