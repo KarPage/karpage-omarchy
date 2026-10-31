@@ -248,15 +248,24 @@ def placeholder(app, small=False):
 
 
 FOOT = """<footer class="foot">
+<div class="foot-top">
+<div class="foot-main">
 <p class="foot-brand">KARPAGE · BUILT FOR OMARCHY</p>
-<p>Open-source apps are MIT licensed and link to their source. Kar Page itself is a private codebase.</p>
-<p>Unofficial. Not affiliated with Omarchy, Tesla, SpaceX or NASA. Screenshots use demo data or open-licensed footage.</p>
+<p>The open-source apps are MIT licensed and link to their source. The Kar Page app itself is a private codebase.</p>
+<p>Unofficial. Not affiliated with or endorsed by Omarchy, Tesla, SpaceX or NASA. Screenshots use demo data or openly licensed footage.</p>
+</div>
+<blockquote class="foot-note"><p>Free and open, the way computers were meant to be. Fork it, fix it, make it yours.</p><cite>— Nik</cite></blockquote>
+</div>
+<div class="foot-legal"><span>© 2026 Kar Page</span><nav aria-label="Footer"><a href="https://github.com/KarPage" rel="noopener">Source</a>%CREDITS%<a href="mailto:support@karpage.com">support@karpage.com</a></nav></div>
 </footer>
 <script src="site.js"></script>
 </body>
 </html>
 """
 FOOT = FOOT.replace("KARPAGE · BUILT FOR OMARCHY", glyph("kp") + "KARPAGE · BUILT FOR " + glyph("omarchy") + "OMARCHY")
+# Home has no credits section; each app page links its own Licenses / Credits block.
+FOOT_HOME = FOOT.replace("%CREDITS%", "")
+FOOT_APP = FOOT.replace("%CREDITS%", '<a href="#credits">Licenses · Credits</a>')
 
 
 FILTERS = [
@@ -371,7 +380,7 @@ def index(apps):
 %s
 </ul>
 </main>
-""" % (e(tw_lines(apps)), e(TAG[1:]), board(apps), "\n".join(tiles)) + FOOT
+""" % (e(tw_lines(apps)), e(TAG[1:]), board(apps), "\n".join(tiles)) + FOOT_HOME
 
 
 def code_tile(i, label, cmd, detail=""):
@@ -520,7 +529,7 @@ def page(app, apps):
 %s
 <section class="more"><h2><span>›</span> MORE APPS</h2><ul class="others">%s</ul></section>
 </main>
-""" % ("".join('<a href="#%s">%s</a>' % (i, t) for i, t in nav), hero, "\n".join(sec), others) + FOOT
+""" % ("".join('<a href="#%s">%s</a>' % (i, t) for i, t in nav), hero, "\n".join(sec), others) + FOOT_APP
 
 
 def main():
