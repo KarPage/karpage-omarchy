@@ -65,6 +65,22 @@ def glyph(name):
     return '<svg class="g" viewBox="%s" aria-hidden="true" focusable="false"><path fill="currentColor" d="%s"/></svg>' % (vb, d)
 
 
+# Android robot (Simple Icons "android"). The Android robot is reproduced or modified from work
+# created and shared by Google and used according to terms described in the Creative Commons 3.0
+# Attribution License. No Apple or Chrome logos: their guidelines need written permission.
+GLYPHS["android"] = ("0 0 24 24", "M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z")
+
+# Generic UI symbols drawn for the install steps (our own line drawings, square caps).
+def _ui(d):
+    return ('<svg class="ui" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" '
+            'stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">%s</svg>') % d
+UI_ICONS = {
+    "share": _ui('<path d="M8.5 9H5v12h14V9h-3.5M12 2.5V15M8 6.5l4-4 4 4"/>'),
+    "addsq": _ui('<path d="M4 4h16v16H4zM12 8v8M8 12h8"/>'),
+    "more": _ui('<path d="M11 4h2v2h-2zM11 11h2v2h-2zM11 18h2v2h-2z"/>'),
+    "install": _ui('<path d="M3 4h18v13H3zM8 21h8M12 7v6.5M9 10.5l3 3 3-3"/>'),
+}
+
 TAG_GLYPHS = {"OMARCHY": "omarchy", "LINUX": "linux"}
 
 
@@ -362,10 +378,10 @@ def page(app, apps):
     sec = []
     n = 0
 
-    def section(id_, title, body):
+    def section(id_, title, body, pre=""):
         nonlocal n
         n += 1
-        sec.append('<section id="%s"><h2><span>%02d</span> %s</h2>%s</section>' % (id_, n, e(title), body))
+        sec.append('<section id="%s"><h2><span>%02d</span> %s%s</h2>%s</section>' % (id_, n, pre, e(title), body))
 
     nav = []
     shots = app["shots"]
@@ -381,11 +397,34 @@ def page(app, apps):
     section("features", "FEATURES", '<div class="grid">%s</div>' % "".join(
         '<div class="feat"><b>%s</b><p>%s</p></div>' % (e(t), e(p)) for t, p in app["features"]))
     nav.append(("features", "FEATURES"))
+    if app.get("related"):
+        r = app["related"]
+        section("omarchy", r[0], '<a class="feat link" href="/%s"><b>KAR PAGE LAUNCHER →</b><p>%s</p></a>' % (e(r[2]), e(r[1])),
+                glyph("omarchy"))
+        nav.append(("omarchy", r[0]))
     if app.get("pwa"):
         w = app["pwa"]
-        cards = "".join('<div class="feat steps-card"><b>%s</b><ol class="steps">%s</ol></div>'
-                        % (e(t), "".join("<li>%s</li>" % e(x) for x in steps)) for t, steps in w["cards"])
-        section("install", "INSTALL", '<div class="grid">%s</div><p class="note">%s</p>' % (cards, e(w["note"])))
+
+        def step_row(steps):
+            # Each step is a key-cap chip: [icon] label, or a text-only cap for the final button.
+            lis = []
+            for ic, label in steps:
+                if ic:
+                    lis.append('<li><span class="cap">%s</span><span class="cap-l">%s</span></li>' % (UI_ICONS[ic], e(label)))
+                else:
+                    lis.append('<li><span class="cap cap-t">%s</span></li>' % e(label))
+            return '<ol class="isteps">%s</ol>' % "".join(lis)
+
+        def os_mark(c):
+            if c.get("glyph"):
+                return glyph(c["glyph"])
+            return '<span class="osb">%s</span>' % e(c["badge"])
+
+        cards = "".join('<div class="feat icard"><b>%s%s</b>%s</div>' % (os_mark(c), e(c["title"]), step_row(c["steps"]))
+                        for c in w["cards"])
+        d = w["desktop"]
+        desk = '<div class="feat icard idesk"><b>%s</b>%s</div>' % (e(d["title"]), step_row(d["steps"]))
+        section("install", "INSTALL", '<div class="igrid">%s</div>%s<p class="note">%s</p>' % (cards, desk, e(w["note"])))
         nav.append(("install", "INSTALL"))
     rest = [] if media_top(app) else shots[1:]
     if rest:
@@ -406,9 +445,6 @@ def page(app, apps):
     elif app.get("soon"):
         section("status", "STATUS", '<div class="feat soon"><b>COMING SOON</b><p>%s</p></div>' % e(app["soon"]))
         nav.append(("status", "STATUS"))
-    if app.get("related"):
-        r = app["related"]
-        section("omarchy", r[0], '<a class="feat link" href="/%s"><b>KAR PAGE LAUNCHER →</b><p>%s</p></a>' % (e(r[2]), e(r[1])))
     if app.get("fine"):
         section("credits", "CREDITS · NOTES", '<div class="fine">%s</div>' % "".join("<p>%s</p>" % e(f) for f in app["fine"]))
         nav.append(("credits", "CREDITS"))

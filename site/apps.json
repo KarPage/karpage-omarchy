@@ -330,35 +330,57 @@
    "embedLine": "A web app for car enthusiasts.",
    "pwa": {
     "cards": [
-     [
-      "IPHONE · IPAD — SAFARI",
-      [
-       "Open karpage.app in Safari.",
-       "Tap ⋯, then Share (or just Share, depending on your tab layout).",
-       "Scroll down and tap Add to Home Screen. Keep Open as Web App on.",
-       "Tap Add."
+     {
+      "badge": "iOS",
+      "title": "· iPADOS — SAFARI (PWA)",
+      "steps": [
+       [
+        "share",
+        "Share"
+       ],
+       [
+        "addsq",
+        "Add to Home Screen"
+       ],
+       [
+        null,
+        "Add"
+       ]
       ]
-     ],
-     [
-      "ANDROID — CHROME",
-      [
-       "Open karpage.app in Chrome.",
-       "Tap ⋮ (More) beside the address bar.",
-       "Tap Install app (Install and create shortcut, or Add to home screen, on some versions).",
-       "Tap Install."
+     },
+     {
+      "glyph": "android",
+      "title": "ANDROID — CHROME",
+      "steps": [
+       [
+        "more",
+        "Menu"
+       ],
+       [
+        "install",
+        "Install app"
+       ],
+       [
+        null,
+        "Install"
+       ]
       ]
-     ],
-     [
-      "DESKTOP — CHROME · EDGE",
+     }
+    ],
+    "desktop": {
+     "title": "DESKTOP — CHROME · EDGE",
+     "steps": [
       [
-       "Open karpage.app.",
-       "Click the Install icon in the address bar (Chrome also has ⋮ › Cast, save, and share › Install page as app).",
-       "Confirm Install.",
-       "On Omarchy, use Kar Page Launcher below."
+       "install",
+       "Install icon in the address bar"
+      ],
+      [
+       null,
+       "Install"
       ]
      ]
-    ],
-    "note": "Kar Page is a web app (PWA): once added, it opens from its own icon, full screen, like an app."
+    },
+    "note": "Open karpage.app in that browser first. Once added, it opens full screen from its own icon."
    },
    "related": [
     "ON OMARCHY",
@@ -367,7 +389,8 @@
    ],
    "links": [],
    "fine": [
-    "The frame shows the public karpage.app homepage, live. Signing in works best in the full app."
+    "The frame shows the public karpage.app homepage, live. Signing in works best in the full app.",
+    "The Android robot is reproduced or modified from work created and shared by Google and used according to terms described in the Creative Commons 3.0 Attribution License. Android and Chrome are trademarks of Google LLC. Safari and iPadOS are trademarks of Apple Inc. Unofficial, not affiliated."
    ],
    "shots": [
     {
