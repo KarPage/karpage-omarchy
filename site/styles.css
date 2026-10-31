@@ -859,3 +859,9 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 @media (max-width: 340px) { .kpbox { display: none; } }
 .ck-l { display: inline-flex; align-items: center; gap: 12px; }
 .ck-l .kpm-l { flex: none; fill: url(#kpm-g); filter: drop-shadow(0 0 6px rgba(63, 224, 164, 0.28)); }
+/* Kar Page mark in a square (tiles, app hero, clock box, icons): logo touches top and bottom, centred, inside a 0.5px jade hairline.
+   The hairline is an inset 0.5px shadow so it stays 0.5px (one device pixel at 2x, a half-strength pixel at 1x) instead of rounding up to a 1px border. */
+.mark.kp, .kpbox, .hero-live .mark.big.kp { box-sizing: border-box; padding: 0.5px; border: 0; background: #000; justify-content: center; box-shadow: inset 0 0 0 0.5px var(--jade); }
+.mark.big.kp { box-shadow: inset 0 0 0 0.5px var(--jade), var(--glow); }
+.mark.kp svg { width: auto; height: 100%; aspect-ratio: 2500 / 4172; overflow: hidden; }
+@media (forced-colors: active) { .mark.kp, .kpbox { border: 1px solid CanvasText; padding: 0; } }
