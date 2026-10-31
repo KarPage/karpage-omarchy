@@ -105,6 +105,9 @@ def full_src(shot):
     return "img/%s%s" % (shot["id"], "-2x.webp" if shot.get("x2") else ".png")
 
 
+HOME_OG_ALT = "Kar Page Apps: a jade terminal window running ~/apps $ ls"
+
+
 def og_image(app):
     if not app["shots"]:
         return ""
@@ -112,9 +115,9 @@ def og_image(app):
     return "%s/%s" % (BASE, full_src(s))
 
 
-def head(title, desc, keywords, path, image):
+def head(title, desc, keywords, path, image, image_meta=""):
     card = "summary_large_image" if image else "summary"
-    img = ('<meta property="og:image" content="%s">\n<meta name="twitter:image" content="%s">\n' % (e(image), e(image))) if image else ""
+    img = ('<meta property="og:image" content="%s">\n%s<meta name="twitter:image" content="%s">\n' % (e(image), image_meta, e(image))) if image else ""
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -364,8 +367,10 @@ def index(apps):
 </a></li>""" % (tags(a), e(a["slug"]), i + 1, mark(a), e(a["slug"]), status_badge(a), media, e(a["name"]), e(a["short"]), e(tile_detail(a))))
     desc = "Kar Page Apps: %s. OmaRaptor Player, a free YouTube video player for Omarchy and Linux, plus Kar Page, Oma Year Planner, the Kar Page Launcher and OmaKarDash." % SUBTITLE.capitalize()
     kw = "Omarchy apps, YouTube player, video player, YouTube video player for Omarchy, YouTube video player for Linux, Hyprland, mpv, yt-dlp, OmaRaptor Player, Kar Page, Oma Year Planner"
-    img = og_image(next(a for a in apps if a["slug"] == "omaraptor"))
-    return head("Kar Page Apps", desc, kw, "/", img) + """<body class="home">
+    img = BASE + "/img/og-home.png"
+    img_meta = ('<meta property="og:image:type" content="image/png">\n<meta property="og:image:width" content="1200">\n'
+                '<meta property="og:image:height" content="630">\n<meta property="og:image:alt" content="%s">\n' % e(HOME_OG_ALT))
+    return head("Kar Page Apps", desc, kw, "/", img, img_meta) + """<body class="home">
 <a class="skip" href="#apps">Skip to apps</a>
 <div class="wrap">
 <header class="mast">
