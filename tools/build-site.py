@@ -414,6 +414,11 @@ def page(app, apps):
     section("features", "FEATURES", '<div class="grid">%s</div>' % "".join(
         '<div class="feat"><b>%s</b><p>%s</p></div>' % (e(t), e(p)) for t, p in app["features"]))
     nav.append(("features", "FEATURES"))
+    if app.get("gallery"):
+        figs = "".join('<figure class="frame"><a href="%s"><img src="img/%s.webp" srcset="img/%s.webp 1x, img/%s-2x.webp 2x" alt="%s" width="%d" height="%d" decoding="async" loading="lazy"></a><figcaption>%s</figcaption></figure>'
+                       % (e(full_src(s)), s["id"], s["id"], s["id"], e(s["alt"]), s["w"], s["h"], e(s["cap"])) for s in app["gallery"])
+        section("screenshots", "SCREENSHOTS", '<div class="gallery g4">%s</div>' % figs)
+        nav.append(("screenshots", "SCREENSHOTS"))
     if app.get("related"):
         r = app["related"]
         section("omarchy", r[0], '<a class="feat link" href="/%s"><b>KAR PAGE LAUNCHER →</b><p>%s</p></a>' % (e(r[2]), e(r[1])),

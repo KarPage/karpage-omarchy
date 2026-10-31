@@ -422,6 +422,40 @@
      "h": 240,
      "alt": "Kar Page post of a red BMW M3"
     }
+   ],
+   "gallery": [
+    {
+     "id": "kp-g1-grid",
+     "alt": "Kar Page home grid of car spots",
+     "w": 320,
+     "h": 631,
+     "x2": true,
+     "cap": "HOME GRID"
+    },
+    {
+     "id": "kp-g2-porsche",
+     "alt": "Kar Page post of a green 1956 Porsche",
+     "w": 320,
+     "h": 631,
+     "x2": true,
+     "cap": "POST · 1956 PORSCHE"
+    },
+    {
+     "id": "kp-g3-m3",
+     "alt": "Kar Page post of a red BMW M3",
+     "w": 320,
+     "h": 631,
+     "x2": true,
+     "cap": "POST · BMW M3"
+    },
+    {
+     "id": "kp-g4-gta-bus",
+     "alt": "Kar Page post of a GTA-wrapped double-decker bus",
+     "w": 320,
+     "h": 631,
+     "x2": true,
+     "cap": "POST · GTA BUS SPOT"
+    }
    ]
   },
   {
