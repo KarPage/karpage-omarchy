@@ -700,9 +700,9 @@
         "Moon phase and how much of it is lit, from the 29.53-day lunar cycle.",
         "Sunrise, sunset, daylight. \u2248 means estimated from your time zone; no location is used.",
         "Chinese zodiac year (element + animal). It changes at Lunar New Year, not 1 January.",
-        "Countdown to the next solstice (longest or shortest day) or equinox (day = night).",
+        "Time to the next solstice (longest/shortest day) or equinox (day = night).",
         "Seconds since 1 Jan 1970 UTC. How computers count time.",
-        "Today's Earth\u2013Sun distance. 1 AU \u2248 149.6 million km. Closest in early Jan."
+        "Earth\u2013Sun distance today. 1 AU \u2248 149.6M km; closest in early Jan."
       ];
       var flipEls = [ov.querySelector(".ck-stat")].concat(Array.prototype.slice.call(ov.querySelectorAll(".ck-c")));
       flipEls.forEach(function (c, i) {
@@ -712,6 +712,10 @@
         var w = document.createElement("p");
         w.className = "ck-why"; w.textContent = WHY[i]; w.setAttribute("aria-live", "polite");
         c.appendChild(w);
+        var hn = document.createElement("span");
+        hn.className = "ck-hint";
+        hn.innerHTML = window.KCAP([[["SPACE"], "info"]], "ck-hi") + window.KCAP([[["SPACE"], "back"]], "ck-hb");
+        c.appendChild(hn);
         c.addEventListener("click", function () { c.focus({ preventScroll: true }); c.classList.toggle("fl"); });
         c.addEventListener("focusout", function () { c.classList.remove("fl"); });
       });
@@ -837,19 +841,20 @@
           el.setAttribute("data-i", String(i));
           if (same(d, sel)) oGrid.setAttribute("aria-activedescendant", el.id);
         }
-        var y0 = new Date(y, 0, 1), doy = Math.round((new Date(y, m, sel.getDate()) - y0) / 864e5) + 1;
+        /* The status panel always describes today; the grid highlight is only a highlight. */
+        var td = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        y = td.getFullYear();
+        var y0 = new Date(y, 0, 1), doy = Math.round((td - y0) / 864e5) + 1;
         var len = Math.round((new Date(y + 1, 0, 1) - y0) / 864e5);
-        var gap = Math.round((new Date(y, m, sel.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
         oFoot.innerHTML = "";
-        var wd = sel.getDay() || 7, iy = new Date(sel.getFullYear(), sel.getMonth(), sel.getDate() + 4 - wd).getFullYear();
-        [["DAY", doy + "/" + len], ["WEEK", two(isoWeek(sel))], ["ISO", iy + "-W" + two(isoWeek(sel)) + "-" + wd],
-         ["", gap === 0 ? "today" : gap > 0 ? "in " + gap + (gap === 1 ? " day" : " days") : -gap + (gap === -1 ? " day ago" : " days ago")]].forEach(function (p) {
+        var wd = td.getDay() || 7, iy = new Date(y, td.getMonth(), td.getDate() + 4 - wd).getFullYear();
+        [["DAY", doy + "/" + len], ["WEEK", two(isoWeek(td))], ["ISO", iy + "-W" + two(isoWeek(td)) + "-" + wd], ["", "today"]].forEach(function (p) {
           var e = document.createElement("span");
           if (p[0]) { var l = document.createElement("i"); l.textContent = p[0]; e.appendChild(l); }
           e.appendChild(document.createTextNode(p[1]));
           oFoot.appendChild(e);
         });
-        var frac = (new Date(y, m, sel.getDate()) - y0 + (gap === 0 ? (now - new Date(now.getFullYear(), now.getMonth(), now.getDate())) : 0)) / (len * 864e5);
+        var frac = (now - y0) / (len * 864e5);
         var on = Math.round(frac * SEG), bars = oYr.children;
         for (var b = 0; b < SEG; b++) bars[b].className = b < on ? "on" : "";
         oPct.textContent = (frac * 100).toFixed(1) + "% of " + y;
@@ -932,7 +937,13 @@
         if (k === "Escape") { ev.preventDefault(); if (fc && fc.classList.contains("fl")) fc.classList.remove("fl"); else ckClose(); }
         else if (fc && STEP[k]) { ev.preventDefault(); var nx = flipNav(fc, k); (nx || oGrid).focus({ preventScroll: true }); }
         else if (fc && (k === "Enter" || k === " ")) { ev.preventDefault(); fc.classList.toggle("fl"); }
-        else if (STEP[k]) { ev.preventDefault(); shift(STEP[k], 0); }
+        else if (STEP[k]) {
+          /* Arrows stay inside the shown month; down past the last row leaves the grid for the stat cards. */
+          ev.preventDefault();
+          var last = new Date(sel.getFullYear(), sel.getMonth() + 1, 0).getDate(), nd = sel.getDate() + STEP[k];
+          if (k === "ArrowDown" && nd > last) flipEls[0].focus({ preventScroll: true });
+          else if (nd >= 1 && nd <= last) shift(STEP[k], 0);
+        }
         else if (k === "PageUp" || k === "PageDown") { ev.preventDefault(); shift(0, k === "PageUp" ? -1 : 1); }
         else if (k === "Home" || k === "t" || k === "T") { ev.preventDefault(); var n = new Date(); sel = new Date(n.getFullYear(), n.getMonth(), n.getDate()); drawCal(); }
         else if (k === "Tab") {
