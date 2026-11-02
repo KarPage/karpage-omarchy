@@ -586,37 +586,53 @@
   ["copy", "cut", "contextmenu", "dragstart"].forEach(function (t) { document.addEventListener(t, noCopy); });
   Array.prototype.forEach.call(document.querySelectorAll("img"), function (i) { i.draggable = false; });
 
-  /* Kar Page live frame: the frame is one cursor stop; Enter (or a click on its edge) moves focus into the app. */
+  /* Kar Page live frame. Outside the app a thin jade tint covers it with an [ENTER] cap; Enter or a click lifts
+     the tint and gives the keys to the app. The app is another origin (karpage.app), so once it has focus this
+     page hears no keys at all, Esc included, and the app keeps Tab to itself. Ways back without touching the app:
+     a click anywhere outside, or the CLICK cap beside it. If the app ever posts {type: "kp:escape"} to its parent, Esc works too and the tag says so. */
   Array.prototype.forEach.call(document.querySelectorAll(".live-phone"), function (v) {
     var f = v.querySelector("iframe");
-    v.addEventListener("click", function (ev) { if (f && ev.target === v) f.focus(); });
     if (!f) return;
-    /* The app is another origin, so its key presses never reach this page and Tab only walks the app's own
-       controls. While it has focus a small tag says how to leave: a click outside it. Once the app posts
-       {type: "kp:escape"} to its parent, Esc lands back on this frame and the tag says ESC from then on. */
+    var esc = false;
+    var tint = document.createElement("div");
+    tint.className = "live-tint";
+    tint.innerHTML = KCAP([[["\u21b5"], "to enter"]], "lt-k");
+    v.appendChild(tint);
     var tag = document.createElement("span");
     tag.className = "live-x";
-    tag.setAttribute("aria-hidden", "true");
-    tag.innerHTML = "<kbd>CLICK</kbd> outside to leave the app";
-    v.appendChild(tag);
-    var inside = function () { v.classList.toggle("in-app", document.activeElement === f); };
-    window.addEventListener("blur", function () { window.setTimeout(inside, 0); });
-    /* A click on empty page space after using the app lands back on this frame, so the arrows carry on from it. */
-    var back = function () {
-      var was = v.classList.contains("in-app");
-      inside();
-      if (was && document.activeElement === document.body) v.focus({ preventScroll: true });
+    var tagText = function () {
+      tag.innerHTML = esc ? KCAP([[["ESC"], "leave the app"]]) :
+        '<p class="keys" aria-hidden="true"><span class="kg"><kbd class="w lv">CLICK</kbd><em>here or outside to leave</em></span></p>';
     };
-    window.addEventListener("focus", back);
-    document.addEventListener("pointerdown", function () { if (v.classList.contains("in-app")) window.setTimeout(back, 0); });
-    document.addEventListener("focusin", inside);
+    tagText();
+    v.appendChild(tag);
+    var on = false;
+    var enter = function () { on = true; v.classList.add("in-app"); f.focus(); };
+    var leave = function (refocus) {
+      on = false; v.classList.remove("in-app");
+      if (refocus) v.focus({ preventScroll: true });
+    };
+    tint.addEventListener("click", function (ev) { ev.stopPropagation(); enter(); });
+    tag.addEventListener("click", function (ev) { ev.stopPropagation(); leave(true); });
+    v.addEventListener("click", function (ev) { if (ev.target === v) enter(); });
+    v.addEventListener("keydown", function (ev) {
+      if (ev.target !== v || ev.key !== "Enter" || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+      ev.preventDefault(); ev.stopPropagation(); enter();
+    }, false);
+    /* Focus moved into the frame some other way (Tab into it, a click on a tile through a gap): treat as entered. */
+    window.addEventListener("blur", function () { window.setTimeout(function () { if (document.activeElement === f && !on) { on = true; v.classList.add("in-app"); } }, 0); });
+    /* Any focus back on this page while inside means the user left: Tab/Shift+Tab out of the app, or a click elsewhere. */
+    document.addEventListener("focusin", function (ev) {
+      if (!on || ev.target === f) return;
+      leave(false);
+      if (ev.target === v || !v.contains(ev.target)) { if (ev.target !== document.body) v.focus({ preventScroll: true }); }
+    });
+    window.addEventListener("focus", function () { if (on && document.activeElement !== f) leave(true); });
+    document.addEventListener("pointerdown", function (ev) { if (on && !v.contains(ev.target)) window.setTimeout(function () { leave(true); }, 0); });
     window.addEventListener("message", function (ev) {
       if (ev.origin !== "https://karpage.app" || ev.source !== f.contentWindow) return;
       var d = ev.data;
-      if (d === "kp:escape" || (d && d.type === "kp:escape")) {
-        tag.innerHTML = "<kbd>ESC</kbd> back to the page";
-        v.focus({ preventScroll: true }); inside();
-      }
+      if (d === "kp:escape" || (d && d.type === "kp:escape")) { if (!esc) { esc = true; tagText(); } leave(true); }
     });
   });
   /* OPEN FULL APP and OPEN KARPAGE.APP are links styled as buttons, so Space and Shift+Space press it too (Enter already does). */
@@ -676,8 +692,44 @@
         '<div class="ck-c"><dt class="ck-nsl">NEXT</dt><dd><span class="ck-ns"></span><small class="ck-nd"></small></dd></div>' +
         '<div class="ck-c"><dt>UNIX EPOCH</dt><dd><span class="ck-ep"></span><small>seconds since 1970</small></dd></div>' +
         '<div class="ck-c"><dt>EARTH \u2192 SUN</dt><dd><span class="ck-au"></span><small class="ck-km"></small></dd></div>' +
-        '</dl>' + KCAP([[["\u2190", "\u2191", "\u2193", "\u2192"], "day"], [["PGUP", "PGDN"], "month"], [["T"], "today"], [["ESC"], "close"]], "ck-kc") + '</div>';
+        '</dl>' + KCAP([[["\u2190", "\u2191", "\u2193", "\u2192"], "day"], [["PGUP", "PGDN"], "month"], [["T"], "today"], [["SPACE", "\u21b5"], "info"], [["ESC"], "close"]], "ck-kc") + '</div>';
       document.body.appendChild(ov);
+      /* Stat cells explain themselves: focus one (Tab from the calendar, then arrows), Enter/Space or a click flips it. */
+      var WHY = [
+        "Day of the year (the 'Julian' day count), week number and ISO week-date: year-Wweek-weekday, Mon = 1. Bar: share of the year gone.",
+        "Moon phase and how much of it is lit, from the 29.53-day lunar cycle.",
+        "Sunrise, sunset, daylight. \u2248 means estimated from your time zone; no location is used.",
+        "Chinese zodiac year (element + animal). It changes at Lunar New Year, not 1 January.",
+        "Countdown to the next solstice (longest or shortest day) or equinox (day = night).",
+        "Seconds since 1 Jan 1970 UTC. How computers count time.",
+        "Today's Earth\u2013Sun distance. 1 AU \u2248 149.6 million km. Closest in early Jan."
+      ];
+      var flipEls = [ov.querySelector(".ck-stat")].concat(Array.prototype.slice.call(ov.querySelectorAll(".ck-c")));
+      flipEls.forEach(function (c, i) {
+        c.tabIndex = 0;
+        c.setAttribute("role", "button");
+        c.setAttribute("aria-label", (c.querySelector("dt") ? c.querySelector("dt").textContent : "Year status") + ". Enter or Space explains it.");
+        var w = document.createElement("p");
+        w.className = "ck-why"; w.textContent = WHY[i]; w.setAttribute("aria-live", "polite");
+        c.appendChild(w);
+        c.addEventListener("click", function () { c.focus({ preventScroll: true }); c.classList.toggle("fl"); });
+        c.addEventListener("focusout", function () { c.classList.remove("fl"); });
+      });
+      var flipNav = function (from, k) {
+        var at = flipEls.indexOf(from);
+        if (at === 0) return k === "ArrowDown" ? flipEls[1] : k === "ArrowUp" ? null : flipEls[0];
+        var cells = flipEls.slice(1), me = cells[at - 1].getBoundingClientRect(), best = null, bd = 1e9;
+        cells.forEach(function (c) {
+          var r = c.getBoundingClientRect(), dx = r.left - me.left, dy = r.top - me.top, d;
+          if (k === "ArrowLeft" && Math.abs(dy) < 4 && dx < 0) d = -dx;
+          else if (k === "ArrowRight" && Math.abs(dy) < 4 && dx > 0) d = dx;
+          else if (k === "ArrowUp" && dy < -4) d = -dy * 10 + Math.abs(dx);
+          else if (k === "ArrowDown" && dy > 4) d = dy * 10 + Math.abs(dx);
+          if (d !== undefined && d < bd) { bd = d; best = c; }
+        });
+        if (!best && k === "ArrowUp") return flipEls[0];
+        return best || from;
+      };
       var q = function (s) { return ov.querySelector(s); };
       var oBox = q(".ck-box"), oHM = q(".ck-hm"), oS = q(".ck-s"), oDate = q(".ck-date"), oM = q(".ck-m"), oGrid = q(".ck-grid"), oFoot = q(".ck-foot");
       var oX = q(".ck-x"), oPrev = q(".ck-prev"), oNext = q(".ck-next"), dCells = ov.querySelectorAll(".ck-d");
@@ -876,13 +928,16 @@
         var k = ev.key, onBtn = document.activeElement && document.activeElement.tagName === "BUTTON";
         var STEP = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
         ev.stopPropagation();
-        if (k === "Escape") { ev.preventDefault(); ckClose(); }
+        var fc = flipEls.indexOf(document.activeElement) >= 0 ? document.activeElement : null;
+        if (k === "Escape") { ev.preventDefault(); if (fc && fc.classList.contains("fl")) fc.classList.remove("fl"); else ckClose(); }
+        else if (fc && STEP[k]) { ev.preventDefault(); var nx = flipNav(fc, k); (nx || oGrid).focus({ preventScroll: true }); }
+        else if (fc && (k === "Enter" || k === " ")) { ev.preventDefault(); fc.classList.toggle("fl"); }
         else if (STEP[k]) { ev.preventDefault(); shift(STEP[k], 0); }
         else if (k === "PageUp" || k === "PageDown") { ev.preventDefault(); shift(0, k === "PageUp" ? -1 : 1); }
         else if (k === "Home" || k === "t" || k === "T") { ev.preventDefault(); var n = new Date(); sel = new Date(n.getFullYear(), n.getMonth(), n.getDate()); drawCal(); }
         else if (k === "Tab") {
           ev.preventDefault();
-          var f = [oX, oPrev, oGrid, oNext], at = f.indexOf(document.activeElement);
+          var f = [oX, oPrev, oGrid, oNext].concat(flipEls), at = f.indexOf(document.activeElement);
           f[(at + (ev.shiftKey ? -1 : 1) + f.length) % f.length].focus();
         } else if ((k === "Enter" || k === " ") && !onBtn) ev.preventDefault();
       }, true);

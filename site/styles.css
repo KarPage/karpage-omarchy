@@ -825,7 +825,7 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 @supports (height: 100dvh) { .live { --h: min(932px, calc(100dvh - var(--live-off))); } }
 .live-phone { position: relative; height: var(--h); width: min(max(420px, calc(var(--h) * 430 / 932)), 100%); min-height: 320px; border: 1px solid var(--jade); border-radius: 1px; background: #000; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 22px rgba(0, 168, 107, 0.22); }
 .live-phone:focus-visible { outline: none; }
-.live-x { position: absolute; left: calc(100% + 14px); top: 0; padding: 3px 8px; border: 1px solid var(--jade); background: var(--ink); color: var(--muted); font: 10px/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; }
+.live-x { position: absolute; left: calc(100% + 14px); top: 0; padding: 6px 8px; cursor: pointer; border: 1px solid var(--jade); background: var(--ink); color: var(--muted); font: 10px/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; }
 .live-x kbd { color: var(--jade-hi); font: inherit; }
 .live-phone.in-app .live-x { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .live-x { transition: none; } }
@@ -915,3 +915,24 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .kx-l dt.keys kbd { height: 20px; min-width: 20px; font-size: 11px; }
 .kor { color: var(--muted); padding: 0 2px; }
 @media (hover: none), (pointer: coarse) { .ck .keys.ck-kc { display: none; } }
+
+/* Live app tint: a thin jade veil with an ENTER cap, lifted while the app has the keys. */
+.live-tint { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; background: rgba(0, 168, 107, 0.10); box-shadow: inset 0 0 0 1px rgba(63, 224, 164, 0.35); cursor: pointer; transition: opacity 0.15s; }
+.live-tint .keys { display: flex; padding: 8px 12px; margin: 0; background: rgba(3, 12, 8, 0.82); border: 1px solid var(--jade); }
+.live-tint .keys kbd { cursor: pointer; }
+.live-phone.in-app .live-tint { opacity: 0; pointer-events: none; }
+.live-phone.in-app .live-x { pointer-events: auto; }
+.live-x .keys { display: flex; gap: 6px 10px; margin: 0; }
+@media (prefers-reduced-motion: reduce) { .live-tint { transition: none; } }
+@media (hover: none), (pointer: coarse) { .live-tint .keys { display: flex; } .live-tint .keys kbd { display: none; } .live-tint .keys em::before { content: "tap "; } }
+
+/* Stat cells flip to a one-line explanation. */
+.ck-stat[tabindex], .ck-c[tabindex] { cursor: pointer; outline: none; }
+.ck-stat:focus-visible, .ck-c:focus-visible { border-color: var(--jade-hi); box-shadow: 0 0 0 1px var(--jade-hi), 0 0 12px rgba(0, 168, 107, 0.3); }
+.ck-why { display: none; margin: 0; color: var(--text, #d9efe4); font-size: 10px; line-height: 1.35; letter-spacing: 0.02em; white-space: normal; }
+.ck-stat.fl > :not(.ck-why), .ck-c.fl > :not(.ck-why) { visibility: hidden; }
+.ck-stat.fl, .ck-c.fl { background: rgba(0, 168, 107, 0.10); }
+.ck-stat.fl .ck-why, .ck-c.fl .ck-why { display: flex; align-items: center; position: absolute; inset: 0; padding: 6px 8px; animation: ckflip 0.2s ease-out; }
+@keyframes ckflip { from { transform: perspective(300px) rotateX(-90deg); opacity: 0.2; } to { transform: none; opacity: 1; } }
+@keyframes ckfade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ck-stat.fl .ck-why, .ck-c.fl .ck-why { animation: ckfade 0.15s linear; } }
