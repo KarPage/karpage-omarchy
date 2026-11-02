@@ -629,7 +629,15 @@
         '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><b class="ck-m" aria-live="polite"></b><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
         '<div class="ck-wd" aria-hidden="true"><span>su</span><span>mo</span><span>tu</span><span>we</span><span>th</span><span>fr</span><span>sa</span></div>' +
         '<div class="ck-grid" role="grid" tabindex="0" aria-label="Month">' + cells + '</div>' +
-        '<p class="ck-foot"></p><p class="ck-keys" aria-hidden="true">\u2190\u2191\u2193\u2192 day \u00b7 PGUP PGDN month \u00b7 T today \u00b7 ESC close</p></div>';
+        '<div class="ck-stat"><p class="ck-foot"></p><p class="ck-yr"><span class="ck-bar" aria-hidden="true"></span><b class="ck-pct"></b></p></div>' +
+        '<dl class="ck-cells">' +
+        '<div class="ck-c"><dt>MOON</dt><dd><svg class="ck-moon" viewBox="0 0 11 11" aria-hidden="true" focusable="false"></svg><span class="ck-mn"></span><small class="ck-mi"></small></dd></div>' +
+        '<div class="ck-c"><dt>SUN <i class="ck-sq"></i></dt><dd><span class="ck-sun"></span><small class="ck-dl"></small></dd></div>' +
+        '<div class="ck-c"><dt>LUNAR YEAR</dt><dd><span class="ck-zo"></span><small class="ck-zs"></small></dd></div>' +
+        '<div class="ck-c"><dt class="ck-nsl">NEXT</dt><dd><span class="ck-ns"></span><small class="ck-nd"></small></dd></div>' +
+        '<div class="ck-c"><dt>UNIX EPOCH</dt><dd><span class="ck-ep"></span><small>seconds since 1970</small></dd></div>' +
+        '<div class="ck-c"><dt>EARTH \u2192 SUN</dt><dd><span class="ck-au"></span><small class="ck-km"></small></dd></div>' +
+        '</dl><p class="ck-keys" aria-hidden="true">\u2190\u2191\u2193\u2192 day \u00b7 PGUP PGDN month \u00b7 T today \u00b7 ESC close</p></div>';
       document.body.appendChild(ov);
       var q = function (s) { return ov.querySelector(s); };
       var oBox = q(".ck-box"), oHM = q(".ck-hm"), oS = q(".ck-s"), oDate = q(".ck-date"), oM = q(".ck-m"), oGrid = q(".ck-grid"), oFoot = q(".ck-foot");
@@ -641,6 +649,89 @@
         var n = t.getUTCDay() || 7;
         t.setUTCDate(t.getUTCDate() + 4 - n);
         return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7);
+      };
+      /* Sky stats, all computed here (no network). Sun uses the location only if the visitor already granted it;
+         otherwise longitude comes from the time-zone offset and latitude defaults to 40 deg, marked approx. Nothing about
+         the place is ever shown. */
+      var oYr = q(".ck-bar"), oPct = q(".ck-pct"), oEp = q(".ck-ep"), geo = null;
+      var SEG = 32, segs = "";
+      for (var s0 = 0; s0 < SEG; s0++) segs += "<i></i>";
+      oYr.innerHTML = segs;
+      var R = Math.PI / 180, JD = function (t) { return t / 864e5 + 2440587.5; };
+      var SYN = 29.530588853, NM0 = Date.UTC(2000, 0, 6, 18, 14);
+      var PH = ["new moon", "waxing crescent", "first quarter", "waxing gibbous", "full moon", "waning gibbous", "last quarter", "waning crescent"];
+      var moonGlyph = function (age) {
+        var k = Math.cos(2 * Math.PI * age / SYN), wax = age < SYN / 2, h = "";
+        for (var yy = 0; yy < 11; yy++) for (var xx = 0; xx < 11; xx++) {
+          var x = (xx - 5) / 5.5, y = (yy - 5) / 5.5;
+          if (x * x + y * y > 1) continue;
+          var w = Math.sqrt(1 - y * y), lit = wax ? x > k * w : x < -k * w;
+          h += '<rect x="' + xx + '" y="' + yy + '" width=".86" height=".86" class="' + (lit ? "l" : "d") + '"/>';
+        }
+        return h;
+      };
+      /* NOAA-style sunrise/sunset for a given local day. Returns minutes after local midnight, or null (polar day/night). */
+      var sunTimes = function (d, lat, lon) {
+        var n = JD(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12)) - 2451545;
+        var L = (280.46 + 0.9856474 * n) % 360, g = (357.528 + 0.9856003 * n) * R;
+        var lam = (L + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * R, eps = (23.439 - 4e-7 * n) * R;
+        var dec = Math.asin(Math.sin(eps) * Math.sin(lam));
+        var ra = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam)) / R;
+        var eot = 4 * (((L - ra + 540) % 360) - 180);
+        var c = (Math.cos(90.833 * R) - Math.sin(lat * R) * Math.sin(dec)) / (Math.cos(lat * R) * Math.cos(dec));
+        if (c > 1 || c < -1) return { polar: c > 1 ? "night" : "day" };
+        var ha = Math.acos(c) / R, noon = 720 - 4 * lon - eot - new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12).getTimezoneOffset();
+        return { rise: noon - 4 * ha, set: noon + 4 * ha };
+      };
+      var hm = function (m) { m = ((Math.round(m) % 1440) + 1440) % 1440; return two(Math.floor(m / 60)) + ":" + two(m % 60); };
+      /* Lunar New Year dates (Gregorian), so the zodiac flips on the right day. */
+      var LNY = { 2020: "0125", 2021: "0212", 2022: "0201", 2023: "0122", 2024: "0210", 2025: "0129", 2026: "0217", 2027: "0206", 2028: "0126", 2029: "0213", 2030: "0203", 2031: "0123", 2032: "0211", 2033: "0131", 2034: "0219", 2035: "0208", 2036: "0128", 2037: "0215", 2038: "0204", 2039: "0124", 2040: "0212" };
+      var ANI = ["rat", "ox", "tiger", "rabbit", "dragon", "snake", "horse", "goat", "monkey", "rooster", "dog", "pig"];
+      var ELE = ["wood", "wood", "fire", "fire", "earth", "earth", "metal", "metal", "water", "water"];
+      var zodiac = function (d) {
+        var y = d.getFullYear(), s = LNY[y], ny = s ? new Date(y, +s.slice(0, 2) - 1, +s.slice(2)) : new Date(y, 1, 4);
+        var zy = d < ny ? y - 1 : y, i = ((zy - 4) % 60 + 60) % 60;
+        var nx = LNY[zy + 1], next = nx ? new Date(zy + 1, +nx.slice(0, 2) - 1, +nx.slice(2)) : null;
+        return { name: ELE[i % 10] + " " + ANI[i % 12], next: next, y: zy };
+      };
+      /* Meeus mean equinox/solstice instants (JDE, good to a few minutes for this century). */
+      var SEAS = [["mar equinox", [2451623.80984, 365242.37404, 0.05169, -0.00411, -0.00057]], ["jun solstice", [2451716.56767, 365241.62603, 0.00325, 0.00888, -0.0003]],
+        ["sep equinox", [2451810.21715, 365242.01767, -0.11575, 0.00337, 0.00078]], ["dec solstice", [2451900.05952, 365242.74049, -0.06223, -0.00823, 0.00032]]];
+      var season = function (now) {
+        for (var y = now.getFullYear(); y <= now.getFullYear() + 1; y++) for (var j = 0; j < 4; j++) {
+          var c = SEAS[j][1], Y = (y - 2000) / 1000, jde = c[0] + c[1] * Y + c[2] * Y * Y + c[3] * Y * Y * Y + c[4] * Y * Y * Y * Y;
+          var t = (jde - 2440587.5) * 864e5 - 69e3;
+          if (t > now) return { name: SEAS[j][0], t: t };
+        }
+      };
+      var drawSky = function () {
+        var now = new Date(), t = now.getTime();
+        var age = (((t - NM0) / 864e5) % SYN + SYN) % SYN, ill = (1 - Math.cos(2 * Math.PI * age / SYN)) / 2;
+        q(".ck-moon").innerHTML = moonGlyph(age);
+        q(".ck-mn").textContent = PH[Math.floor((age / SYN) * 8 + 0.5) % 8];
+        q(".ck-mi").textContent = Math.round(ill * 100) + "% lit \u00b7 day " + Math.floor(age);
+        var jan = new Date(now.getFullYear(), 0, 1).getTimezoneOffset(), jul = new Date(now.getFullYear(), 6, 1).getTimezoneOffset();
+        var lat = geo ? geo[0] : 40, lon = geo ? geo[1] : -Math.max(jan, jul) / 4;
+        var st = sunTimes(now, lat, lon);
+        q(".ck-sq").textContent = geo ? "" : "\u2248";
+        q(".ck-sq").title = geo ? "" : "approximate, from your time zone";
+        if (st.polar) { q(".ck-sun").textContent = "polar " + st.polar; q(".ck-dl").textContent = ""; }
+        else {
+          q(".ck-sun").textContent = "\u2191 " + hm(st.rise) + "  \u2193 " + hm(st.set);
+          var len = st.set - st.rise;
+          q(".ck-dl").textContent = Math.floor(len / 60) + "h " + two(Math.round(len % 60)) + "m of daylight";
+        }
+        var z = zodiac(now);
+        q(".ck-zo").textContent = z.name;
+        q(".ck-zs").textContent = z.next ? "until " + MON[z.next.getMonth()].slice(0, 3) + " " + z.next.getDate() + " " + z.next.getFullYear() : String(z.y);
+        var se = season(now), gap = se.t - t;
+        q(".ck-nsl").textContent = se.name.toUpperCase() + " IN";
+        q(".ck-ns").textContent = Math.floor(gap / 864e5) + "d " + two(Math.floor(gap / 36e5) % 24) + "h " + two(Math.floor(gap / 6e4) % 60) + "m";
+        var sd = new Date(se.t);
+        q(".ck-nd").textContent = MON[sd.getMonth()].slice(0, 3) + " " + sd.getDate() + " \u00b7 " + two(sd.getHours()) + ":" + two(sd.getMinutes()) + " local";
+        var gm = (357.529 + 0.98560028 * (JD(t) - 2451545)) * R, au = 1.00014 - 0.01671 * Math.cos(gm) - 0.00014 * Math.cos(2 * gm);
+        q(".ck-au").textContent = au.toFixed(5) + " AU";
+        q(".ck-km").textContent = (au * 149597870.7 / 1e6).toFixed(3) + " million km";
       };
       var drawCal = function () {
         var now = new Date(), y = sel.getFullYear(), m = sel.getMonth();
@@ -658,8 +749,19 @@
         var y0 = new Date(y, 0, 1), doy = Math.round((new Date(y, m, sel.getDate()) - y0) / 864e5) + 1;
         var len = Math.round((new Date(y + 1, 0, 1) - y0) / 864e5);
         var gap = Math.round((new Date(y, m, sel.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
-        oFoot.textContent = "> day " + doy + " of " + len + " \u00b7 week " + isoWeek(sel) + " \u00b7 " +
-          (gap === 0 ? "today" : gap > 0 ? "in " + gap + (gap === 1 ? " day" : " days") : -gap + (gap === -1 ? " day ago" : " days ago"));
+        oFoot.innerHTML = "";
+        var wd = sel.getDay() || 7, iy = new Date(sel.getFullYear(), sel.getMonth(), sel.getDate() + 4 - wd).getFullYear();
+        [["DAY", doy + "/" + len], ["WEEK", two(isoWeek(sel))], ["ISO", iy + "-W" + two(isoWeek(sel)) + "-" + wd],
+         ["", gap === 0 ? "today" : gap > 0 ? "in " + gap + (gap === 1 ? " day" : " days") : -gap + (gap === -1 ? " day ago" : " days ago")]].forEach(function (p) {
+          var e = document.createElement("span");
+          if (p[0]) { var l = document.createElement("i"); l.textContent = p[0]; e.appendChild(l); }
+          e.appendChild(document.createTextNode(p[1]));
+          oFoot.appendChild(e);
+        });
+        var frac = (new Date(y, m, sel.getDate()) - y0 + (gap === 0 ? (now - new Date(now.getFullYear(), now.getMonth(), now.getDate())) : 0)) / (len * 864e5);
+        var on = Math.round(frac * SEG), bars = oYr.children;
+        for (var b = 0; b < SEG; b++) bars[b].className = b < on ? "on" : "";
+        oPct.textContent = (frac * 100).toFixed(1) + "% of " + y;
       };
       var tickBig = function () {
         var d = new Date();
@@ -670,6 +772,8 @@
         oHM.appendChild(cc);
         oHM.appendChild(document.createTextNode(two(d.getMinutes())));
         oS.textContent = ":" + two(d.getSeconds());
+        oEp.textContent = Math.floor(d.getTime() / 1000);
+        if (d.getSeconds() === 0) drawSky();
         oDate.textContent = DAY[d.getDay()] + " \u00b7 " + d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear();
         window.clearTimeout(oT);
         oT = window.setTimeout(tickBig, 1000 - d.getMilliseconds() + 20);
@@ -685,7 +789,12 @@
         oBack = document.activeElement;
         var now = new Date();
         sel = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        drawSky();
         tickBig();
+        /* Use the precise sun only if location is already allowed; never prompt, never show it. */
+        if (!geo && navigator.permissions && navigator.geolocation) navigator.permissions.query({ name: "geolocation" }).then(function (p) {
+          if (p.state === "granted") navigator.geolocation.getCurrentPosition(function (pos) { geo = [pos.coords.latitude, pos.coords.longitude]; if (!ov.hidden) drawSky(); }, function () {}, { maximumAge: 36e5, timeout: 8000 });
+        }).catch(function () {});
         drawCal();
         var sw = window.innerWidth - document.documentElement.clientWidth;
         document.documentElement.style.setProperty("--sbw", sw + "px");
@@ -742,6 +851,65 @@
         if (!ov.hidden && !ov.contains(ev.target)) oGrid.focus({ preventScroll: true });
       });
       document.addEventListener("visibilitychange", function () { if (!ov.hidden && !document.hidden) tickBig(); });
+    }
+
+    /* 1b. Kar Page mark beside the clock -> a Kar Page preview card that pops out of the mark. */
+    var kb = document.querySelector(".mast .kpbox");
+    if (kb) {
+      mark(kb, "\u21b5 kar page", "b");
+      var kv = document.createElement("div");
+      kv.className = "ck kpc";
+      kv.hidden = true;
+      kv.setAttribute("role", "dialog");
+      kv.setAttribute("aria-modal", "true");
+      kv.setAttribute("aria-labelledby", "kpc-h");
+      kv.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg>KAR PAGE \u00b7 WEB APP</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+        '<div class="kpc-shots">' + [["kp-t1-grid", "Kar Page home grid of car spots"], ["kp-t2-porsche", "Kar Page post of a green 1956 Porsche"], ["kp-t3-m3", "Kar Page post of a red BMW M3"]].map(function (s) {
+          return '<img draggable="false" src="img/' + s[0] + '.webp" srcset="img/' + s[0] + '.webp 1x, img/' + s[0] + '-2x.webp 2x" alt="' + s[1] + '" width="122" height="240" decoding="async">';
+        }).join("") + '</div>' +
+        '<h2 class="kpc-h" id="kpc-h">Your cars. Your story.</h2><p class="kpc-p">A web app for car enthusiasts.</p>' +
+        '<p class="kpc-url">&gt; https://karpage.app</p>' +
+        '<div class="kpc-go"><a class="kpc-b on" href="https://karpage.app" rel="noopener">OPEN KARPAGE.APP \u2197</a><a class="kpc-b" href="/kar-page">APP PAGE \u2192</a></div>' +
+        '<p class="ck-keys" aria-hidden="true">TAB move \u00b7 \u21b5 open \u00b7 ESC close</p></div>';
+      document.body.appendChild(kv);
+      var kBox = kv.querySelector(".ck-box"), kX = kv.querySelector(".ck-x"), kBack = null;
+      var kFoc = function () { return [kX].concat([].slice.call(kv.querySelectorAll(".kpc-b"))); };
+      var kOpen = function () {
+        if (!kv.hidden) return;
+        kBack = document.activeElement;
+        document.documentElement.style.setProperty("--sbw", (window.innerWidth - document.documentElement.clientWidth) + "px");
+        document.documentElement.classList.add("lb-on");
+        kv.hidden = false;
+        var a = kb.getBoundingClientRect(), b = kBox.getBoundingClientRect();
+        kBox.style.setProperty("--ckx", Math.round(a.left + a.width / 2 - (b.left + b.width / 2)) + "px");
+        kBox.style.setProperty("--cky", Math.round(a.top + a.height / 2 - (b.top + b.height / 2)) + "px");
+        kv.classList.remove("in");
+        void kBox.offsetWidth;
+        if (!still.matches) kv.classList.add("in");
+        kv.querySelector(".kpc-b").focus({ preventScroll: true });
+      };
+      var kClose = function () {
+        if (kv.hidden) return;
+        kv.hidden = true;
+        kv.classList.remove("in");
+        document.documentElement.classList.remove("lb-on");
+        (kBack && kBack !== document.body && kBack.focus ? kBack : kb).focus({ preventScroll: true });
+        kBack = null;
+      };
+      kb.addEventListener("click", kOpen);
+      kX.addEventListener("click", kClose);
+      kv.addEventListener("click", function (ev) { if (ev.target === kv) kClose(); });
+      window.addEventListener("keydown", function (ev) {
+        if (kv.hidden) return;
+        ev.stopPropagation();
+        if (ev.key === "Escape") { ev.preventDefault(); kClose(); }
+        else if (ev.key === "Tab") {
+          ev.preventDefault();
+          var f = kFoc(), at = f.indexOf(document.activeElement);
+          f[(at + (ev.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+        }
+      }, true);
+      document.addEventListener("focusin", function (ev) { if (!kv.hidden && !kv.contains(ev.target)) kFoc()[1].focus({ preventScroll: true }); });
     }
 
     /* 2. Title: a quick terminal scramble that resolves back, left to right. */
@@ -1037,7 +1205,7 @@
     ? ".board .stat, #panel .rows > li > a, #grid > li"
     : ".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, section .feat, .code, .others > li, .live-phone, .live-open, .btn-open";
   var STOPS = (home
-    ? [".mast .prompt", ".mast h1", ".mast .clock", ".mast .lede", ".mast .keys", ".board .stat", "#panel .reset", "#panel .panel-body > .panel-h", "#panel .rows > li > a"]
+    ? [".mast .prompt", ".mast h1", ".mast .kpbox", ".mast .clock", ".mast .lede", ".mast .keys", ".board .stat", "#panel .reset", "#panel .panel-body > .panel-h", "#panel .rows > li > a"]
     : [".bar .brand", ".bar nav a", ".hero .tag", ".hero .title-row", ".hero .tagline", ".hero .live-sub", ".hero .live-desc", ".hero .lede", ".hero .keys", ".act-note", "main section > h2", ".chips > li", "main .note", ".fine > p"]
   ).concat([HOV, ".foot-brand", ".foot-main > p:not(.foot-brand)", ".foot-note", ".foot-legal > span", ".foot-legal a"]);
   var TIGHT = ".prompt, .mast h1, .keys, .panel-h, .tag, .title-row, .tagline, .live-sub, .live-desc, .hero .lede, .act-note, section > h2, .note, .fine > p, .foot-brand, .foot-main > p, .foot-legal > span";
