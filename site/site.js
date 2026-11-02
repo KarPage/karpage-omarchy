@@ -28,6 +28,7 @@
       var cc = document.createElement("span");
       cc.className = "cc";
       cc.textContent = ":";
+      cc.style.animationDelay = -d.getMilliseconds() + "ms";
       out.textContent = D[d.getDay()] + " " + d.getDate() + " " + M[d.getMonth()] + " " + d.getFullYear() +
         " \u00b7 " + two(d.getHours());
       out.appendChild(cc);
@@ -201,30 +202,92 @@
     document.addEventListener("kp:filter", function () { var b = hinted; hinted = null; if (b) showHint(b); });
   }
 
-  /* Keycap hints light up while their real key is held. */
-  var caps = document.querySelectorAll(".keys kbd[data-key]");
+  /* Shared key caps: every keyboard hint on the site is built from these. KCAP(groups) returns a .keys row;
+     each group is [[label, key], ...] plus a caption. Caps press down (and click) while their key is held. */
+  var KMAP = { "\u2190": "ArrowLeft", "\u2191": "ArrowUp", "\u2193": "ArrowDown", "\u2192": "ArrowRight", "ESC": "Escape", "TAB": "Tab", "\u21b5": "Enter", "PGUP": "PageUp", "PGDN": "PageDown", "T": "t", "?": "?", "+": "+", "\u2212": "-", "BACKSPACE": "Backspace", "SPACE": " " };
+  var kcap = function (label) {
+    var k = KMAP[label];
+    return '<kbd' + (label.length > 1 ? ' class="w"' : "") + (k ? ' data-key="' + (k === " " ? " " : k) + '"' : "") + ">" + label + "</kbd>";
+  };
+  window.KCAP = function (groups, cls) {
+    return '<p class="keys' + (cls ? " " + cls : "") + '" aria-hidden="true">' + groups.map(function (g) {
+      return '<span class="kg">' + g[0].map(kcap).join("") + (g[1] ? "<em>" + g[1] + "</em>" : "") + "</span>";
+    }).join("") + "</p>";
+  };
+  window.KCAPS = function (text) { return text.split(" ").map(function (t) { return t === "/" || t === "+" && false ? '<span class="kor">' + t + "</span>" : t === "/" ? '<span class="kor">/</span>' : kcap(t); }).join(""); };
+  /* A short dry key click, synthesised (no file, no network). Only after a real key press or click. */
+  var actx = null, clickSnd = function (dull) {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === "suspended") actx.resume();
+      var n = Math.floor(actx.sampleRate * 0.018), buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4);
+      var src = actx.createBufferSource(), bp = actx.createBiquadFilter(), g = actx.createGain();
+      bp.type = "bandpass"; bp.frequency.value = dull ? 700 : 2400; bp.Q.value = 1.2; g.gain.value = dull ? 0.1 : 0.18;
+      src.buffer = buf; src.connect(bp); bp.connect(g); g.connect(actx.destination); src.start();
+    } catch (e) {}
+  };
+
+  /* Keycap hints light up while their real key is held. Looked up live, so caps in overlays work too. */
+  var caps = { get length() { return 1; } };
   if (caps.length) {
+    var allCaps = function () { return document.querySelectorAll(".keys kbd[data-key]"); };
     var at = {};
+    var wallKey = null;
+    var wallCaps = function (key) {
+      var any = false;
+      Array.prototype.forEach.call(allCaps(), function (k) {
+        if (k.getAttribute("data-key") !== key || !k.getClientRects().length) return;
+        any = true; k.classList.remove("hit", "kwall"); void k.offsetWidth; k.classList.add("kwall");
+        window.setTimeout(function () { k.classList.remove("kwall"); }, 300);
+      });
+      if (any) clickSnd(true);
+    };
+    /* Shared wall cue: an arrow key that cannot move any further. One class, a short rose flash, no movement. */
+    var wallT = new WeakMap();
+    window.KWALL = function (el, key) {
+      if (key) wallKey = key;
+      [].concat(el).forEach(function (e) {
+        if (!e || !e.classList) return;
+        e.classList.remove("kwall"); void e.offsetWidth; e.classList.add("kwall");
+        window.clearTimeout(wallT.get(e));
+        wallT.set(e, window.setTimeout(function () { e.classList.remove("kwall"); }, 300));
+      });
+    };
     var lit = function (key, on) {
-      Array.prototype.forEach.call(caps, function (k) {
-        if (k.getAttribute("data-key") !== key) return;
-        if (on) { at[key] = Date.now(); k.classList.add("hit"); return; }
+      var hitAny = false;
+      Array.prototype.forEach.call(allCaps(), function (k) {
+        var dk = k.getAttribute("data-key");
+        if (dk !== key && !(dk === "t" && key === "T")) return;
+        if (!k.getClientRects().length) return;
+        if (on) { if (!k.classList.contains("hit")) hitAny = true; at[key] = Date.now(); k.classList.add("hit"); return; }
         window.setTimeout(function () { k.classList.remove("hit"); }, Math.max(0, 160 - (Date.now() - (at[key] || 0))));
       });
+      if (hitAny) clickSnd();
     };
     /* The ENTER / SPACE cap shows whichever of the two was pressed last (ENTER until then). */
     var sw = document.querySelectorAll(".keys .ksw");
     var typing = function (t) { return t && t.closest && t.closest("input, textarea, select, [contenteditable]"); };
-    document.addEventListener("keydown", function (ev) {
-      if ((ev.key === " " || ev.key === "Enter") && !typing(ev.target)) {
+    /* Capture on window, registered before the overlays, so caps inside dialogs light up too. */
+    window.addEventListener("keydown", function (ev) {
+      if (typing(ev.target)) return;
+      if (ev.key === " " || ev.key === "Enter") {
         Array.prototype.forEach.call(sw, function (w) { w.classList.toggle("sp", ev.key === " "); });
       }
-      lit(ev.key, true);
+      /* Arrows wait until every handler ran, so a blocked move (KWALL) shows a rose cap instead of a press. */
+      if (/^Arrow/.test(ev.key)) { var ak = ev.key; wallKey = null; window.setTimeout(function () { if (wallKey === ak) wallCaps(ak); else lit(ak, true); }, 0); }
+      else lit(ev.code === "Slash" && ev.shiftKey ? "?" : ev.key, true);
+    }, true);
+    window.addEventListener("keyup", function (ev) { lit(ev.code === "Slash" || ev.key === "?" ? "?" : ev.key, false); }, true);
+    window.addEventListener("blur", function () { Array.prototype.forEach.call(allCaps(), function (k) { k.classList.remove("hit"); }); });
+    /* Inside a dialog a cap is also a button: a click presses its key. */
+    document.addEventListener("click", function (ev) {
+      var k = ev.target.closest && ev.target.closest(".ck .keys kbd[data-key]");
+      if (!k) return;
+      var key = k.getAttribute("data-key");
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: key, bubbles: true }));
+      window.setTimeout(function () { window.dispatchEvent(new KeyboardEvent("keyup", { key: key, bubbles: true })); }, 120);
     });
-    document.addEventListener("keyup", function (ev) { lit(ev.key, false); });
-    window.addEventListener("keydown", function (ev) { if (ev.key === "?") lit("?", true); }, true);
-    window.addEventListener("keyup", function (ev) { if (ev.key === "?") lit("?", false); }, true);
-    window.addEventListener("blur", function () { Array.prototype.forEach.call(caps, function (k) { k.classList.remove("hit"); }); });
   }
 
   function selectText(node) {
@@ -547,37 +610,53 @@
   ["copy", "cut", "contextmenu", "dragstart"].forEach(function (t) { document.addEventListener(t, noCopy); });
   Array.prototype.forEach.call(document.querySelectorAll("img"), function (i) { i.draggable = false; });
 
-  /* Kar Page live frame: the frame is one cursor stop; Enter (or a click on its edge) moves focus into the app. */
+  /* Kar Page live frame. Outside the app a thin jade tint covers it with an [ENTER] cap; Enter or a click lifts
+     the tint and gives the keys to the app. The app is another origin (karpage.app), so once it has focus this
+     page hears no keys at all, Esc included, and the app keeps Tab to itself. Ways back without touching the app:
+     a click anywhere outside, or the CLICK cap beside it. If the app ever posts {type: "kp:escape"} to its parent, Esc works too and the tag says so. */
   Array.prototype.forEach.call(document.querySelectorAll(".live-phone"), function (v) {
     var f = v.querySelector("iframe");
-    v.addEventListener("click", function (ev) { if (f && ev.target === v) f.focus(); });
     if (!f) return;
-    /* The app is another origin, so its key presses never reach this page and Tab only walks the app's own
-       controls. While it has focus a small tag says how to leave: a click outside it. Once the app posts
-       {type: "kp:escape"} to its parent, Esc lands back on this frame and the tag says ESC from then on. */
+    var esc = false;
+    var tint = document.createElement("div");
+    tint.className = "live-tint";
+    tint.innerHTML = KCAP([[["\u21b5"], "to enter"]], "lt-k");
+    v.appendChild(tint);
     var tag = document.createElement("span");
     tag.className = "live-x";
-    tag.setAttribute("aria-hidden", "true");
-    tag.innerHTML = "<kbd>CLICK</kbd> outside to leave the app";
-    v.appendChild(tag);
-    var inside = function () { v.classList.toggle("in-app", document.activeElement === f); };
-    window.addEventListener("blur", function () { window.setTimeout(inside, 0); });
-    /* A click on empty page space after using the app lands back on this frame, so the arrows carry on from it. */
-    var back = function () {
-      var was = v.classList.contains("in-app");
-      inside();
-      if (was && document.activeElement === document.body) v.focus({ preventScroll: true });
+    var tagText = function () {
+      tag.innerHTML = esc ? KCAP([[["ESC"], "leave the app"]]) :
+        '<p class="keys" aria-hidden="true"><span class="kg"><kbd class="w lv">CLICK</kbd><em>here or outside to leave</em></span></p>';
     };
-    window.addEventListener("focus", back);
-    document.addEventListener("pointerdown", function () { if (v.classList.contains("in-app")) window.setTimeout(back, 0); });
-    document.addEventListener("focusin", inside);
+    tagText();
+    v.appendChild(tag);
+    var on = false;
+    var enter = function () { on = true; v.classList.add("in-app"); f.focus(); };
+    var leave = function (refocus) {
+      on = false; v.classList.remove("in-app");
+      if (refocus) v.focus({ preventScroll: true });
+    };
+    tint.addEventListener("click", function (ev) { ev.stopPropagation(); enter(); });
+    tag.addEventListener("click", function (ev) { ev.stopPropagation(); leave(true); });
+    v.addEventListener("click", function (ev) { if (ev.target === v) enter(); });
+    v.addEventListener("keydown", function (ev) {
+      if (ev.target !== v || ev.key !== "Enter" || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+      ev.preventDefault(); ev.stopPropagation(); enter();
+    }, false);
+    /* Focus moved into the frame some other way (Tab into it, a click on a tile through a gap): treat as entered. */
+    window.addEventListener("blur", function () { window.setTimeout(function () { if (document.activeElement === f && !on) { on = true; v.classList.add("in-app"); } }, 0); });
+    /* Any focus back on this page while inside means the user left: Tab/Shift+Tab out of the app, or a click elsewhere. */
+    document.addEventListener("focusin", function (ev) {
+      if (!on || ev.target === f) return;
+      leave(false);
+      if (ev.target === v || !v.contains(ev.target)) { if (ev.target !== document.body) v.focus({ preventScroll: true }); }
+    });
+    window.addEventListener("focus", function () { if (on && document.activeElement !== f) leave(true); });
+    document.addEventListener("pointerdown", function (ev) { if (on && !v.contains(ev.target)) window.setTimeout(function () { leave(true); }, 0); });
     window.addEventListener("message", function (ev) {
       if (ev.origin !== "https://karpage.app" || ev.source !== f.contentWindow) return;
       var d = ev.data;
-      if (d === "kp:escape" || (d && d.type === "kp:escape")) {
-        tag.innerHTML = "<kbd>ESC</kbd> back to the page";
-        v.focus({ preventScroll: true }); inside();
-      }
+      if (d === "kp:escape" || (d && d.type === "kp:escape")) { if (!esc) { esc = true; tagText(); } leave(true); }
     });
   });
   /* OPEN FULL APP and OPEN KARPAGE.APP are links styled as buttons, so Space and Shift+Space press it too (Enter already does). */
@@ -622,17 +701,116 @@
       ov.setAttribute("role", "dialog");
       ov.setAttribute("aria-modal", "true");
       ov.setAttribute("aria-label", "Local time and calendar");
+      /* Mini Oma Year board: one row per month, days 1-31 across, like the Oma Year Planner. */
+      var ybHTML = function () {
+        var h = '<div class="yb-h" aria-hidden="true"><i></i>';
+        for (var d = 1; d <= 31; d++) h += "<span>" + (d === 1 || d % 5 === 0 ? d : "") + "</span>";
+        h += "</div>";
+        for (var m = 0; m < 12; m++) {
+          h += '<div class="yb-r" data-m="' + m + '"><b>' + MON[m].slice(0, 3) + "</b>";
+          for (var dd = 1; dd <= 31; dd++) h += '<span class="yb-d" data-m="' + m + '" data-d="' + dd + '"></span>';
+          h += "</div>";
+        }
+        return h;
+      };
       var cells = "";
       for (var c = 0; c < 42; c++) cells += '<span class="ck-d" role="gridcell" id="ckd' + c + '"></span>';
-      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg>LOCAL TIME</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
-        '<p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p>' +
-        '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><b class="ck-m" aria-live="polite"></b><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
+      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg><span class="ck-lt">WORLD CLOCK</span></span><div class="ck-cs"><span class="ck-csl" role="tablist" tabindex="0" aria-label="Cities. Left and Right switch city.">' + ["LOCAL", "NYC", "LDN", "SOF", "DXB", "TYO", "SYD"].map(function (c, i) { return '<button type="button" tabindex="-1" class="ck-cb" data-c="' + i + '">' + c + "</button>"; }).join("") + '</span></div><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+        '<div class="ck-face" tabindex="0" role="button" aria-label="Clock. Space or Enter shows the next world city."><p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p><p class="ck-off"><span class="o1"></span><span class="o2"></span><span class="o3"></span><span class="o4"></span></p>' +
+        '<span class="ck-hint">' + KCAP([[["SPACE"], "city"]], "ck-hi") + '</span></div>' +
+        '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><span class="ck-yl">YEAR PLANNER</span><b class="ck-m" aria-live="polite"></b><span class="ck-dl2"></span><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
         '<div class="ck-wd" aria-hidden="true"><span>su</span><span>mo</span><span>tu</span><span>we</span><span>th</span><span>fr</span><span>sa</span></div>' +
         '<div class="ck-grid" role="grid" tabindex="0" aria-label="Month">' + cells + '</div>' +
-        '<p class="ck-foot"></p><p class="ck-keys" aria-hidden="true">\u2190\u2191\u2193\u2192 day \u00b7 PGUP PGDN month \u00b7 T today \u00b7 ESC close</p></div>';
+        '<div class="ck-ms" role="group" aria-label="Months">' + MON.map(function (n, i) { return '<button type="button" class="ck-mb" data-m="' + i + '">' + n.slice(0, 3) + '</button>'; }).join("") + '</div>' +
+        '<div class="ck-yb" role="grid" tabindex="0" aria-label="Year">' + ybHTML() + '</div>' +
+        '<div class="ck-stat"><p class="ck-foot"></p><p class="ck-yr"><span class="ck-bar" aria-hidden="true"></span><b class="ck-pct"></b></p></div>' +
+        '<dl class="ck-cells">' +
+        '<div class="ck-c"><dt>MOON</dt><dd><svg class="ck-moon" viewBox="0 0 11 11" aria-hidden="true" focusable="false"></svg><span class="ck-mn"></span><small class="ck-mi"></small></dd></div>' +
+        '<div class="ck-c"><dt>SUN <i class="ck-sq"></i></dt><dd><span class="ck-sun"></span><small class="ck-dl"></small></dd></div>' +
+        '<div class="ck-c"><dt>LUNAR YEAR</dt><dd><span class="ck-zo"></span><small class="ck-zs"></small></dd></div>' +
+        '<div class="ck-c"><dt class="ck-nsl">NEXT</dt><dd><span class="ck-ns"></span><small class="ck-nd"></small></dd></div>' +
+        '<div class="ck-c"><dt>UNIX EPOCH</dt><dd><span class="ck-ep"></span><small>seconds since 1970</small></dd></div>' +
+        '<div class="ck-c"><dt>EARTH \u2192 SUN</dt><dd><span class="ck-au"></span><small class="ck-km"></small></dd></div>' +
+        '</dl>' + KCAP([[["\u2191", "\u2193"], "month"], [["\u2190", "\u2192"], "city"], [["PGUP", "PGDN"], "month"], [["T"], "today"], [["SPACE", "\u21b5"], "info / city"], [["ESC"], "close"]], "ck-kc ck-kw") + KCAP([[["\u2190", "\u2191", "\u2193", "\u2192"], "move"], [["PGUP", "PGDN"], "month"], [["T"], "today"], [["SPACE", "\u21b5"], "info / city"], [["ESC"], "close"]], "ck-kc ck-kn") + '</div>';
       document.body.appendChild(ov);
+      /* Stat cells explain themselves: focus one (Tab from the calendar, then arrows), Enter/Space or a click flips it. */
+      var WHY = [
+        "Day of the year (the 'Julian' day count), week number and ISO week-date: year-Wweek-weekday, Mon = 1. Bar: share of the year gone.",
+        "Moon phase and how much of it is lit, from the 29.53-day lunar cycle.",
+        "Sunrise, sunset, daylight. \u2248 means estimated from your time zone; no location is used.",
+        "Chinese zodiac year (element + animal). It changes at Lunar New Year, not 1 January.",
+        "Time to the next solstice (longest/shortest day) or equinox (day = night).",
+        "Seconds since 1 Jan 1970 UTC. How computers count time.",
+        "Earth\u2013Sun distance today. 1 AU \u2248 149.6M km; closest in early Jan."
+      ];
+      var flipEls = [ov.querySelector(".ck-stat")].concat(Array.prototype.slice.call(ov.querySelectorAll(".ck-c")));
+      flipEls.forEach(function (c, i) {
+        c.tabIndex = 0;
+        c.setAttribute("role", "button");
+        c.setAttribute("aria-label", (c.querySelector("dt") ? c.querySelector("dt").textContent : "Year status") + ". Enter or Space explains it.");
+        var w = document.createElement("p");
+        w.className = "ck-why"; w.textContent = WHY[i]; w.setAttribute("aria-live", "polite");
+        c.appendChild(w);
+        var hn = document.createElement("span");
+        hn.className = "ck-hint";
+        hn.innerHTML = window.KCAP([[["SPACE"], "info"]], "ck-hi") + window.KCAP([[["SPACE"], "back"]], "ck-hb");
+        c.appendChild(hn);
+        c.addEventListener("click", function () { c.focus({ preventScroll: true }); c.classList.toggle("fl"); });
+        c.addEventListener("focusout", function () { c.classList.remove("fl"); });
+      });
+      var flipNav = function (from, k) {
+        var at = flipEls.indexOf(from);
+        if (at === 0) return k === "ArrowDown" ? flipEls[1] : null;
+        var cells = flipEls.slice(1), me = cells[at - 1].getBoundingClientRect(), best = null, bd = 1e9;
+        cells.forEach(function (c) {
+          var r = c.getBoundingClientRect(), dx = r.left - me.left, dy = r.top - me.top, d;
+          if (k === "ArrowLeft" && Math.abs(dy) < 4 && dx < 0) d = -dx;
+          else if (k === "ArrowRight" && Math.abs(dy) < 4 && dx > 0) d = dx;
+          else if (k === "ArrowUp" && dy < -4) d = -dy * 10 + Math.abs(dx);
+          else if (k === "ArrowDown" && dy > 4) d = dy * 10 + Math.abs(dx);
+          if (d !== undefined && d < bd) { bd = d; best = c; }
+        });
+        if (!best && k === "ArrowUp") return flipEls[0];
+        return best;
+      };
       var q = function (s) { return ov.querySelector(s); };
       var oBox = q(".ck-box"), oHM = q(".ck-hm"), oS = q(".ck-s"), oDate = q(".ck-date"), oM = q(".ck-m"), oGrid = q(".ck-grid"), oFoot = q(".ck-foot");
+      var oFace = q(".ck-face"), oLt = q(".ck-lt"), oOff = q(".ck-off"), oYb = q(".ck-yb"), ybCells = ov.querySelectorAll(".yb-d"), ybRows = ov.querySelectorAll(".yb-r"), mBtns = ov.querySelectorAll(".ck-mb"), cBtns = ov.querySelectorAll(".ck-cb"), oCs = q(".ck-csl");
+      var wideMQ = window.matchMedia("(min-width: 760px)"), wide = function () { return wideMQ.matches; };
+      var oCal = function () { return wide() ? oYb : oGrid; };
+      /* World clock: Space/Enter/click on the face cycles cities. IANA zones, so DST is right. Resets to local on each open. */
+      var CITIES = [null, ["NEW YORK", "America/New_York"], ["LONDON", "Europe/London"], ["SOFIA", "Europe/Sofia"], ["DUBAI", "Asia/Dubai"], ["TOKYO", "Asia/Tokyo"], ["SYDNEY", "Australia/Sydney"]];
+      var city = 0;
+      var zoneNow = function (tz, t) {
+        var o = {};
+        new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }).formatToParts(t).forEach(function (p) { o[p.type] = p.value; });
+        var y = +o.year, mo = +o.month - 1, d = +o.day, h = +o.hour % 24, mi = +o.minute, se = +o.second;
+        var off = Math.round((Date.UTC(y, mo, d, h, mi, se) - Math.floor(t.getTime() / 1000) * 1000) / 6e4);
+        return { y: y, mo: mo, d: d, h: h, mi: mi, se: se, off: off, wd: new Date(Date.UTC(y, mo, d)).getUTCDay() };
+      };
+      var fmtOff = function (m) { var a = Math.abs(m), h = Math.floor(a / 60), r = a % 60; return (m < 0 ? "\u2212" : "+") + h + (r ? ":" + two(r) : ""); };
+      var faceNow = function (t) {
+        if (!CITIES[city]) return { y: t.getFullYear(), mo: t.getMonth(), d: t.getDate(), h: t.getHours(), mi: t.getMinutes(), se: t.getSeconds(), wd: t.getDay(), off: -t.getTimezoneOffset() };
+        return zoneNow(CITIES[city][1], t);
+      };
+      var drawFace = function (t) {
+        var z = faceNow(t), c = CITIES[city];
+        var o = oOff.children, dayT = z.h >= 6 && z.h < 18, lz = "";
+        try { lz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "").split("/").pop().replace(/_/g, " "); } catch (e) {}
+        o[0].textContent = c ? c[0] : "LOCAL";
+        o[1].textContent = "UTC" + (z.off ? fmtOff(z.off) : "");
+        if (c) {
+          var diff = z.off + t.getTimezoneOffset(), dh = diff / 60;
+          o[2].textContent = diff === 0 ? "SAME" : (diff > 0 ? "+" : "\u2212") + (Math.abs(dh) % 1 ? Math.abs(dh).toFixed(1) : Math.abs(dh)) + "H VS LOCAL";
+        } else o[2].textContent = lz || "YOUR ZONE";
+        o[3].textContent = (dayT ? "\u2600 DAY" : "\u263e NIGHT");
+        o[3].className = "o4 " + (dayT ? "d" : "n");
+        oFace.classList.toggle("city", !!c);
+        for (var ci = 0; ci < cBtns.length; ci++) { cBtns[ci].classList.toggle("on", ci === city); cBtns[ci].setAttribute("aria-pressed", String(ci === city)); }
+        return z;
+      };
+      var wall = function (el, k) { if (window.KWALL) window.KWALL(el, k); };
+      var nextCity = function () { city = (city + 1) % CITIES.length; tickBig(); };
       var oX = q(".ck-x"), oPrev = q(".ck-prev"), oNext = q(".ck-next"), dCells = ov.querySelectorAll(".ck-d");
       var sel = null, oT = 0, oBack = null;
       var same = function (a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); };
@@ -642,10 +820,117 @@
         t.setUTCDate(t.getUTCDate() + 4 - n);
         return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7);
       };
+      /* Sky stats, all computed here (no network). Sun uses the location only if the visitor already granted it;
+         otherwise longitude comes from the time-zone offset and latitude defaults to 40 deg, marked approx. Nothing about
+         the place is ever shown. */
+      var oYr = q(".ck-bar"), oPct = q(".ck-pct"), oEp = q(".ck-ep"), geo = null;
+      var SEG = 32, segs = "";
+      for (var s0 = 0; s0 < SEG; s0++) segs += "<i></i>";
+      oYr.innerHTML = segs;
+      var R = Math.PI / 180, JD = function (t) { return t / 864e5 + 2440587.5; };
+      var SYN = 29.530588853, NM0 = Date.UTC(2000, 0, 6, 18, 14);
+      var PH = ["new moon", "waxing crescent", "first quarter", "waxing gibbous", "full moon", "waning gibbous", "last quarter", "waning crescent"];
+      var moonGlyph = function (age) {
+        var k = Math.cos(2 * Math.PI * age / SYN), wax = age < SYN / 2, h = "";
+        for (var yy = 0; yy < 11; yy++) for (var xx = 0; xx < 11; xx++) {
+          var x = (xx - 5) / 5.5, y = (yy - 5) / 5.5;
+          if (x * x + y * y > 1) continue;
+          var w = Math.sqrt(1 - y * y), lit = wax ? x > k * w : x < -k * w;
+          h += '<rect x="' + xx + '" y="' + yy + '" width=".86" height=".86" class="' + (lit ? "l" : "d") + '"/>';
+        }
+        return h;
+      };
+      /* NOAA-style sunrise/sunset for a given local day. Returns minutes after local midnight, or null (polar day/night). */
+      var sunTimes = function (d, lat, lon) {
+        var n = JD(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12)) - 2451545;
+        var L = (280.46 + 0.9856474 * n) % 360, g = (357.528 + 0.9856003 * n) * R;
+        var lam = (L + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * R, eps = (23.439 - 4e-7 * n) * R;
+        var dec = Math.asin(Math.sin(eps) * Math.sin(lam));
+        var ra = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam)) / R;
+        var eot = 4 * (((L - ra + 540) % 360) - 180);
+        var c = (Math.cos(90.833 * R) - Math.sin(lat * R) * Math.sin(dec)) / (Math.cos(lat * R) * Math.cos(dec));
+        if (c > 1 || c < -1) return { polar: c > 1 ? "night" : "day" };
+        var ha = Math.acos(c) / R, noon = 720 - 4 * lon - eot - new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12).getTimezoneOffset();
+        return { rise: noon - 4 * ha, set: noon + 4 * ha };
+      };
+      var hm = function (m) { m = ((Math.round(m) % 1440) + 1440) % 1440; return two(Math.floor(m / 60)) + ":" + two(m % 60); };
+      /* Lunar New Year dates (Gregorian), so the zodiac flips on the right day. */
+      var LNY = { 2020: "0125", 2021: "0212", 2022: "0201", 2023: "0122", 2024: "0210", 2025: "0129", 2026: "0217", 2027: "0206", 2028: "0126", 2029: "0213", 2030: "0203", 2031: "0123", 2032: "0211", 2033: "0131", 2034: "0219", 2035: "0208", 2036: "0128", 2037: "0215", 2038: "0204", 2039: "0124", 2040: "0212" };
+      var ANI = ["rat", "ox", "tiger", "rabbit", "dragon", "snake", "horse", "goat", "monkey", "rooster", "dog", "pig"];
+      var ELE = ["wood", "wood", "fire", "fire", "earth", "earth", "metal", "metal", "water", "water"];
+      var zodiac = function (d) {
+        var y = d.getFullYear(), s = LNY[y], ny = s ? new Date(y, +s.slice(0, 2) - 1, +s.slice(2)) : new Date(y, 1, 4);
+        var zy = d < ny ? y - 1 : y, i = ((zy - 4) % 60 + 60) % 60;
+        var nx = LNY[zy + 1], next = nx ? new Date(zy + 1, +nx.slice(0, 2) - 1, +nx.slice(2)) : null;
+        return { name: ELE[i % 10] + " " + ANI[i % 12], next: next, y: zy };
+      };
+      /* Meeus mean equinox/solstice instants (JDE, good to a few minutes for this century). */
+      var SEAS = [["mar equinox", [2451623.80984, 365242.37404, 0.05169, -0.00411, -0.00057]], ["jun solstice", [2451716.56767, 365241.62603, 0.00325, 0.00888, -0.0003]],
+        ["sep equinox", [2451810.21715, 365242.01767, -0.11575, 0.00337, 0.00078]], ["dec solstice", [2451900.05952, 365242.74049, -0.06223, -0.00823, 0.00032]]];
+      var season = function (now) {
+        for (var y = now.getFullYear(); y <= now.getFullYear() + 1; y++) for (var j = 0; j < 4; j++) {
+          var c = SEAS[j][1], Y = (y - 2000) / 1000, jde = c[0] + c[1] * Y + c[2] * Y * Y + c[3] * Y * Y * Y + c[4] * Y * Y * Y * Y;
+          var t = (jde - 2440587.5) * 864e5 - 69e3;
+          if (t > now) return { name: SEAS[j][0], t: t };
+        }
+      };
+      var drawSky = function () {
+        var now = new Date(), t = now.getTime();
+        var age = (((t - NM0) / 864e5) % SYN + SYN) % SYN, ill = (1 - Math.cos(2 * Math.PI * age / SYN)) / 2;
+        q(".ck-moon").innerHTML = moonGlyph(age);
+        q(".ck-mn").textContent = PH[Math.floor((age / SYN) * 8 + 0.5) % 8];
+        q(".ck-mi").textContent = Math.round(ill * 100) + "% lit";
+        var jan = new Date(now.getFullYear(), 0, 1).getTimezoneOffset(), jul = new Date(now.getFullYear(), 6, 1).getTimezoneOffset();
+        var lat = geo ? geo[0] : 40, lon = geo ? geo[1] : -Math.max(jan, jul) / 4;
+        var st = sunTimes(now, lat, lon);
+        q(".ck-sq").textContent = geo ? "" : "\u2248";
+        q(".ck-sq").title = geo ? "" : "approximate, from your time zone";
+        if (st.polar) { q(".ck-sun").textContent = "polar " + st.polar; q(".ck-dl").textContent = ""; }
+        else {
+          q(".ck-sun").textContent = "\u2191 " + hm(st.rise) + "  \u2193 " + hm(st.set);
+          var len = st.set - st.rise;
+          q(".ck-dl").textContent = Math.floor(len / 60) + "h " + two(Math.round(len % 60)) + "m of daylight";
+        }
+        var z = zodiac(now);
+        q(".ck-zo").textContent = z.name;
+        q(".ck-zs").textContent = z.next ? "until " + MON[z.next.getMonth()].slice(0, 3) + " " + z.next.getDate() + " " + z.next.getFullYear() : String(z.y);
+        var se = season(now), gap = se.t - t;
+        q(".ck-nsl").textContent = se.name.toUpperCase() + " IN";
+        q(".ck-ns").textContent = Math.floor(gap / 864e5) + "d " + two(Math.floor(gap / 36e5) % 24) + "h " + two(Math.floor(gap / 6e4) % 60) + "m";
+        var sd = new Date(se.t);
+        q(".ck-nd").textContent = MON[sd.getMonth()].slice(0, 3) + " " + sd.getDate() + " \u00b7 " + two(sd.getHours()) + ":" + two(sd.getMinutes()) + " local";
+        var gm = (357.529 + 0.98560028 * (JD(t) - 2451545)) * R, au = 1.00014 - 0.01671 * Math.cos(gm) - 0.00014 * Math.cos(2 * gm);
+        q(".ck-au").textContent = au.toFixed(5) + " AU";
+        q(".ck-km").textContent = (au * 149597870.7 / 1e6).toFixed(3) + " million km";
+      };
       var drawCal = function () {
         var now = new Date(), y = sel.getFullYear(), m = sel.getMonth();
         var first = new Date(y, m, 1), start = new Date(y, m, 1 - first.getDay());
-        oM.textContent = MON[m].toUpperCase() + " " + y;
+        oM.textContent = wide() ? String(y) : MON[m].toUpperCase() + " " + y;
+        var tdy0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()), ny = new Date(now.getFullYear() + 1, 0, 1), dl = Math.ceil((ny - new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)) / 864e5);
+        var onYb = document.activeElement === oYb && wide();
+        if (onYb) {
+          var mdays = new Date(y, m + 1, 0).getDate(), mst = new Date(y, m, 1), men = new Date(y, m + 1, 1);
+          var mleft = tdy0 >= men ? 0 : tdy0 < mst ? mdays : Math.round((men - tdy0) / 864e5) - 1;
+          q(".ck-dl2").textContent = MON[m].slice(0, 3).toUpperCase() + " \u00b7 " + mdays + " DAYS \u00b7 " + mleft + " LEFT";
+        } else q(".ck-dl2").textContent = dl + " DAYS LEFT";
+        var tdy = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        for (var j = 0; j < ybCells.length; j++) {
+          var yc = ybCells[j], ym = +yc.getAttribute("data-m"), ydn = +yc.getAttribute("data-d"), ydt = new Date(y, ym, ydn);
+          if (ydt.getMonth() !== ym) { yc.className = "yb-d none"; yc.textContent = ""; yc.removeAttribute("aria-label"); continue; }
+          var wk = ydt.getDay();
+          yc.textContent = ydn;
+          yc.className = "yb-d" + (wk === 0 || wk === 6 ? " we" : "") + (ydt < tdy ? " past" : "") + (same(ydt, tdy) ? " today" : "") + (same(ydt, sel) ? " sel" : "");
+          yc.setAttribute("aria-label", DAY[wk] + " " + ydn + " " + MON[ym] + " " + y + (same(ydt, tdy) ? ", today" : ""));
+        }
+        for (var r = 0; r < 12; r++) {
+          ybRows[r].classList.toggle("msel", onYb && r === m);
+          ybRows[r].classList.toggle("cur", y === tdy.getFullYear() && r === tdy.getMonth());
+          ybRows[r].classList.toggle("past", y < tdy.getFullYear() || (y === tdy.getFullYear() && r < tdy.getMonth()));
+          mBtns[r].classList.toggle("on", r === m);
+          mBtns[r].classList.toggle("cur", y === tdy.getFullYear() && r === tdy.getMonth());
+          mBtns[r].setAttribute("aria-pressed", String(r === m));
+        }
         for (var i = 0; i < 42; i++) {
           var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i), el = dCells[i];
           el.textContent = d.getDate();
@@ -655,22 +940,37 @@
           el.setAttribute("data-i", String(i));
           if (same(d, sel)) oGrid.setAttribute("aria-activedescendant", el.id);
         }
-        var y0 = new Date(y, 0, 1), doy = Math.round((new Date(y, m, sel.getDate()) - y0) / 864e5) + 1;
+        /* The status panel always describes today; the grid highlight is only a highlight. */
+        var td = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        y = td.getFullYear();
+        var y0 = new Date(y, 0, 1), doy = Math.round((td - y0) / 864e5) + 1;
         var len = Math.round((new Date(y + 1, 0, 1) - y0) / 864e5);
-        var gap = Math.round((new Date(y, m, sel.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
-        oFoot.textContent = "> day " + doy + " of " + len + " \u00b7 week " + isoWeek(sel) + " \u00b7 " +
-          (gap === 0 ? "today" : gap > 0 ? "in " + gap + (gap === 1 ? " day" : " days") : -gap + (gap === -1 ? " day ago" : " days ago"));
+        oFoot.innerHTML = "";
+        var wd = td.getDay() || 7, iy = new Date(y, td.getMonth(), td.getDate() + 4 - wd).getFullYear();
+        [["DAY", doy + "/" + len], ["WEEK", two(isoWeek(td))], ["ISO", iy + "-W" + two(isoWeek(td)) + "-" + wd], ["", "today"]].forEach(function (p) {
+          var e = document.createElement("span");
+          if (p[0]) { var l = document.createElement("i"); l.textContent = p[0]; e.appendChild(l); }
+          e.appendChild(document.createTextNode(p[1]));
+          oFoot.appendChild(e);
+        });
+        var frac = (now - y0) / (len * 864e5);
+        var on = Math.round(frac * SEG), bars = oYr.children;
+        for (var b = 0; b < SEG; b++) bars[b].className = b < on ? "on" : "";
+        oPct.textContent = (frac * 100).toFixed(1) + "% of " + y;
       };
       var tickBig = function () {
-        var d = new Date();
+        var d = new Date(), z = drawFace(d);
         var cc = document.createElement("span");
         cc.className = "cc";
         cc.textContent = ":";
-        oHM.textContent = two(d.getHours());
+        cc.style.animationDelay = -d.getMilliseconds() + "ms";
+        oHM.textContent = two(z.h);
         oHM.appendChild(cc);
-        oHM.appendChild(document.createTextNode(two(d.getMinutes())));
-        oS.textContent = ":" + two(d.getSeconds());
-        oDate.textContent = DAY[d.getDay()] + " \u00b7 " + d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear();
+        oHM.appendChild(document.createTextNode(two(z.mi)));
+        oS.textContent = ":" + two(z.se);
+        oEp.textContent = Math.floor(d.getTime() / 1000);
+        if (d.getSeconds() === 0) drawSky();
+        oDate.textContent = DAY[z.wd] + " \u00b7 " + z.d + " " + MON[z.mo] + " " + z.y;
         window.clearTimeout(oT);
         oT = window.setTimeout(tickBig, 1000 - d.getMilliseconds() + 20);
       };
@@ -685,7 +985,13 @@
         oBack = document.activeElement;
         var now = new Date();
         sel = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        city = 0;
+        drawSky();
         tickBig();
+        /* Use the precise sun only if location is already allowed; never prompt, never show it. */
+        if (!geo && navigator.permissions && navigator.geolocation) navigator.permissions.query({ name: "geolocation" }).then(function (p) {
+          if (p.state === "granted") navigator.geolocation.getCurrentPosition(function (pos) { geo = [pos.coords.latitude, pos.coords.longitude]; if (!ov.hidden) drawSky(); }, function () {}, { maximumAge: 36e5, timeout: 8000 });
+        }).catch(function () {});
         drawCal();
         var sw = window.innerWidth - document.documentElement.clientWidth;
         document.documentElement.style.setProperty("--sbw", sw + "px");
@@ -698,7 +1004,7 @@
         ov.classList.remove("in");
         void oBox.offsetWidth;
         if (!still.matches) ov.classList.add("in");
-        oGrid.focus({ preventScroll: true });
+        oCal().focus({ preventScroll: true });
       };
       var ckClose = function () {
         if (ov.hidden) return;
@@ -711,10 +1017,16 @@
       };
       ck.addEventListener("click", ckOpen);
       oX.addEventListener("click", ckClose);
-      oPrev.addEventListener("click", function () { shift(0, -1); });
-      oNext.addEventListener("click", function () { shift(0, 1); });
+      oPrev.addEventListener("click", function () { shift(0, wide() ? -12 : -1); });
+      oNext.addEventListener("click", function () { shift(0, wide() ? 12 : 1); });
+      Array.prototype.forEach.call(cBtns, function (b) { b.addEventListener("click", function (e) { e.stopPropagation(); city = +b.getAttribute("data-c"); tickBig(); oFace.focus({ preventScroll: true }); }); });
+      oFace.addEventListener("click", function () { oFace.focus({ preventScroll: true }); nextCity(); });
+      Array.prototype.forEach.call(mBtns, function (b) { b.addEventListener("click", function () { shift(0, +b.getAttribute("data-m") - sel.getMonth()); }); });
+      wideMQ.addEventListener("change", function () { if (!ov.hidden) { drawCal(); if (document.activeElement === oGrid || document.activeElement === oYb) oCal().focus({ preventScroll: true }); } });
       ov.addEventListener("click", function (ev) {
         if (ev.target === ov) { ckClose(); return; }
+        var yd = ev.target.closest && ev.target.closest(".yb-d:not(.none)");
+        if (yd) { sel = new Date(sel.getFullYear(), +yd.getAttribute("data-m"), +yd.getAttribute("data-d")); drawCal(); oYb.focus({ preventScroll: true }); return; }
         var d = ev.target.closest && ev.target.closest(".ck-d");
         if (d) {
           var y = sel.getFullYear(), m = sel.getMonth(), first = new Date(y, m, 1);
@@ -728,20 +1040,117 @@
         var k = ev.key, onBtn = document.activeElement && document.activeElement.tagName === "BUTTON";
         var STEP = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
         ev.stopPropagation();
-        if (k === "Escape") { ev.preventDefault(); ckClose(); }
-        else if (STEP[k]) { ev.preventDefault(); shift(STEP[k], 0); }
+        var fc = flipEls.indexOf(document.activeElement) >= 0 ? document.activeElement : null;
+        var onFace = document.activeElement === oFace, onCs = document.activeElement === oCs;
+        if (k === "Escape") { ev.preventDefault(); if (fc && fc.classList.contains("fl")) fc.classList.remove("fl"); else if (onFace && city) { city = 0; tickBig(); } else ckClose(); }
+        else if (onFace && (k === "Enter" || k === " ")) { ev.preventDefault(); nextCity(); }
+        else if (onCs && STEP[k]) {
+          /* City header: Left/Right switch city (stops at LOCAL and SYD), Down returns to the face. */
+          ev.preventDefault();
+          if (k === "ArrowDown") oFace.focus({ preventScroll: true });
+          else if (k === "ArrowLeft" || k === "ArrowRight") { var nc = city + STEP[k]; if (nc >= 0 && nc < CITIES.length) { city = nc; tickBig(); } else wall(oCs, k); }
+          else wall(oCs, k);
+        }
+        else if (onCs && (k === "Enter" || k === " ")) { ev.preventDefault(); oFace.focus({ preventScroll: true }); }
+        else if (onFace && STEP[k]) {
+          ev.preventDefault();
+          if (k === "ArrowUp") oCs.focus({ preventScroll: true });
+          else if (k !== "ArrowDown") wall(oFace, k);
+          else { if (wide()) { var tn = new Date(); sel = new Date(tn.getFullYear(), tn.getMonth(), tn.getDate()); } oCal().focus({ preventScroll: true }); }
+        }
+        else if (fc && STEP[k]) { ev.preventDefault(); var nx = flipNav(fc, k); if (nx) nx.focus({ preventScroll: true }); else if (k === "ArrowUp") oCal().focus({ preventScroll: true }); else wall(fc, k); }
+        else if (fc && (k === "Enter" || k === " ")) { ev.preventDefault(); fc.classList.toggle("fl"); }
+        else if (STEP[k]) {
+          /* Arrows stay inside the shown month; down past the last row leaves the grid for the stat cards. */
+          ev.preventDefault();
+          var last = new Date(sel.getFullYear(), sel.getMonth() + 1, 0).getDate(), nd = sel.getDate() + STEP[k], mo = sel.getMonth();
+          if (wide()) {
+            /* Board: Left/Right walk days (and into the next or previous month), Up/Down change month row.
+               Up from January reaches the clock, Down from December leaves for the status box. */
+            if (k === "ArrowUp" && mo === 0) oFace.focus({ preventScroll: true });
+            else if (k === "ArrowDown" && mo === 11) flipEls[0].focus({ preventScroll: true });
+            else if (k === "ArrowUp" || k === "ArrowDown") shift(0, k === "ArrowUp" ? -1 : 1);
+            /* Left/Right do nothing on the board (rows are whole months): wall cue. */
+            else wall(ybRows[mo], k);
+          }
+          else if (k === "ArrowDown" && nd > last) flipEls[0].focus({ preventScroll: true });
+          else if (k === "ArrowUp" && nd < 1) oFace.focus({ preventScroll: true });
+          else if (nd >= 1 && nd <= last) shift(STEP[k], 0);
+          else wall(oGrid.querySelector(".ck-d.sel") || oGrid, k);
+        }
         else if (k === "PageUp" || k === "PageDown") { ev.preventDefault(); shift(0, k === "PageUp" ? -1 : 1); }
         else if (k === "Home" || k === "t" || k === "T") { ev.preventDefault(); var n = new Date(); sel = new Date(n.getFullYear(), n.getMonth(), n.getDate()); drawCal(); }
         else if (k === "Tab") {
           ev.preventDefault();
-          var f = [oX, oPrev, oGrid, oNext], at = f.indexOf(document.activeElement);
+          var f = [oX, oCs, oFace, oPrev, oCal(), oNext].concat(flipEls), at = f.indexOf(document.activeElement);
           f[(at + (ev.shiftKey ? -1 : 1) + f.length) % f.length].focus();
         } else if ((k === "Enter" || k === " ") && !onBtn) ev.preventDefault();
       }, true);
       document.addEventListener("focusin", function (ev) {
-        if (!ov.hidden && !ov.contains(ev.target)) oGrid.focus({ preventScroll: true });
+        if (!ov.hidden && !ov.contains(ev.target)) oCal().focus({ preventScroll: true });
       });
+      oYb.addEventListener("focus", drawCal);
+      oYb.addEventListener("blur", drawCal);
       document.addEventListener("visibilitychange", function () { if (!ov.hidden && !document.hidden) tickBig(); });
+    }
+
+    /* 1b. Kar Page mark beside the clock -> a Kar Page preview card that pops out of the mark. */
+    var kb = document.querySelector(".mast .kpbox");
+    if (kb) {
+      mark(kb, "\u21b5 kar page", "b");
+      var kv = document.createElement("div");
+      kv.className = "ck kpc";
+      kv.hidden = true;
+      kv.setAttribute("role", "dialog");
+      kv.setAttribute("aria-modal", "true");
+      kv.setAttribute("aria-labelledby", "kpc-h");
+      kv.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg>KAR PAGE \u00b7 WEB APP</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+        '<div class="kpc-shots">' + [["kp-t1-grid", "Kar Page home grid of car spots"], ["kp-t2-porsche", "Kar Page post of a green 1956 Porsche"], ["kp-t3-m3", "Kar Page post of a red BMW M3"]].map(function (s) {
+          return '<img draggable="false" src="img/' + s[0] + '.webp" srcset="img/' + s[0] + '.webp 1x, img/' + s[0] + '-2x.webp 2x" alt="' + s[1] + '" width="122" height="240" decoding="async">';
+        }).join("") + '</div>' +
+        '<h2 class="kpc-h" id="kpc-h">Your cars. Your story.</h2><p class="kpc-p">A web app for car enthusiasts.</p>' +
+        '<p class="kpc-url">&gt; https://karpage.app</p>' +
+        '<div class="kpc-go"><a class="kpc-b on" href="https://karpage.app" rel="noopener">OPEN KARPAGE.APP \u2197</a><a class="kpc-b" href="/kar-page">APP PAGE \u2192</a></div>' +
+        KCAP([[["TAB"], "move"], [["\u21b5"], "open"], [["ESC"], "close"]], "ck-kc") + '</div>';
+      document.body.appendChild(kv);
+      var kBox = kv.querySelector(".ck-box"), kX = kv.querySelector(".ck-x"), kBack = null;
+      var kFoc = function () { return [kX].concat([].slice.call(kv.querySelectorAll(".kpc-b"))); };
+      var kOpen = function () {
+        if (!kv.hidden) return;
+        kBack = document.activeElement;
+        document.documentElement.style.setProperty("--sbw", (window.innerWidth - document.documentElement.clientWidth) + "px");
+        document.documentElement.classList.add("lb-on");
+        kv.hidden = false;
+        var a = kb.getBoundingClientRect(), b = kBox.getBoundingClientRect();
+        kBox.style.setProperty("--ckx", Math.round(a.left + a.width / 2 - (b.left + b.width / 2)) + "px");
+        kBox.style.setProperty("--cky", Math.round(a.top + a.height / 2 - (b.top + b.height / 2)) + "px");
+        kv.classList.remove("in");
+        void kBox.offsetWidth;
+        if (!still.matches) kv.classList.add("in");
+        kv.querySelector(".kpc-b").focus({ preventScroll: true });
+      };
+      var kClose = function () {
+        if (kv.hidden) return;
+        kv.hidden = true;
+        kv.classList.remove("in");
+        document.documentElement.classList.remove("lb-on");
+        (kBack && kBack !== document.body && kBack.focus ? kBack : kb).focus({ preventScroll: true });
+        kBack = null;
+      };
+      kb.addEventListener("click", kOpen);
+      kX.addEventListener("click", kClose);
+      kv.addEventListener("click", function (ev) { if (ev.target === kv) kClose(); });
+      window.addEventListener("keydown", function (ev) {
+        if (kv.hidden) return;
+        ev.stopPropagation();
+        if (ev.key === "Escape") { ev.preventDefault(); kClose(); }
+        else if (ev.key === "Tab") {
+          ev.preventDefault();
+          var f = kFoc(), at = f.indexOf(document.activeElement);
+          f[(at + (ev.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+        }
+      }, true);
+      document.addEventListener("focusin", function (ev) { if (!kv.hidden && !kv.contains(ev.target)) kFoc()[1].focus({ preventScroll: true }); });
     }
 
     /* 2. Title: a quick terminal scramble that resolves back, left to right. */
@@ -961,11 +1370,13 @@
 
   /* Press ? anywhere: a cheat sheet of every key on this page, in the clock's frame. Esc, ? or a click outside closes. */
   (function () {
+    var eggsLive = null;
     var rows = [["\u2190 \u2191 \u2193 \u2192", "move the jade frame, row by row"], ["\u21b5 / SPACE", "open or play what is framed"], ["ESC", home ? "clear the filter, step back" : "back to all apps"]];
     if (!home) rows.push(["BACKSPACE", "back to all apps"]);
-    if (document.querySelector(".live-phone")) rows.push(["CLICK", "outside the live app to leave it"]);
+    if (document.querySelector(".live-phone")) eggsLive = ["CLICK", "outside the live app to leave it"];
     if (document.querySelector(".lb, .shots, .gallery, .hero-shot")) rows.push(["\u2190 \u2192 + / \u2212", "in the viewer: next shot, zoom"]);
     rows.push(["PGUP PGDN", "scroll; the next arrow starts on screen"], ["TAB", "plain tab order still works"], ["?", "this sheet"]);
+    if (eggsLive) rows.push(eggsLive);
     var eggs = home ? [["CLOCK", "\u21b5 try it"], ["TITLE", "\u21b5 try it"], ["~/apps $", "\u21b5 try it"], ["KEY ROW", "\u21b5 try it"]] : [];
     var ov = document.createElement("div");
     ov.className = "ck kx";
@@ -973,13 +1384,13 @@
     ov.setAttribute("role", "dialog");
     ov.setAttribute("aria-modal", "true");
     ov.setAttribute("aria-label", "Keyboard shortcuts");
-    var dl = function (list) {
-      return '<dl class="kx-l">' + list.map(function (r) { return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>"; }).join("") + "</dl>";
+    var dl = function (list, caps) {
+      return '<dl class="kx-l">' + list.map(function (r) { return (caps ? '<dt class="keys">' + KCAPS(r[0]) : "<dt>" + r[0]) + "</dt><dd>" + r[1] + "</dd>"; }).join("") + "</dl>";
     };
     ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span>KEYBOARD</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
-      '<p class="kx-p">~/apps <span>$</span> man keys</p>' + dl(rows) +
+      '<p class="kx-p">~/apps <span>$</span> man keys</p>' + dl(rows, true) +
       (eggs.length ? '<p class="kx-h">// hidden in plain sight</p>' + dl(eggs) : "") +
-      '<p class="ck-keys" aria-hidden="true">ESC or ? to close</p></div>';
+      KCAP([[["ESC"], ""], [["?"], "close"]], "ck-kc") + '</div>';
     document.body.appendChild(ov);
     var x = ov.querySelector(".ck-x"), back = null;
     var open = function () {
@@ -1005,23 +1416,24 @@
     Array.prototype.forEach.call(document.querySelectorAll('.keys kbd[data-key="?"]'), function (k) {
       k.addEventListener("click", function (ev) {
         ev.stopPropagation();
-        k.classList.add("hit");
-        window.setTimeout(function () { k.classList.remove("hit"); }, 160);
-        open();
+        /* Same press as a real key: the shared cap handler lights it, clicks, and opens help. */
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }));
+        window.setTimeout(function () { window.dispatchEvent(new KeyboardEvent("keyup", { key: "?", bubbles: true })); }, 120);
       });
     });
     ov.addEventListener("click", function (ev) { if (ev.target === ov) close(); });
+    var isQ = function (ev) { return ev.key === "?" || (ev.code === "Slash" && ev.shiftKey); };
     window.addEventListener("keydown", function (ev) {
       var t = ev.target;
       if (ov.hidden) {
-        if (ev.key === "?" && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !(t && t.closest && t.closest("input, textarea, select, [contenteditable]"))) {
+        if (isQ(ev) && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !(t && t.closest && t.closest("input, textarea, select, [contenteditable]"))) {
           ev.preventDefault();
           open();
         }
         return;
       }
       ev.stopPropagation();
-      if (ev.key === "Escape" || ev.key === "?") { ev.preventDefault(); close(); }
+      if (ev.key === "Escape" || isQ(ev)) { ev.preventDefault(); close(); }
       else if (ev.key === "Tab") { ev.preventDefault(); x.focus(); }
       else if (ev.key !== "Enter" && ev.key !== " ") ev.preventDefault();
     }, true);
@@ -1037,7 +1449,7 @@
     ? ".board .stat, #panel .rows > li > a, #grid > li"
     : ".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, section .feat, .code, .others > li, .live-phone, .live-open, .btn-open";
   var STOPS = (home
-    ? [".mast .prompt", ".mast h1", ".mast .clock", ".mast .lede", ".mast .keys", ".board .stat", "#panel .reset", "#panel .panel-body > .panel-h", "#panel .rows > li > a"]
+    ? [".mast .prompt", ".mast h1", ".mast .kpbox", ".mast .clock", ".mast .lede", ".mast .keys", ".board .stat", "#panel .reset", "#panel .panel-body > .panel-h", "#panel .rows > li > a"]
     : [".bar .brand", ".bar nav a", ".hero .tag", ".hero .title-row", ".hero .tagline", ".hero .live-sub", ".hero .live-desc", ".hero .lede", ".hero .keys", ".act-note", "main section > h2", ".chips > li", "main .note", ".fine > p"]
   ).concat([HOV, ".foot-brand", ".foot-main > p:not(.foot-brand)", ".foot-note", ".foot-legal > span", ".foot-legal a"]);
   var TIGHT = ".prompt, .mast h1, .keys, .panel-h, .tag, .title-row, .tagline, .live-sub, .live-desc, .hero .lede, .act-note, section > h2, .note, .fine > p, .foot-brand, .foot-main > p, .foot-legal > span";
@@ -1272,7 +1684,7 @@
     if (DIRS[k]) {
       var d = DIRS[k], fresh = away && !inView(cur), nx = fresh ? fromScreen(d) : move(cur, d);
       if (!nx && !fresh && active !== cur.f && cur.f) nx = cur;
-      if (!nx) return;
+      if (!nx) { if (window.KWALL && cur.box && inView(cur)) window.KWALL([cur.box, box], k); return; }
       ev.preventDefault();
       setCur(nx, true, fresh || snapped || d === "l" || d === "r" ? "h" : "v");
       reveal(nx);
