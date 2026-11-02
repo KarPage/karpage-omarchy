@@ -979,10 +979,8 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .yb-d.we { color: var(--muted); }
 .yb-d.past { opacity: 0.35; }
 .yb-d.none { cursor: default; }
-.yb-d:not(.none):hover { border-color: var(--line); }
+/* No per-day outline on the year board: only today (solid jade) is marked. */
 .yb-d.today { background: var(--jade); color: var(--ink); opacity: 1; box-shadow: 0 0 8px rgba(63, 224, 164, 0.5); }
-.yb-d.sel { border-color: var(--jade-hi); }
-.ck-yb:focus-visible .yb-d.sel { outline: 1px solid var(--jade-hi); }
 @media (min-width: 760px) {
   .ck:not(.kx) .ck-box { width: min(660px, 100%); }
   .ck-yb { display: block; }
@@ -1021,7 +1019,6 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .ck-csl:focus-visible { outline: 1px solid var(--jade-hi); outline-offset: 3px; box-shadow: 0 0 10px rgba(63, 224, 164, 0.35); }
 .yb-r.msel { border-color: var(--jade-hi); background: rgba(63, 224, 164, 0.12); box-shadow: 0 0 8px rgba(63, 224, 164, 0.25); }
 .yb-r.msel b { color: var(--jade-hi); font-weight: 700; }
-.ck-yb:focus .yb-d.sel:not(.today) { border-color: transparent; outline: none; }
 .ck-yb:focus { outline: none; }
 @media (max-width: 759px) { .ck .ck-kw { display: none; } }
 @media (min-width: 760px) { .ck .ck-kn { display: none; } }
