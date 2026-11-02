@@ -952,3 +952,42 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .ck-stat:focus .ck-hint { top: 3px; }
 @media (prefers-reduced-motion: reduce) { .ck-hint { transition: none; } }
 @media (hover: none), (pointer: coarse) { .ck-hint kbd { display: none; } .ck-hint em::before { content: "tap "; } }
+/* World clock face */
+.ck-face { position: relative; margin: 0 -6px; padding: 0 6px; border: 1px solid transparent; cursor: pointer; }
+.ck-face:focus { outline: none; border-color: var(--jade-hi); box-shadow: 0 0 12px rgba(63, 224, 164, 0.3); }
+.ck-face .ck-date { margin-bottom: 4px; }
+.ck-off { margin: 0 0 12px; min-height: 14px; color: var(--jade); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+.ck-face:focus .ck-hint { opacity: 1; }
+.ck-face .ck-hint { top: 6px; right: 6px; }
+/* Phone month strip */
+.ck-ms { display: none; grid-template-columns: repeat(6, 1fr); gap: 3px; margin-top: 8px; }
+.ck-mb { min-height: 32px; border: 1px solid var(--line-dim); background: transparent; color: var(--muted); font: inherit; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 0; cursor: pointer; }
+.ck-mb.cur { color: var(--jade-hi); }
+.ck-mb.on { border-color: var(--jade-hi); color: var(--fg); }
+@media (max-width: 759px) { .ck-ms { display: grid; } }
+/* Mini Oma Year board (desktop) */
+.ck-yb { display: none; margin-top: 8px; font-size: 9px; }
+.ck-yb:focus { outline: none; }
+.yb-h, .yb-r { display: grid; grid-template-columns: 30px repeat(31, 1fr); gap: 1px; }
+.yb-h { color: var(--muted); text-align: center; margin-bottom: 2px; }
+.yb-r { border: 1px solid transparent; }
+.yb-r b { font-weight: 400; color: var(--muted); letter-spacing: 0.08em; align-self: center; }
+.yb-r.cur { border-color: var(--line); background: rgba(63, 224, 164, 0.06); }
+.yb-r.cur b { color: var(--jade-hi); }
+.yb-r.past b { opacity: 0.5; }
+.yb-d { display: grid; place-items: center; height: 16px; color: var(--fg); cursor: pointer; border: 1px solid transparent; }
+.yb-d.we { color: var(--muted); }
+.yb-d.past { opacity: 0.35; }
+.yb-d.none { cursor: default; }
+.yb-d:not(.none):hover { border-color: var(--line); }
+.yb-d.today { background: var(--jade); color: var(--ink); opacity: 1; box-shadow: 0 0 8px rgba(63, 224, 164, 0.5); }
+.yb-d.sel { border-color: var(--jade-hi); }
+.ck-yb:focus-visible .yb-d.sel { outline: 1px solid var(--jade-hi); }
+@media (min-width: 760px) {
+  .ck:not(.kx) .ck-box { width: min(660px, 100%); }
+  .ck-yb { display: block; }
+  .ck:not(.kx) .ck-wd, .ck:not(.kx) .ck-grid { display: none; }
+}
+.ck-mb { -webkit-tap-highlight-color: transparent; }
+.ck-mb:focus { outline: none; background: transparent; }
+.ck-mb:focus-visible { outline: 1px solid var(--jade-hi); }

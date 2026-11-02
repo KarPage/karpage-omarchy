@@ -677,13 +677,28 @@
       ov.setAttribute("role", "dialog");
       ov.setAttribute("aria-modal", "true");
       ov.setAttribute("aria-label", "Local time and calendar");
+      /* Mini Oma Year board: one row per month, days 1-31 across, like the Oma Year Planner. */
+      var ybHTML = function () {
+        var h = '<div class="yb-h" aria-hidden="true"><i></i>';
+        for (var d = 1; d <= 31; d++) h += "<span>" + (d === 1 || d % 5 === 0 ? d : "") + "</span>";
+        h += "</div>";
+        for (var m = 0; m < 12; m++) {
+          h += '<div class="yb-r" data-m="' + m + '"><b>' + MON[m].slice(0, 3) + "</b>";
+          for (var dd = 1; dd <= 31; dd++) h += '<span class="yb-d" data-m="' + m + '" data-d="' + dd + '"></span>';
+          h += "</div>";
+        }
+        return h;
+      };
       var cells = "";
       for (var c = 0; c < 42; c++) cells += '<span class="ck-d" role="gridcell" id="ckd' + c + '"></span>';
-      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg>LOCAL TIME</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
-        '<p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p>' +
+      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg><span class="ck-lt">LOCAL TIME</span></span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+        '<div class="ck-face" tabindex="0" role="button" aria-label="Clock. Space or Enter shows the next world city."><p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p><p class="ck-off"></p>' +
+        '<span class="ck-hint">' + KCAP([[["SPACE"], "city"]], "ck-hi") + '</span></div>' +
         '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><b class="ck-m" aria-live="polite"></b><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
         '<div class="ck-wd" aria-hidden="true"><span>su</span><span>mo</span><span>tu</span><span>we</span><span>th</span><span>fr</span><span>sa</span></div>' +
         '<div class="ck-grid" role="grid" tabindex="0" aria-label="Month">' + cells + '</div>' +
+        '<div class="ck-ms" role="group" aria-label="Months">' + MON.map(function (n, i) { return '<button type="button" class="ck-mb" data-m="' + i + '">' + n.slice(0, 3) + '</button>'; }).join("") + '</div>' +
+        '<div class="ck-yb" role="grid" tabindex="0" aria-label="Year">' + ybHTML() + '</div>' +
         '<div class="ck-stat"><p class="ck-foot"></p><p class="ck-yr"><span class="ck-bar" aria-hidden="true"></span><b class="ck-pct"></b></p></div>' +
         '<dl class="ck-cells">' +
         '<div class="ck-c"><dt>MOON</dt><dd><svg class="ck-moon" viewBox="0 0 11 11" aria-hidden="true" focusable="false"></svg><span class="ck-mn"></span><small class="ck-mi"></small></dd></div>' +
@@ -692,7 +707,7 @@
         '<div class="ck-c"><dt class="ck-nsl">NEXT</dt><dd><span class="ck-ns"></span><small class="ck-nd"></small></dd></div>' +
         '<div class="ck-c"><dt>UNIX EPOCH</dt><dd><span class="ck-ep"></span><small>seconds since 1970</small></dd></div>' +
         '<div class="ck-c"><dt>EARTH \u2192 SUN</dt><dd><span class="ck-au"></span><small class="ck-km"></small></dd></div>' +
-        '</dl>' + KCAP([[["\u2190", "\u2191", "\u2193", "\u2192"], "day"], [["PGUP", "PGDN"], "month"], [["T"], "today"], [["SPACE", "\u21b5"], "info"], [["ESC"], "close"]], "ck-kc") + '</div>';
+        '</dl>' + KCAP([[["\u2190", "\u2191", "\u2193", "\u2192"], "move"], [["PGUP", "PGDN"], "month"], [["T"], "today"], [["SPACE", "\u21b5"], "info / city"], [["ESC"], "close"]], "ck-kc") + '</div>';
       document.body.appendChild(ov);
       /* Stat cells explain themselves: focus one (Tab from the calendar, then arrows), Enter/Space or a click flips it. */
       var WHY = [
@@ -736,6 +751,35 @@
       };
       var q = function (s) { return ov.querySelector(s); };
       var oBox = q(".ck-box"), oHM = q(".ck-hm"), oS = q(".ck-s"), oDate = q(".ck-date"), oM = q(".ck-m"), oGrid = q(".ck-grid"), oFoot = q(".ck-foot");
+      var oFace = q(".ck-face"), oLt = q(".ck-lt"), oOff = q(".ck-off"), oYb = q(".ck-yb"), ybCells = ov.querySelectorAll(".yb-d"), ybRows = ov.querySelectorAll(".yb-r"), mBtns = ov.querySelectorAll(".ck-mb");
+      var wideMQ = window.matchMedia("(min-width: 760px)"), wide = function () { return wideMQ.matches; };
+      var oCal = function () { return wide() ? oYb : oGrid; };
+      /* World clock: Space/Enter/click on the face cycles cities. IANA zones, so DST is right. Resets to local on each open. */
+      var CITIES = [null, ["NEW YORK", "America/New_York"], ["LONDON", "Europe/London"], ["SOFIA", "Europe/Sofia"], ["DUBAI", "Asia/Dubai"], ["TOKYO", "Asia/Tokyo"], ["SYDNEY", "Australia/Sydney"]];
+      var city = 0;
+      var zoneNow = function (tz, t) {
+        var o = {};
+        new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }).formatToParts(t).forEach(function (p) { o[p.type] = p.value; });
+        var y = +o.year, mo = +o.month - 1, d = +o.day, h = +o.hour % 24, mi = +o.minute, se = +o.second;
+        var off = Math.round((Date.UTC(y, mo, d, h, mi, se) - Math.floor(t.getTime() / 1000) * 1000) / 6e4);
+        return { y: y, mo: mo, d: d, h: h, mi: mi, se: se, off: off, wd: new Date(Date.UTC(y, mo, d)).getUTCDay() };
+      };
+      var fmtOff = function (m) { var a = Math.abs(m), h = Math.floor(a / 60), r = a % 60; return (m < 0 ? "\u2212" : "+") + h + (r ? ":" + two(r) : ""); };
+      var faceNow = function (t) {
+        if (!CITIES[city]) return { y: t.getFullYear(), mo: t.getMonth(), d: t.getDate(), h: t.getHours(), mi: t.getMinutes(), se: t.getSeconds(), wd: t.getDay(), off: -t.getTimezoneOffset() };
+        return zoneNow(CITIES[city][1], t);
+      };
+      var drawFace = function (t) {
+        var z = faceNow(t), c = CITIES[city];
+        oLt.textContent = c ? c[0] + " \u00b7 UTC" + (z.off ? fmtOff(z.off) : "") : "LOCAL TIME";
+        if (c) {
+          var diff = z.off + t.getTimezoneOffset(), dh = diff / 60, txt = diff === 0 ? "same as local" : (diff > 0 ? "+" : "\u2212") + (Math.abs(dh) % 1 ? Math.abs(dh).toFixed(1) : Math.abs(dh)) + "h vs local";
+          oOff.textContent = txt + " \u00b7 " + (z.h >= 6 && z.h < 18 ? "day" : "night");
+        } else oOff.textContent = "";
+        oFace.classList.toggle("city", !!c);
+        return z;
+      };
+      var nextCity = function () { city = (city + 1) % CITIES.length; tickBig(); };
       var oX = q(".ck-x"), oPrev = q(".ck-prev"), oNext = q(".ck-next"), dCells = ov.querySelectorAll(".ck-d");
       var sel = null, oT = 0, oBack = null;
       var same = function (a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); };
@@ -831,7 +875,23 @@
       var drawCal = function () {
         var now = new Date(), y = sel.getFullYear(), m = sel.getMonth();
         var first = new Date(y, m, 1), start = new Date(y, m, 1 - first.getDay());
-        oM.textContent = MON[m].toUpperCase() + " " + y;
+        oM.textContent = wide() ? String(y) : MON[m].toUpperCase() + " " + y;
+        var tdy = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        for (var j = 0; j < ybCells.length; j++) {
+          var yc = ybCells[j], ym = +yc.getAttribute("data-m"), ydn = +yc.getAttribute("data-d"), ydt = new Date(y, ym, ydn);
+          if (ydt.getMonth() !== ym) { yc.className = "yb-d none"; yc.textContent = ""; yc.removeAttribute("aria-label"); continue; }
+          var wk = ydt.getDay();
+          yc.textContent = ydn;
+          yc.className = "yb-d" + (wk === 0 || wk === 6 ? " we" : "") + (ydt < tdy ? " past" : "") + (same(ydt, tdy) ? " today" : "") + (same(ydt, sel) ? " sel" : "");
+          yc.setAttribute("aria-label", DAY[wk] + " " + ydn + " " + MON[ym] + " " + y + (same(ydt, tdy) ? ", today" : ""));
+        }
+        for (var r = 0; r < 12; r++) {
+          ybRows[r].classList.toggle("cur", y === tdy.getFullYear() && r === tdy.getMonth());
+          ybRows[r].classList.toggle("past", y < tdy.getFullYear() || (y === tdy.getFullYear() && r < tdy.getMonth()));
+          mBtns[r].classList.toggle("on", r === m);
+          mBtns[r].classList.toggle("cur", y === tdy.getFullYear() && r === tdy.getMonth());
+          mBtns[r].setAttribute("aria-pressed", String(r === m));
+        }
         for (var i = 0; i < 42; i++) {
           var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i), el = dCells[i];
           el.textContent = d.getDate();
@@ -860,17 +920,17 @@
         oPct.textContent = (frac * 100).toFixed(1) + "% of " + y;
       };
       var tickBig = function () {
-        var d = new Date();
+        var d = new Date(), z = drawFace(d);
         var cc = document.createElement("span");
         cc.className = "cc";
         cc.textContent = ":";
-        oHM.textContent = two(d.getHours());
+        oHM.textContent = two(z.h);
         oHM.appendChild(cc);
-        oHM.appendChild(document.createTextNode(two(d.getMinutes())));
-        oS.textContent = ":" + two(d.getSeconds());
+        oHM.appendChild(document.createTextNode(two(z.mi)));
+        oS.textContent = ":" + two(z.se);
         oEp.textContent = Math.floor(d.getTime() / 1000);
         if (d.getSeconds() === 0) drawSky();
-        oDate.textContent = DAY[d.getDay()] + " \u00b7 " + d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear();
+        oDate.textContent = DAY[z.wd] + " \u00b7 " + z.d + " " + MON[z.mo] + " " + z.y;
         window.clearTimeout(oT);
         oT = window.setTimeout(tickBig, 1000 - d.getMilliseconds() + 20);
       };
@@ -885,6 +945,7 @@
         oBack = document.activeElement;
         var now = new Date();
         sel = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        city = 0;
         drawSky();
         tickBig();
         /* Use the precise sun only if location is already allowed; never prompt, never show it. */
@@ -903,7 +964,7 @@
         ov.classList.remove("in");
         void oBox.offsetWidth;
         if (!still.matches) ov.classList.add("in");
-        oGrid.focus({ preventScroll: true });
+        oCal().focus({ preventScroll: true });
       };
       var ckClose = function () {
         if (ov.hidden) return;
@@ -916,10 +977,15 @@
       };
       ck.addEventListener("click", ckOpen);
       oX.addEventListener("click", ckClose);
-      oPrev.addEventListener("click", function () { shift(0, -1); });
-      oNext.addEventListener("click", function () { shift(0, 1); });
+      oPrev.addEventListener("click", function () { shift(0, wide() ? -12 : -1); });
+      oNext.addEventListener("click", function () { shift(0, wide() ? 12 : 1); });
+      oFace.addEventListener("click", function () { oFace.focus({ preventScroll: true }); nextCity(); });
+      Array.prototype.forEach.call(mBtns, function (b) { b.addEventListener("click", function () { shift(0, +b.getAttribute("data-m") - sel.getMonth()); }); });
+      wideMQ.addEventListener("change", function () { if (!ov.hidden) { drawCal(); if (document.activeElement === oGrid || document.activeElement === oYb) oCal().focus({ preventScroll: true }); } });
       ov.addEventListener("click", function (ev) {
         if (ev.target === ov) { ckClose(); return; }
+        var yd = ev.target.closest && ev.target.closest(".yb-d:not(.none)");
+        if (yd) { sel = new Date(sel.getFullYear(), +yd.getAttribute("data-m"), +yd.getAttribute("data-d")); drawCal(); oYb.focus({ preventScroll: true }); return; }
         var d = ev.target.closest && ev.target.closest(".ck-d");
         if (d) {
           var y = sel.getFullYear(), m = sel.getMonth(), first = new Date(y, m, 1);
@@ -934,26 +1000,38 @@
         var STEP = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
         ev.stopPropagation();
         var fc = flipEls.indexOf(document.activeElement) >= 0 ? document.activeElement : null;
-        if (k === "Escape") { ev.preventDefault(); if (fc && fc.classList.contains("fl")) fc.classList.remove("fl"); else ckClose(); }
-        else if (fc && STEP[k]) { ev.preventDefault(); var nx = flipNav(fc, k); (nx || oGrid).focus({ preventScroll: true }); }
+        var onFace = document.activeElement === oFace;
+        if (k === "Escape") { ev.preventDefault(); if (fc && fc.classList.contains("fl")) fc.classList.remove("fl"); else if (onFace && city) { city = 0; tickBig(); } else ckClose(); }
+        else if (onFace && (k === "Enter" || k === " ")) { ev.preventDefault(); nextCity(); }
+        else if (onFace && STEP[k]) { ev.preventDefault(); if (k === "ArrowDown") oCal().focus({ preventScroll: true }); }
+        else if (fc && STEP[k]) { ev.preventDefault(); var nx = flipNav(fc, k); (nx || oCal()).focus({ preventScroll: true }); }
         else if (fc && (k === "Enter" || k === " ")) { ev.preventDefault(); fc.classList.toggle("fl"); }
         else if (STEP[k]) {
           /* Arrows stay inside the shown month; down past the last row leaves the grid for the stat cards. */
           ev.preventDefault();
-          var last = new Date(sel.getFullYear(), sel.getMonth() + 1, 0).getDate(), nd = sel.getDate() + STEP[k];
-          if (k === "ArrowDown" && nd > last) flipEls[0].focus({ preventScroll: true });
+          var last = new Date(sel.getFullYear(), sel.getMonth() + 1, 0).getDate(), nd = sel.getDate() + STEP[k], mo = sel.getMonth();
+          if (wide()) {
+            /* Board: Left/Right walk days (and into the next or previous month), Up/Down change month row.
+               Up from January reaches the clock, Down from December leaves for the status box. */
+            if (k === "ArrowUp" && mo === 0) oFace.focus({ preventScroll: true });
+            else if (k === "ArrowDown" && mo === 11) flipEls[0].focus({ preventScroll: true });
+            else if (k === "ArrowUp" || k === "ArrowDown") shift(0, k === "ArrowUp" ? -1 : 1);
+            else if (!(mo === 0 && nd < 1) && !(mo === 11 && nd > last)) shift(STEP[k], 0);
+          }
+          else if (k === "ArrowDown" && nd > last) flipEls[0].focus({ preventScroll: true });
+          else if (k === "ArrowUp" && nd < 1) oFace.focus({ preventScroll: true });
           else if (nd >= 1 && nd <= last) shift(STEP[k], 0);
         }
         else if (k === "PageUp" || k === "PageDown") { ev.preventDefault(); shift(0, k === "PageUp" ? -1 : 1); }
         else if (k === "Home" || k === "t" || k === "T") { ev.preventDefault(); var n = new Date(); sel = new Date(n.getFullYear(), n.getMonth(), n.getDate()); drawCal(); }
         else if (k === "Tab") {
           ev.preventDefault();
-          var f = [oX, oPrev, oGrid, oNext].concat(flipEls), at = f.indexOf(document.activeElement);
+          var f = [oX, oFace, oPrev, oCal(), oNext].concat(flipEls), at = f.indexOf(document.activeElement);
           f[(at + (ev.shiftKey ? -1 : 1) + f.length) % f.length].focus();
         } else if ((k === "Enter" || k === " ") && !onBtn) ev.preventDefault();
       }, true);
       document.addEventListener("focusin", function (ev) {
-        if (!ov.hidden && !ov.contains(ev.target)) oGrid.focus({ preventScroll: true });
+        if (!ov.hidden && !ov.contains(ev.target)) oCal().focus({ preventScroll: true });
       });
       document.addEventListener("visibilitychange", function () { if (!ov.hidden && !document.hidden) tickBig(); });
     }
