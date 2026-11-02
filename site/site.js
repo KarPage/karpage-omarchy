@@ -691,10 +691,10 @@
       };
       var cells = "";
       for (var c = 0; c < 42; c++) cells += '<span class="ck-d" role="gridcell" id="ckd' + c + '"></span>';
-      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg><span class="ck-lt">LOCAL TIME</span></span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
-        '<div class="ck-face" tabindex="0" role="button" aria-label="Clock. Space or Enter shows the next world city."><p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p><p class="ck-off"></p>' +
+      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg><span class="ck-lt">WORLD CLOCK</span></span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+        '<div class="ck-face" tabindex="0" role="button" aria-label="Clock. Space or Enter shows the next world city."><p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p><p class="ck-off"><span class="o1"></span><span class="o2"></span><span class="o3"></span><span class="o4"></span></p>' +
         '<span class="ck-hint">' + KCAP([[["SPACE"], "city"]], "ck-hi") + '</span></div>' +
-        '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><b class="ck-m" aria-live="polite"></b><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
+        '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><span class="ck-yl">YEAR PLANNER</span><b class="ck-m" aria-live="polite"></b><span class="ck-dl2"></span><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
         '<div class="ck-wd" aria-hidden="true"><span>su</span><span>mo</span><span>tu</span><span>we</span><span>th</span><span>fr</span><span>sa</span></div>' +
         '<div class="ck-grid" role="grid" tabindex="0" aria-label="Month">' + cells + '</div>' +
         '<div class="ck-ms" role="group" aria-label="Months">' + MON.map(function (n, i) { return '<button type="button" class="ck-mb" data-m="' + i + '">' + n.slice(0, 3) + '</button>'; }).join("") + '</div>' +
@@ -771,11 +771,16 @@
       };
       var drawFace = function (t) {
         var z = faceNow(t), c = CITIES[city];
-        oLt.textContent = c ? c[0] + " \u00b7 UTC" + (z.off ? fmtOff(z.off) : "") : "LOCAL TIME";
+        var o = oOff.children, dayT = z.h >= 6 && z.h < 18, lz = "";
+        try { lz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "").split("/").pop().replace(/_/g, " "); } catch (e) {}
+        o[0].textContent = c ? c[0] : "LOCAL";
+        o[1].textContent = "UTC" + (z.off ? fmtOff(z.off) : "");
         if (c) {
-          var diff = z.off + t.getTimezoneOffset(), dh = diff / 60, txt = diff === 0 ? "same as local" : (diff > 0 ? "+" : "\u2212") + (Math.abs(dh) % 1 ? Math.abs(dh).toFixed(1) : Math.abs(dh)) + "h vs local";
-          oOff.textContent = txt + " \u00b7 " + (z.h >= 6 && z.h < 18 ? "day" : "night");
-        } else oOff.textContent = "";
+          var diff = z.off + t.getTimezoneOffset(), dh = diff / 60;
+          o[2].textContent = diff === 0 ? "SAME" : (diff > 0 ? "+" : "\u2212") + (Math.abs(dh) % 1 ? Math.abs(dh).toFixed(1) : Math.abs(dh)) + "H VS LOCAL";
+        } else o[2].textContent = lz || "YOUR ZONE";
+        o[3].textContent = (dayT ? "\u2600 DAY" : "\u263e NIGHT");
+        o[3].className = "o4 " + (dayT ? "d" : "n");
         oFace.classList.toggle("city", !!c);
         return z;
       };
@@ -876,6 +881,8 @@
         var now = new Date(), y = sel.getFullYear(), m = sel.getMonth();
         var first = new Date(y, m, 1), start = new Date(y, m, 1 - first.getDay());
         oM.textContent = wide() ? String(y) : MON[m].toUpperCase() + " " + y;
+        var ny = new Date(now.getFullYear() + 1, 0, 1), dl = Math.ceil((ny - new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)) / 864e5);
+        q(".ck-dl2").textContent = dl + " DAYS LEFT";
         var tdy = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         for (var j = 0; j < ybCells.length; j++) {
           var yc = ybCells[j], ym = +yc.getAttribute("data-m"), ydn = +yc.getAttribute("data-d"), ydt = new Date(y, ym, ydn);
