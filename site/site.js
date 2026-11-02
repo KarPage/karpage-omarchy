@@ -201,30 +201,69 @@
     document.addEventListener("kp:filter", function () { var b = hinted; hinted = null; if (b) showHint(b); });
   }
 
-  /* Keycap hints light up while their real key is held. */
-  var caps = document.querySelectorAll(".keys kbd[data-key]");
+  /* Shared key caps: every keyboard hint on the site is built from these. KCAP(groups) returns a .keys row;
+     each group is [[label, key], ...] plus a caption. Caps press down (and click) while their key is held. */
+  var KMAP = { "\u2190": "ArrowLeft", "\u2191": "ArrowUp", "\u2193": "ArrowDown", "\u2192": "ArrowRight", "ESC": "Escape", "TAB": "Tab", "\u21b5": "Enter", "PGUP": "PageUp", "PGDN": "PageDown", "T": "t", "?": "?", "+": "+", "\u2212": "-", "BACKSPACE": "Backspace", "SPACE": " " };
+  var kcap = function (label) {
+    var k = KMAP[label];
+    return '<kbd' + (label.length > 1 ? ' class="w"' : "") + (k ? ' data-key="' + (k === " " ? " " : k) + '"' : "") + ">" + label + "</kbd>";
+  };
+  window.KCAP = function (groups, cls) {
+    return '<p class="keys' + (cls ? " " + cls : "") + '" aria-hidden="true">' + groups.map(function (g) {
+      return '<span class="kg">' + g[0].map(kcap).join("") + (g[1] ? "<em>" + g[1] + "</em>" : "") + "</span>";
+    }).join("") + "</p>";
+  };
+  window.KCAPS = function (text) { return text.split(" ").map(function (t) { return t === "/" || t === "+" && false ? '<span class="kor">' + t + "</span>" : t === "/" ? '<span class="kor">/</span>' : kcap(t); }).join(""); };
+  /* A short dry key click, synthesised (no file, no network). Only after a real key press or click. */
+  var actx = null, clickSnd = function () {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === "suspended") actx.resume();
+      var n = Math.floor(actx.sampleRate * 0.018), buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4);
+      var src = actx.createBufferSource(), bp = actx.createBiquadFilter(), g = actx.createGain();
+      bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 1.2; g.gain.value = 0.18;
+      src.buffer = buf; src.connect(bp); bp.connect(g); g.connect(actx.destination); src.start();
+    } catch (e) {}
+  };
+
+  /* Keycap hints light up while their real key is held. Looked up live, so caps in overlays work too. */
+  var caps = { get length() { return 1; } };
   if (caps.length) {
+    var allCaps = function () { return document.querySelectorAll(".keys kbd[data-key]"); };
     var at = {};
     var lit = function (key, on) {
-      Array.prototype.forEach.call(caps, function (k) {
-        if (k.getAttribute("data-key") !== key) return;
-        if (on) { at[key] = Date.now(); k.classList.add("hit"); return; }
+      var hitAny = false;
+      Array.prototype.forEach.call(allCaps(), function (k) {
+        var dk = k.getAttribute("data-key");
+        if (dk !== key && !(dk === "t" && key === "T")) return;
+        if (!k.getClientRects().length) return;
+        if (on) { if (!k.classList.contains("hit")) hitAny = true; at[key] = Date.now(); k.classList.add("hit"); return; }
         window.setTimeout(function () { k.classList.remove("hit"); }, Math.max(0, 160 - (Date.now() - (at[key] || 0))));
       });
+      if (hitAny) clickSnd();
     };
     /* The ENTER / SPACE cap shows whichever of the two was pressed last (ENTER until then). */
     var sw = document.querySelectorAll(".keys .ksw");
     var typing = function (t) { return t && t.closest && t.closest("input, textarea, select, [contenteditable]"); };
-    document.addEventListener("keydown", function (ev) {
-      if ((ev.key === " " || ev.key === "Enter") && !typing(ev.target)) {
+    /* Capture on window, registered before the overlays, so caps inside dialogs light up too. */
+    window.addEventListener("keydown", function (ev) {
+      if (typing(ev.target)) return;
+      if (ev.key === " " || ev.key === "Enter") {
         Array.prototype.forEach.call(sw, function (w) { w.classList.toggle("sp", ev.key === " "); });
       }
       lit(ev.key, true);
+    }, true);
+    window.addEventListener("keyup", function (ev) { lit(ev.key, false); }, true);
+    window.addEventListener("blur", function () { Array.prototype.forEach.call(allCaps(), function (k) { k.classList.remove("hit"); }); });
+    /* Inside a dialog a cap is also a button: a click presses its key. */
+    document.addEventListener("click", function (ev) {
+      var k = ev.target.closest && ev.target.closest(".ck .keys kbd[data-key]");
+      if (!k) return;
+      var key = k.getAttribute("data-key");
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: key, bubbles: true }));
+      window.setTimeout(function () { window.dispatchEvent(new KeyboardEvent("keyup", { key: key, bubbles: true })); }, 120);
     });
-    document.addEventListener("keyup", function (ev) { lit(ev.key, false); });
-    window.addEventListener("keydown", function (ev) { if (ev.key === "?") lit("?", true); }, true);
-    window.addEventListener("keyup", function (ev) { if (ev.key === "?") lit("?", false); }, true);
-    window.addEventListener("blur", function () { Array.prototype.forEach.call(caps, function (k) { k.classList.remove("hit"); }); });
   }
 
   function selectText(node) {
@@ -637,7 +676,7 @@
         '<div class="ck-c"><dt class="ck-nsl">NEXT</dt><dd><span class="ck-ns"></span><small class="ck-nd"></small></dd></div>' +
         '<div class="ck-c"><dt>UNIX EPOCH</dt><dd><span class="ck-ep"></span><small>seconds since 1970</small></dd></div>' +
         '<div class="ck-c"><dt>EARTH \u2192 SUN</dt><dd><span class="ck-au"></span><small class="ck-km"></small></dd></div>' +
-        '</dl><p class="ck-keys" aria-hidden="true">\u2190\u2191\u2193\u2192 day \u00b7 PGUP PGDN month \u00b7 T today \u00b7 ESC close</p></div>';
+        '</dl>' + KCAP([[["\u2190", "\u2191", "\u2193", "\u2192"], "day"], [["PGUP", "PGDN"], "month"], [["T"], "today"], [["ESC"], "close"]], "ck-kc") + '</div>';
       document.body.appendChild(ov);
       var q = function (s) { return ov.querySelector(s); };
       var oBox = q(".ck-box"), oHM = q(".ck-hm"), oS = q(".ck-s"), oDate = q(".ck-date"), oM = q(".ck-m"), oGrid = q(".ck-grid"), oFoot = q(".ck-foot");
@@ -870,7 +909,7 @@
         '<h2 class="kpc-h" id="kpc-h">Your cars. Your story.</h2><p class="kpc-p">A web app for car enthusiasts.</p>' +
         '<p class="kpc-url">&gt; https://karpage.app</p>' +
         '<div class="kpc-go"><a class="kpc-b on" href="https://karpage.app" rel="noopener">OPEN KARPAGE.APP \u2197</a><a class="kpc-b" href="/kar-page">APP PAGE \u2192</a></div>' +
-        '<p class="ck-keys" aria-hidden="true">TAB move \u00b7 \u21b5 open \u00b7 ESC close</p></div>';
+        KCAP([[["TAB"], "move"], [["\u21b5"], "open"], [["ESC"], "close"]], "ck-kc") + '</div>';
       document.body.appendChild(kv);
       var kBox = kv.querySelector(".ck-box"), kX = kv.querySelector(".ck-x"), kBack = null;
       var kFoc = function () { return [kX].concat([].slice.call(kv.querySelectorAll(".kpc-b"))); };
@@ -1129,11 +1168,13 @@
 
   /* Press ? anywhere: a cheat sheet of every key on this page, in the clock's frame. Esc, ? or a click outside closes. */
   (function () {
+    var eggsLive = null;
     var rows = [["\u2190 \u2191 \u2193 \u2192", "move the jade frame, row by row"], ["\u21b5 / SPACE", "open or play what is framed"], ["ESC", home ? "clear the filter, step back" : "back to all apps"]];
     if (!home) rows.push(["BACKSPACE", "back to all apps"]);
-    if (document.querySelector(".live-phone")) rows.push(["CLICK", "outside the live app to leave it"]);
+    if (document.querySelector(".live-phone")) eggsLive = ["CLICK", "outside the live app to leave it"];
     if (document.querySelector(".lb, .shots, .gallery, .hero-shot")) rows.push(["\u2190 \u2192 + / \u2212", "in the viewer: next shot, zoom"]);
     rows.push(["PGUP PGDN", "scroll; the next arrow starts on screen"], ["TAB", "plain tab order still works"], ["?", "this sheet"]);
+    if (eggsLive) rows.push(eggsLive);
     var eggs = home ? [["CLOCK", "\u21b5 try it"], ["TITLE", "\u21b5 try it"], ["~/apps $", "\u21b5 try it"], ["KEY ROW", "\u21b5 try it"]] : [];
     var ov = document.createElement("div");
     ov.className = "ck kx";
@@ -1141,13 +1182,13 @@
     ov.setAttribute("role", "dialog");
     ov.setAttribute("aria-modal", "true");
     ov.setAttribute("aria-label", "Keyboard shortcuts");
-    var dl = function (list) {
-      return '<dl class="kx-l">' + list.map(function (r) { return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>"; }).join("") + "</dl>";
+    var dl = function (list, caps) {
+      return '<dl class="kx-l">' + list.map(function (r) { return (caps ? '<dt class="keys">' + KCAPS(r[0]) : "<dt>" + r[0]) + "</dt><dd>" + r[1] + "</dd>"; }).join("") + "</dl>";
     };
     ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span>KEYBOARD</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
-      '<p class="kx-p">~/apps <span>$</span> man keys</p>' + dl(rows) +
+      '<p class="kx-p">~/apps <span>$</span> man keys</p>' + dl(rows, true) +
       (eggs.length ? '<p class="kx-h">// hidden in plain sight</p>' + dl(eggs) : "") +
-      '<p class="ck-keys" aria-hidden="true">ESC or ? to close</p></div>';
+      KCAP([[["ESC"], ""], [["?"], "close"]], "ck-kc") + '</div>';
     document.body.appendChild(ov);
     var x = ov.querySelector(".ck-x"), back = null;
     var open = function () {
