@@ -28,6 +28,7 @@
       var cc = document.createElement("span");
       cc.className = "cc";
       cc.textContent = ":";
+      cc.style.animationDelay = -d.getMilliseconds() + "ms";
       out.textContent = D[d.getDay()] + " " + d.getDate() + " " + M[d.getMonth()] + " " + d.getFullYear() +
         " \u00b7 " + two(d.getHours());
       out.appendChild(cc);
@@ -962,6 +963,7 @@
         var cc = document.createElement("span");
         cc.className = "cc";
         cc.textContent = ":";
+        cc.style.animationDelay = -d.getMilliseconds() + "ms";
         oHM.textContent = two(z.h);
         oHM.appendChild(cc);
         oHM.appendChild(document.createTextNode(two(z.mi)));
