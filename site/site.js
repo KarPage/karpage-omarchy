@@ -709,7 +709,7 @@
         var age = (((t - NM0) / 864e5) % SYN + SYN) % SYN, ill = (1 - Math.cos(2 * Math.PI * age / SYN)) / 2;
         q(".ck-moon").innerHTML = moonGlyph(age);
         q(".ck-mn").textContent = PH[Math.floor((age / SYN) * 8 + 0.5) % 8];
-        q(".ck-mi").textContent = Math.round(ill * 100) + "% lit \u00b7 day " + Math.floor(age);
+        q(".ck-mi").textContent = Math.round(ill * 100) + "% lit";
         var jan = new Date(now.getFullYear(), 0, 1).getTimezoneOffset(), jul = new Date(now.getFullYear(), 6, 1).getTimezoneOffset();
         var lat = geo ? geo[0] : 40, lon = geo ? geo[1] : -Math.max(jan, jul) / 4;
         var st = sunTimes(now, lat, lon);
