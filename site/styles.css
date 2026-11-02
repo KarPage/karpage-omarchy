@@ -1009,3 +1009,22 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .ck-yb { padding: 8px; border: 1px solid var(--line-dim); }
 @media (max-width: 759px) { .ck-dl2 { display: none; } .ck-mh { grid-template-columns: 30px auto 1fr 30px; } .ck-yl { font-size: 11px; } }
 @media (max-width: 480px) { .ck-off { grid-template-columns: repeat(2, 1fr); font-size: 12px; } .ck-off span { margin-top: -1px; padding: 6px 4px; } }
+/* City strip in the top row */
+.ck-top { gap: 10px; }
+.ck-cs { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-width: 0; }
+.ck-csl { display: flex; }
+.ck-cb { min-height: 26px; padding: 0 7px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--muted); font: 10px/1 var(--mono); letter-spacing: 0.16em; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ck-cb:hover { color: var(--fg); }
+.ck-cb:focus { outline: none; }
+.ck-cb.on { color: var(--ink); background: var(--jade); border-bottom-color: var(--jade-hi); }
+.ck .ck-csh { margin: 0; opacity: 0.4; transition: opacity 0.2s; font-size: 9px; color: var(--muted); white-space: nowrap; }
+.ck:has(.ck-face:focus) .ck-csh { opacity: 0.85; }
+@media (max-width: 759px) {
+  .ck-top { flex-wrap: wrap; }
+  .ck-cs { order: 3; flex-basis: 100%; justify-content: space-between; gap: 6px; }
+  .ck-csl { flex: 1; justify-content: space-between; }
+  .ck-cb { min-height: 34px; padding: 0 4px; font-size: 11px; letter-spacing: 0.08em; }
+  .ck .ck-csh { display: none; }
+}
+.ck .ck-csh kbd { height: 15px; min-width: 0; padding: 0 5px; font-size: 8px; }
+.ck-face .ck-hint { display: none; }

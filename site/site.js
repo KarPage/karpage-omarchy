@@ -691,7 +691,7 @@
       };
       var cells = "";
       for (var c = 0; c < 42; c++) cells += '<span class="ck-d" role="gridcell" id="ckd' + c + '"></span>';
-      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg><span class="ck-lt">WORLD CLOCK</span></span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg><span class="ck-lt">WORLD CLOCK</span></span><div class="ck-cs"><span class="ck-csl" role="group" aria-label="Cities">' + ["LOCAL", "NYC", "LDN", "SOF", "DXB", "TYO", "SYD"].map(function (c, i) { return '<button type="button" tabindex="-1" class="ck-cb" data-c="' + i + '">' + c + "</button>"; }).join("") + '</span>' + KCAP([[["SPACE"], "next city"]], "ck-csh") + '</div><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
         '<div class="ck-face" tabindex="0" role="button" aria-label="Clock. Space or Enter shows the next world city."><p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p><p class="ck-off"><span class="o1"></span><span class="o2"></span><span class="o3"></span><span class="o4"></span></p>' +
         '<span class="ck-hint">' + KCAP([[["SPACE"], "city"]], "ck-hi") + '</span></div>' +
         '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><span class="ck-yl">YEAR PLANNER</span><b class="ck-m" aria-live="polite"></b><span class="ck-dl2"></span><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
@@ -751,7 +751,7 @@
       };
       var q = function (s) { return ov.querySelector(s); };
       var oBox = q(".ck-box"), oHM = q(".ck-hm"), oS = q(".ck-s"), oDate = q(".ck-date"), oM = q(".ck-m"), oGrid = q(".ck-grid"), oFoot = q(".ck-foot");
-      var oFace = q(".ck-face"), oLt = q(".ck-lt"), oOff = q(".ck-off"), oYb = q(".ck-yb"), ybCells = ov.querySelectorAll(".yb-d"), ybRows = ov.querySelectorAll(".yb-r"), mBtns = ov.querySelectorAll(".ck-mb");
+      var oFace = q(".ck-face"), oLt = q(".ck-lt"), oOff = q(".ck-off"), oYb = q(".ck-yb"), ybCells = ov.querySelectorAll(".yb-d"), ybRows = ov.querySelectorAll(".yb-r"), mBtns = ov.querySelectorAll(".ck-mb"), cBtns = ov.querySelectorAll(".ck-cb");
       var wideMQ = window.matchMedia("(min-width: 760px)"), wide = function () { return wideMQ.matches; };
       var oCal = function () { return wide() ? oYb : oGrid; };
       /* World clock: Space/Enter/click on the face cycles cities. IANA zones, so DST is right. Resets to local on each open. */
@@ -782,6 +782,7 @@
         o[3].textContent = (dayT ? "\u2600 DAY" : "\u263e NIGHT");
         o[3].className = "o4 " + (dayT ? "d" : "n");
         oFace.classList.toggle("city", !!c);
+        for (var ci = 0; ci < cBtns.length; ci++) { cBtns[ci].classList.toggle("on", ci === city); cBtns[ci].setAttribute("aria-pressed", String(ci === city)); }
         return z;
       };
       var nextCity = function () { city = (city + 1) % CITIES.length; tickBig(); };
@@ -986,6 +987,7 @@
       oX.addEventListener("click", ckClose);
       oPrev.addEventListener("click", function () { shift(0, wide() ? -12 : -1); });
       oNext.addEventListener("click", function () { shift(0, wide() ? 12 : 1); });
+      Array.prototype.forEach.call(cBtns, function (b) { b.addEventListener("click", function (e) { e.stopPropagation(); city = +b.getAttribute("data-c"); tickBig(); oFace.focus({ preventScroll: true }); }); });
       oFace.addEventListener("click", function () { oFace.focus({ preventScroll: true }); nextCity(); });
       Array.prototype.forEach.call(mBtns, function (b) { b.addEventListener("click", function () { shift(0, +b.getAttribute("data-m") - sel.getMonth()); }); });
       wideMQ.addEventListener("change", function () { if (!ov.hidden) { drawCal(); if (document.activeElement === oGrid || document.activeElement === oYb) oCal().focus({ preventScroll: true }); } });
