@@ -1422,17 +1422,20 @@
       });
     });
     ov.addEventListener("click", function (ev) { if (ev.target === ov) close(); });
+    var isQ = function (ev) { return ev.key === "?" || (ev.code === "Slash" && ev.shiftKey); };
+    var hitQ = function () { Array.prototype.forEach.call(document.querySelectorAll('.keys kbd[data-key="?"]'), function (k) { k.classList.add("hit"); window.setTimeout(function () { k.classList.remove("hit"); }, 160); }); };
     window.addEventListener("keydown", function (ev) {
       var t = ev.target;
       if (ov.hidden) {
-        if (ev.key === "?" && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !(t && t.closest && t.closest("input, textarea, select, [contenteditable]"))) {
+        if (isQ(ev) && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !(t && t.closest && t.closest("input, textarea, select, [contenteditable]"))) {
           ev.preventDefault();
+          hitQ();
           open();
         }
         return;
       }
       ev.stopPropagation();
-      if (ev.key === "Escape" || ev.key === "?") { ev.preventDefault(); close(); }
+      if (ev.key === "Escape" || isQ(ev)) { ev.preventDefault(); close(); }
       else if (ev.key === "Tab") { ev.preventDefault(); x.focus(); }
       else if (ev.key !== "Enter" && ev.key !== " ") ev.preventDefault();
     }, true);
