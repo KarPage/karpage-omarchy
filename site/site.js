@@ -215,14 +215,14 @@
   };
   window.KCAPS = function (text) { return text.split(" ").map(function (t) { return t === "/" || t === "+" && false ? '<span class="kor">' + t + "</span>" : t === "/" ? '<span class="kor">/</span>' : kcap(t); }).join(""); };
   /* A short dry key click, synthesised (no file, no network). Only after a real key press or click. */
-  var actx = null, clickSnd = function () {
+  var actx = null, clickSnd = function (dull) {
     try {
       actx = actx || new (window.AudioContext || window.webkitAudioContext)();
       if (actx.state === "suspended") actx.resume();
       var n = Math.floor(actx.sampleRate * 0.018), buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0);
       for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4);
       var src = actx.createBufferSource(), bp = actx.createBiquadFilter(), g = actx.createGain();
-      bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 1.2; g.gain.value = 0.18;
+      bp.type = "bandpass"; bp.frequency.value = dull ? 700 : 2400; bp.Q.value = 1.2; g.gain.value = dull ? 0.1 : 0.18;
       src.buffer = buf; src.connect(bp); bp.connect(g); g.connect(actx.destination); src.start();
     } catch (e) {}
   };
@@ -232,6 +232,27 @@
   if (caps.length) {
     var allCaps = function () { return document.querySelectorAll(".keys kbd[data-key]"); };
     var at = {};
+    var wallKey = null;
+    var wallCaps = function (key) {
+      var any = false;
+      Array.prototype.forEach.call(allCaps(), function (k) {
+        if (k.getAttribute("data-key") !== key || !k.getClientRects().length) return;
+        any = true; k.classList.remove("hit", "kwall"); void k.offsetWidth; k.classList.add("kwall");
+        window.setTimeout(function () { k.classList.remove("kwall"); }, 300);
+      });
+      if (any) clickSnd(true);
+    };
+    /* Shared wall cue: an arrow key that cannot move any further. One class, a short rose flash, no movement. */
+    var wallT = new WeakMap();
+    window.KWALL = function (el, key) {
+      if (key) wallKey = key;
+      [].concat(el).forEach(function (e) {
+        if (!e || !e.classList) return;
+        e.classList.remove("kwall"); void e.offsetWidth; e.classList.add("kwall");
+        window.clearTimeout(wallT.get(e));
+        wallT.set(e, window.setTimeout(function () { e.classList.remove("kwall"); }, 300));
+      });
+    };
     var lit = function (key, on) {
       var hitAny = false;
       Array.prototype.forEach.call(allCaps(), function (k) {
@@ -252,7 +273,9 @@
       if (ev.key === " " || ev.key === "Enter") {
         Array.prototype.forEach.call(sw, function (w) { w.classList.toggle("sp", ev.key === " "); });
       }
-      lit(ev.key, true);
+      /* Arrows wait until every handler ran, so a blocked move (KWALL) shows a rose cap instead of a press. */
+      if (/^Arrow/.test(ev.key)) { var ak = ev.key; wallKey = null; window.setTimeout(function () { if (wallKey === ak) wallCaps(ak); else lit(ak, true); }, 0); }
+      else lit(ev.key, true);
     }, true);
     window.addEventListener("keyup", function (ev) { lit(ev.key, false); }, true);
     window.addEventListener("blur", function () { Array.prototype.forEach.call(allCaps(), function (k) { k.classList.remove("hit"); }); });
@@ -691,7 +714,7 @@
       };
       var cells = "";
       for (var c = 0; c < 42; c++) cells += '<span class="ck-d" role="gridcell" id="ckd' + c + '"></span>';
-      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg><span class="ck-lt">WORLD CLOCK</span></span><div class="ck-cs"><span class="ck-csl" role="group" aria-label="Cities">' + ["LOCAL", "NYC", "LDN", "SOF", "DXB", "TYO", "SYD"].map(function (c, i) { return '<button type="button" tabindex="-1" class="ck-cb" data-c="' + i + '">' + c + "</button>"; }).join("") + '</span>' + KCAP([[["SPACE"], "next city"]], "ck-csh") + '</div><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
+      ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span class="ck-l"><svg class="kpm-l" viewBox="0 0 2500 4172" width="16.8" height="28" aria-hidden="true" focusable="false"><use href="#kpm"/></svg><span class="ck-lt">WORLD CLOCK</span></span><div class="ck-cs"><span class="ck-csl" role="tablist" tabindex="0" aria-label="Cities. Left and Right switch city.">' + ["LOCAL", "NYC", "LDN", "SOF", "DXB", "TYO", "SYD"].map(function (c, i) { return '<button type="button" tabindex="-1" class="ck-cb" data-c="' + i + '">' + c + "</button>"; }).join("") + '</span></div><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
         '<div class="ck-face" tabindex="0" role="button" aria-label="Clock. Space or Enter shows the next world city."><p class="ck-time"><span class="ck-hm"></span><span class="ck-s"></span></p><p class="ck-date"></p><p class="ck-off"><span class="o1"></span><span class="o2"></span><span class="o3"></span><span class="o4"></span></p>' +
         '<span class="ck-hint">' + KCAP([[["SPACE"], "city"]], "ck-hi") + '</span></div>' +
         '<div class="ck-mh"><button class="ck-nav ck-prev" type="button" aria-label="Previous month">\u2190</button><span class="ck-yl">YEAR PLANNER</span><b class="ck-m" aria-live="polite"></b><span class="ck-dl2"></span><button class="ck-nav ck-next" type="button" aria-label="Next month">\u2192</button></div>' +
@@ -707,7 +730,7 @@
         '<div class="ck-c"><dt class="ck-nsl">NEXT</dt><dd><span class="ck-ns"></span><small class="ck-nd"></small></dd></div>' +
         '<div class="ck-c"><dt>UNIX EPOCH</dt><dd><span class="ck-ep"></span><small>seconds since 1970</small></dd></div>' +
         '<div class="ck-c"><dt>EARTH \u2192 SUN</dt><dd><span class="ck-au"></span><small class="ck-km"></small></dd></div>' +
-        '</dl>' + KCAP([[["\u2190", "\u2191", "\u2193", "\u2192"], "move"], [["PGUP", "PGDN"], "month"], [["T"], "today"], [["SPACE", "\u21b5"], "info / city"], [["ESC"], "close"]], "ck-kc") + '</div>';
+        '</dl>' + KCAP([[["\u2191", "\u2193"], "month"], [["\u2190", "\u2192"], "city"], [["PGUP", "PGDN"], "month"], [["T"], "today"], [["SPACE", "\u21b5"], "info / city"], [["ESC"], "close"]], "ck-kc ck-kw") + KCAP([[["\u2190", "\u2191", "\u2193", "\u2192"], "move"], [["PGUP", "PGDN"], "month"], [["T"], "today"], [["SPACE", "\u21b5"], "info / city"], [["ESC"], "close"]], "ck-kc ck-kn") + '</div>';
       document.body.appendChild(ov);
       /* Stat cells explain themselves: focus one (Tab from the calendar, then arrows), Enter/Space or a click flips it. */
       var WHY = [
@@ -736,7 +759,7 @@
       });
       var flipNav = function (from, k) {
         var at = flipEls.indexOf(from);
-        if (at === 0) return k === "ArrowDown" ? flipEls[1] : k === "ArrowUp" ? null : flipEls[0];
+        if (at === 0) return k === "ArrowDown" ? flipEls[1] : null;
         var cells = flipEls.slice(1), me = cells[at - 1].getBoundingClientRect(), best = null, bd = 1e9;
         cells.forEach(function (c) {
           var r = c.getBoundingClientRect(), dx = r.left - me.left, dy = r.top - me.top, d;
@@ -747,11 +770,11 @@
           if (d !== undefined && d < bd) { bd = d; best = c; }
         });
         if (!best && k === "ArrowUp") return flipEls[0];
-        return best || from;
+        return best;
       };
       var q = function (s) { return ov.querySelector(s); };
       var oBox = q(".ck-box"), oHM = q(".ck-hm"), oS = q(".ck-s"), oDate = q(".ck-date"), oM = q(".ck-m"), oGrid = q(".ck-grid"), oFoot = q(".ck-foot");
-      var oFace = q(".ck-face"), oLt = q(".ck-lt"), oOff = q(".ck-off"), oYb = q(".ck-yb"), ybCells = ov.querySelectorAll(".yb-d"), ybRows = ov.querySelectorAll(".yb-r"), mBtns = ov.querySelectorAll(".ck-mb"), cBtns = ov.querySelectorAll(".ck-cb");
+      var oFace = q(".ck-face"), oLt = q(".ck-lt"), oOff = q(".ck-off"), oYb = q(".ck-yb"), ybCells = ov.querySelectorAll(".yb-d"), ybRows = ov.querySelectorAll(".yb-r"), mBtns = ov.querySelectorAll(".ck-mb"), cBtns = ov.querySelectorAll(".ck-cb"), oCs = q(".ck-csl");
       var wideMQ = window.matchMedia("(min-width: 760px)"), wide = function () { return wideMQ.matches; };
       var oCal = function () { return wide() ? oYb : oGrid; };
       /* World clock: Space/Enter/click on the face cycles cities. IANA zones, so DST is right. Resets to local on each open. */
@@ -785,6 +808,7 @@
         for (var ci = 0; ci < cBtns.length; ci++) { cBtns[ci].classList.toggle("on", ci === city); cBtns[ci].setAttribute("aria-pressed", String(ci === city)); }
         return z;
       };
+      var wall = function (el, k) { if (window.KWALL) window.KWALL(el, k); };
       var nextCity = function () { city = (city + 1) % CITIES.length; tickBig(); };
       var oX = q(".ck-x"), oPrev = q(".ck-prev"), oNext = q(".ck-next"), dCells = ov.querySelectorAll(".ck-d");
       var sel = null, oT = 0, oBack = null;
@@ -882,8 +906,13 @@
         var now = new Date(), y = sel.getFullYear(), m = sel.getMonth();
         var first = new Date(y, m, 1), start = new Date(y, m, 1 - first.getDay());
         oM.textContent = wide() ? String(y) : MON[m].toUpperCase() + " " + y;
-        var ny = new Date(now.getFullYear() + 1, 0, 1), dl = Math.ceil((ny - new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)) / 864e5);
-        q(".ck-dl2").textContent = dl + " DAYS LEFT";
+        var tdy0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()), ny = new Date(now.getFullYear() + 1, 0, 1), dl = Math.ceil((ny - new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)) / 864e5);
+        var onYb = document.activeElement === oYb && wide();
+        if (onYb) {
+          var mdays = new Date(y, m + 1, 0).getDate(), mst = new Date(y, m, 1), men = new Date(y, m + 1, 1);
+          var mleft = tdy0 >= men ? 0 : tdy0 < mst ? mdays : Math.round((men - tdy0) / 864e5) - 1;
+          q(".ck-dl2").textContent = MON[m].slice(0, 3).toUpperCase() + " \u00b7 " + mdays + " DAYS \u00b7 " + mleft + " LEFT";
+        } else q(".ck-dl2").textContent = dl + " DAYS LEFT";
         var tdy = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         for (var j = 0; j < ybCells.length; j++) {
           var yc = ybCells[j], ym = +yc.getAttribute("data-m"), ydn = +yc.getAttribute("data-d"), ydt = new Date(y, ym, ydn);
@@ -894,6 +923,7 @@
           yc.setAttribute("aria-label", DAY[wk] + " " + ydn + " " + MON[ym] + " " + y + (same(ydt, tdy) ? ", today" : ""));
         }
         for (var r = 0; r < 12; r++) {
+          ybRows[r].classList.toggle("msel", onYb && r === m);
           ybRows[r].classList.toggle("cur", y === tdy.getFullYear() && r === tdy.getMonth());
           ybRows[r].classList.toggle("past", y < tdy.getFullYear() || (y === tdy.getFullYear() && r < tdy.getMonth()));
           mBtns[r].classList.toggle("on", r === m);
@@ -1009,11 +1039,24 @@
         var STEP = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
         ev.stopPropagation();
         var fc = flipEls.indexOf(document.activeElement) >= 0 ? document.activeElement : null;
-        var onFace = document.activeElement === oFace;
+        var onFace = document.activeElement === oFace, onCs = document.activeElement === oCs;
         if (k === "Escape") { ev.preventDefault(); if (fc && fc.classList.contains("fl")) fc.classList.remove("fl"); else if (onFace && city) { city = 0; tickBig(); } else ckClose(); }
         else if (onFace && (k === "Enter" || k === " ")) { ev.preventDefault(); nextCity(); }
-        else if (onFace && STEP[k]) { ev.preventDefault(); if (k === "ArrowDown") oCal().focus({ preventScroll: true }); }
-        else if (fc && STEP[k]) { ev.preventDefault(); var nx = flipNav(fc, k); (nx || oCal()).focus({ preventScroll: true }); }
+        else if (onCs && STEP[k]) {
+          /* City header: Left/Right switch city (stops at LOCAL and SYD), Down returns to the face. */
+          ev.preventDefault();
+          if (k === "ArrowDown") oFace.focus({ preventScroll: true });
+          else if (k === "ArrowLeft" || k === "ArrowRight") { var nc = city + STEP[k]; if (nc >= 0 && nc < CITIES.length) { city = nc; tickBig(); } else wall(oCs, k); }
+          else wall(oCs, k);
+        }
+        else if (onCs && (k === "Enter" || k === " ")) { ev.preventDefault(); oFace.focus({ preventScroll: true }); }
+        else if (onFace && STEP[k]) {
+          ev.preventDefault();
+          if (k === "ArrowUp") oCs.focus({ preventScroll: true });
+          else if (k !== "ArrowDown") wall(oFace, k);
+          else { if (wide()) { var tn = new Date(); sel = new Date(tn.getFullYear(), tn.getMonth(), tn.getDate()); } oCal().focus({ preventScroll: true }); }
+        }
+        else if (fc && STEP[k]) { ev.preventDefault(); var nx = flipNav(fc, k); if (nx) nx.focus({ preventScroll: true }); else if (k === "ArrowUp") oCal().focus({ preventScroll: true }); else wall(fc, k); }
         else if (fc && (k === "Enter" || k === " ")) { ev.preventDefault(); fc.classList.toggle("fl"); }
         else if (STEP[k]) {
           /* Arrows stay inside the shown month; down past the last row leaves the grid for the stat cards. */
@@ -1025,23 +1068,27 @@
             if (k === "ArrowUp" && mo === 0) oFace.focus({ preventScroll: true });
             else if (k === "ArrowDown" && mo === 11) flipEls[0].focus({ preventScroll: true });
             else if (k === "ArrowUp" || k === "ArrowDown") shift(0, k === "ArrowUp" ? -1 : 1);
-            else if (!(mo === 0 && nd < 1) && !(mo === 11 && nd > last)) shift(STEP[k], 0);
+            /* Left/Right do nothing on the board (rows are whole months): wall cue. */
+            else wall(ybRows[mo], k);
           }
           else if (k === "ArrowDown" && nd > last) flipEls[0].focus({ preventScroll: true });
           else if (k === "ArrowUp" && nd < 1) oFace.focus({ preventScroll: true });
           else if (nd >= 1 && nd <= last) shift(STEP[k], 0);
+          else wall(oGrid.querySelector(".ck-d.sel") || oGrid, k);
         }
         else if (k === "PageUp" || k === "PageDown") { ev.preventDefault(); shift(0, k === "PageUp" ? -1 : 1); }
         else if (k === "Home" || k === "t" || k === "T") { ev.preventDefault(); var n = new Date(); sel = new Date(n.getFullYear(), n.getMonth(), n.getDate()); drawCal(); }
         else if (k === "Tab") {
           ev.preventDefault();
-          var f = [oX, oFace, oPrev, oCal(), oNext].concat(flipEls), at = f.indexOf(document.activeElement);
+          var f = [oX, oCs, oFace, oPrev, oCal(), oNext].concat(flipEls), at = f.indexOf(document.activeElement);
           f[(at + (ev.shiftKey ? -1 : 1) + f.length) % f.length].focus();
         } else if ((k === "Enter" || k === " ") && !onBtn) ev.preventDefault();
       }, true);
       document.addEventListener("focusin", function (ev) {
         if (!ov.hidden && !ov.contains(ev.target)) oCal().focus({ preventScroll: true });
       });
+      oYb.addEventListener("focus", drawCal);
+      oYb.addEventListener("blur", drawCal);
       document.addEventListener("visibilitychange", function () { if (!ov.hidden && !document.hidden) tickBig(); });
     }
 
@@ -1634,7 +1681,7 @@
     if (DIRS[k]) {
       var d = DIRS[k], fresh = away && !inView(cur), nx = fresh ? fromScreen(d) : move(cur, d);
       if (!nx && !fresh && active !== cur.f && cur.f) nx = cur;
-      if (!nx) return;
+      if (!nx) { if (window.KWALL && cur.box && inView(cur)) window.KWALL([cur.box, box], k); return; }
       ev.preventDefault();
       setCur(nx, true, fresh || snapped || d === "l" || d === "r" ? "h" : "v");
       reveal(nx);

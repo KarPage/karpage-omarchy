@@ -1017,8 +1017,14 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 .ck-cb:hover { color: var(--fg); }
 .ck-cb:focus { outline: none; }
 .ck-cb.on { color: var(--ink); background: var(--jade); border-bottom-color: var(--jade-hi); }
-.ck .ck-csh { margin: 0; opacity: 0.4; transition: opacity 0.2s; font-size: 9px; color: var(--muted); white-space: nowrap; }
-.ck:has(.ck-face:focus) .ck-csh { opacity: 0.85; }
+.ck-csl:focus { outline: none; }
+.ck-csl:focus-visible { outline: 1px solid var(--jade-hi); outline-offset: 3px; box-shadow: 0 0 10px rgba(63, 224, 164, 0.35); }
+.yb-r.msel { border-color: var(--jade-hi); background: rgba(63, 224, 164, 0.12); box-shadow: 0 0 8px rgba(63, 224, 164, 0.25); }
+.yb-r.msel b { color: var(--jade-hi); font-weight: 700; }
+.ck-yb:focus .yb-d.sel:not(.today) { border-color: transparent; outline: none; }
+.ck-yb:focus { outline: none; }
+@media (max-width: 759px) { .ck .ck-kw { display: none; } }
+@media (min-width: 760px) { .ck .ck-kn { display: none; } }
 @media (max-width: 759px) {
   .ck-top { flex-wrap: wrap; }
   .ck-cs { order: 3; flex-basis: 100%; justify-content: space-between; gap: 6px; }
@@ -1028,3 +1034,10 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 }
 .ck .ck-csh kbd { height: 15px; min-width: 0; padding: 0 5px; font-size: 8px; }
 .ck-face .ck-hint { display: none; }
+
+/* Shared wall cue (KWALL): an arrow that cannot move any further flashes the selected tile and its cap rose. */
+.kwall { animation: kwall 0.3s ease-out; outline: 1px solid rgba(224, 96, 122, 0.9) !important; outline-offset: 0; }
+.kcur.kwall { border-color: #e0607a !important; box-shadow: 0 0 12px rgba(224, 96, 122, 0.45) !important; }
+@keyframes kwall { 0% { background-color: rgba(224, 96, 122, 0.22); } 100% { background-color: rgba(224, 96, 122, 0); } }
+.keys kbd.kwall { animation: none; outline: none !important; color: #e0607a; border-color: #e0607a; background: rgba(224, 96, 122, 0.18); box-shadow: 0 2px 0 rgba(224, 96, 122, 0.4); }
+@media (prefers-reduced-motion: reduce) { .kwall { animation: none; } }
