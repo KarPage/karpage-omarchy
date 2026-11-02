@@ -276,9 +276,9 @@
       }
       /* Arrows wait until every handler ran, so a blocked move (KWALL) shows a rose cap instead of a press. */
       if (/^Arrow/.test(ev.key)) { var ak = ev.key; wallKey = null; window.setTimeout(function () { if (wallKey === ak) wallCaps(ak); else lit(ak, true); }, 0); }
-      else lit(ev.key, true);
+      else lit(ev.code === "Slash" && ev.shiftKey ? "?" : ev.key, true);
     }, true);
-    window.addEventListener("keyup", function (ev) { lit(ev.key, false); }, true);
+    window.addEventListener("keyup", function (ev) { lit(ev.code === "Slash" || ev.key === "?" ? "?" : ev.key, false); }, true);
     window.addEventListener("blur", function () { Array.prototype.forEach.call(allCaps(), function (k) { k.classList.remove("hit"); }); });
     /* Inside a dialog a cap is also a button: a click presses its key. */
     document.addEventListener("click", function (ev) {
@@ -1416,20 +1416,18 @@
     Array.prototype.forEach.call(document.querySelectorAll('.keys kbd[data-key="?"]'), function (k) {
       k.addEventListener("click", function (ev) {
         ev.stopPropagation();
-        k.classList.add("hit");
-        window.setTimeout(function () { k.classList.remove("hit"); }, 160);
-        open();
+        /* Same press as a real key: the shared cap handler lights it, clicks, and opens help. */
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }));
+        window.setTimeout(function () { window.dispatchEvent(new KeyboardEvent("keyup", { key: "?", bubbles: true })); }, 120);
       });
     });
     ov.addEventListener("click", function (ev) { if (ev.target === ov) close(); });
     var isQ = function (ev) { return ev.key === "?" || (ev.code === "Slash" && ev.shiftKey); };
-    var hitQ = function () { Array.prototype.forEach.call(document.querySelectorAll('.keys kbd[data-key="?"]'), function (k) { k.classList.add("hit"); window.setTimeout(function () { k.classList.remove("hit"); }, 160); }); };
     window.addEventListener("keydown", function (ev) {
       var t = ev.target;
       if (ov.hidden) {
         if (isQ(ev) && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !(t && t.closest && t.closest("input, textarea, select, [contenteditable]"))) {
           ev.preventDefault();
-          hitQ();
           open();
         }
         return;
