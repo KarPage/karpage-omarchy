@@ -1604,6 +1604,45 @@
     document.addEventListener("keydown", seen, true);
   })();
 
+  /* Home subtitle: one quiet terminal line under the pitch. Types each line fast, holds, erases, types the next.
+     Reduced motion: the first line stays, cursor steady. Pauses while the tab is hidden. Decorative (aria-hidden). */
+  (function () {
+    var t = document.querySelector(".hsub .hs-t[data-tw]");
+    if (!t) return;
+    var seq = t.getAttribute("data-tw").split("|").filter(Boolean);
+    var calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var idx = 0, n = seq[0].length, phase = "hold", timer = 0;
+    var box = t.parentNode;
+    var draw = function () {
+      var s = seq[idx].slice(0, n);
+      while (t.firstChild) t.removeChild(t.firstChild);
+      var c0 = s.charAt(0);
+      if (c0 === "/" || c0 === "#") { var sl = document.createElement("span"); sl.className = "sl"; sl.textContent = c0; t.appendChild(sl); s = s.slice(1); }
+      if (s) t.appendChild(document.createTextNode(s));
+      /* A fresh cursor node each frame, so the moving cursor never counts as a layout shift. */
+      var c = document.createElement("span"); c.className = "hs-c"; t.appendChild(c);
+    };
+    var HOLD = 2500, TYPE = 16, ERASE = 7, GAP = 140;
+    var step = function () {
+      timer = 0;
+      if (document.hidden || calm.matches) return;
+      var wait;
+      if (phase === "type") {
+        n++; draw();
+        if (n >= seq[idx].length) { phase = "hold"; box.classList.remove("k"); wait = HOLD; } else wait = TYPE;
+      } else if (phase === "hold") { phase = "erase"; box.classList.add("k"); wait = ERASE; }
+      else {
+        n = Math.max(0, n - 2); draw();
+        if (n === 0) { phase = "type"; idx = (idx + 1) % seq.length; wait = GAP; } else wait = ERASE;
+      }
+      timer = window.setTimeout(step, wait);
+    };
+    var go = function () { if (!timer && !document.hidden && !calm.matches) timer = window.setTimeout(step, phase === "hold" ? HOLD : 30); };
+    document.addEventListener("visibilitychange", function () { if (document.hidden) { window.clearTimeout(timer); timer = 0; } else go(); });
+    calm.addEventListener("change", function () { window.clearTimeout(timer); timer = 0; if (calm.matches) { idx = 0; n = seq[0].length; phase = "hold"; box.classList.remove("k"); draw(); } else go(); });
+    go();
+  })();
+
   /* Press ? anywhere: a cheat sheet of every key on this page, in the clock's frame. Esc, ? or a click outside closes. */
   (function () {
     var eggsLive = null;

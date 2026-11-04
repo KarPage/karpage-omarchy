@@ -1296,3 +1296,13 @@ svg.tr { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer
 .qk kbd.qs { margin-right: 4px; cursor: pointer; }
 .keys kbd[data-key="Shift"] { cursor: pointer; }
 @media (hover: none), (pointer: coarse) { .home-w .ktip.keys .t-kb { display: none; } html.kb .home-w .ktip.keys .t-kb { display: inline-flex; } }
+/* Home subtitle: a quiet typed line, height reserved so nothing moves. */
+.hsub { height: 20px; margin: 6px 0 0; overflow: hidden; white-space: nowrap; color: #8fb3a2; font: 13px/20px var(--mono); letter-spacing: 0.02em; }
+.hsub .sl { color: var(--jade-hi); }
+.hsub .hs-c { display: inline-block; width: 0.6em; height: 1.05em; margin-left: 0.2em; vertical-align: -0.18em; background: var(--jade-hi); animation: hsb 1.06s steps(1, end) infinite; }
+.hsub.k .hs-c { animation: none; }
+@keyframes hsb { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hsub .hs-c { animation: none; } }
+@media (max-width: 420px) { .hsub { font-size: 12px; letter-spacing: 0; } }
+.ktip.keys .t-kb { flex-wrap: wrap; row-gap: 6px; }
+.ktip.keys .kg, .ktip.keys kbd { white-space: nowrap; flex: none; }
