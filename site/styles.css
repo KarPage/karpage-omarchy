@@ -1103,7 +1103,7 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 
 /* ---------- Site-wide board: a faint PCB under every page (traces, vias, pads, one chip per tile).
    One 2.8 KB tiled SVG, fixed behind everything, so the live traces on the home board sit on top of it. ---------- */
-body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: url(img/pcb.svg) 0 0 / 360px 360px; opacity: 0.075; }
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: url(img/pcb-die.svg) 720px 0 / 360px 360px no-repeat, url(img/pcb-die.svg) 360px 720px / 360px 360px no-repeat, url(img/pcb.svg) 0 0 / 360px 360px; opacity: 0.075; }
 @media (max-width: 760px) { body::before { background-size: 288px 288px; opacity: 0.065; } }
 @media (forced-colors: active), (prefers-contrast: more) { body::before { display: none; } }
 
@@ -1132,7 +1132,6 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
 .qk kbd.qq.hit { background: var(--jade); color: var(--ink); box-shadow: none; }
 .qk .qw { position: absolute; right: 0; top: calc(100% + 6px); display: flex; gap: 4px; }
 .qk .qw kbd { visibility: hidden; }
-.qk .qw kbd.kwall { visibility: visible; }
 @media (hover: none), (pointer: coarse) { .mast .keys.qk { display: none; } html.kb .mast .keys.qk { display: inline-flex; } }
 
 /* The status line: only while a bus is lit. */
@@ -1313,3 +1312,4 @@ svg.tr { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer
 .pitchrow .hsub { display: block; width: auto; height: 26px; margin: 0; font-size: clamp(13px, 3.4vw, 17px); line-height: 26px; }
 @media (max-width: 760px) { .home-w .mhead .h1row { margin-top: 40px; } }
 @media (max-width: 500px) { .home-w .mhead .h1row { margin-top: 34px; column-gap: 16px; } .pitchrow .hsub { letter-spacing: 0; } }
+.mast .keys.qk.kwall { outline: none !important; animation: none; }
