@@ -360,7 +360,7 @@
 
   /* Shared key caps: every keyboard hint on the site is built from these. KCAP(groups) returns a .keys row;
      each group is [[label, key], ...] plus a caption. Caps press down (and click) while their key is held. */
-  var KMAP = { "\u2190": "ArrowLeft", "\u2191": "ArrowUp", "\u2193": "ArrowDown", "\u2192": "ArrowRight", "ESC": "Escape", "TAB": "Tab", "\u21b5": "Enter", "PGUP": "PageUp", "PGDN": "PageDown", "T": "t", "?": "?", "+": "+", "\u2212": "-", "BACKSPACE": "Backspace", "SPACE": " ", "1": "1", "2": "2", "3": "3", "4": "4", "5": "5" };
+  var KMAP = { "\u2190": "ArrowLeft", "\u2191": "ArrowUp", "\u2193": "ArrowDown", "\u2192": "ArrowRight", "ESC": "Escape", "TAB": "Tab", "\u21b5": "Enter", "PGUP": "PageUp", "PGDN": "PageDown", "T": "t", "?": "?", "\u21e7": "Shift", "+": "+", "\u2212": "-", "BACKSPACE": "Backspace", "SPACE": " ", "1": "1", "2": "2", "3": "3", "4": "4", "5": "5" };
   var kcap = function (label) {
     var k = KMAP[label];
     return '<kbd' + (label.length > 1 ? ' class="w"' : "") + (k ? ' data-key="' + (k === " " ? " " : k) + '"' : "") + ">" + label + "</kbd>";
@@ -414,7 +414,7 @@
       var hitAny = false;
       Array.prototype.forEach.call(allCaps(), function (k) {
         var dk = k.getAttribute("data-key");
-        if (dk !== key && !(dk === "t" && key === "T")) return;
+        if (dk !== key && !(dk === "t" && key === "T") && !(dk === "1" && k.classList.contains("kn") && /^[1-4]$/.test(key))) return;
         if (!k.getClientRects().length) return;
         if (on) { if (!k.classList.contains("hit")) hitAny = true; at[key] = Date.now(); k.classList.add("hit"); return; }
         window.setTimeout(function () { k.classList.remove("hit"); }, Math.max(0, 160 - (Date.now() - (at[key] || 0))));
@@ -434,7 +434,7 @@
       if (/^Arrow/.test(ev.key)) { var ak = ev.key; wallKey = null; window.setTimeout(function () { if (wallKey === ak) wallCaps(ak); else lit(ak, true); }, 0); }
       else lit(ev.code === "Slash" && ev.shiftKey ? "?" : ev.key, true);
     }, true);
-    window.addEventListener("keyup", function (ev) { lit(ev.code === "Slash" || ev.key === "?" ? "?" : ev.key, false); }, true);
+    window.addEventListener("keyup", function (ev) { var u = ev.code === "Slash" || ev.key === "?" ? "?" : ev.key; lit(u, false); if (ev.key === "Shift" || ev.key === "?") lit(ev.key === "?" ? "Shift" : "?", false); }, true);
     window.addEventListener("blur", function () { Array.prototype.forEach.call(allCaps(), function (k) { k.classList.remove("hit"); }); });
     /* Inside a dialog a cap is also a button: a click presses its key. */
     document.addEventListener("click", function (ev) {
@@ -1540,6 +1540,25 @@
       hint();
     }
 
+    /* 5. The tip line: its caps press like their keys; Enter on the line (or the shift / ? caps) opens the key map. */
+    var tp = document.querySelector(".mast .ktip");
+    if (tp) {
+      mark(tp, "\u21b5 keys", "b");
+      var bus = 0, send = function (key) {
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: key, bubbles: true }));
+        window.setTimeout(function () { window.dispatchEvent(new KeyboardEvent("keyup", { key: key, bubbles: true })); }, 120);
+      };
+      tp.addEventListener("click", function (ev) {
+        var k = ev.target.closest && ev.target.closest("kbd[data-key]");
+        if (k && k.getAttribute("data-key") !== "?" && k.getAttribute("data-key") !== "Shift") {
+          ev.stopPropagation();
+          send(k.classList.contains("kn") ? String((bus++ % 4) + 1) : k.getAttribute("data-key"));
+          return;
+        }
+        if (!k) send("?");
+      });
+    }
+
     /* 4. Corner ? cap: Enter on it (or a click) opens the key map, like pressing ?. */
     var kr = document.querySelector(".mast .keys.qk");
     if (kr) {
@@ -1593,7 +1612,7 @@
     if (document.querySelector(".live-phone")) eggsLive = ["CLICK", "outside the live app to leave it"];
     if (document.querySelector(".lb, .shots, .gallery, .hero-shot")) rows.push(["\u2190 \u2192 + / \u2212", "in the viewer: next shot, zoom"]);
     if (home) rows.push(["1 2 3 4", "light a bus: its apps power up"]);
-    rows.push(["PGUP PGDN", "scroll; the next arrow starts on screen"], ["TAB", "plain tab order still works"], ["?", "this sheet"]);
+    rows.push(["PGUP PGDN", "scroll; the next arrow starts on screen"], ["TAB", "plain tab order still works"], ["\u21e7 ?", "this sheet"]);
     if (eggsLive) rows.push(eggsLive);
     var eggs = home ? [["CLOCK", "\u21b5 try it"], ["TITLE", "\u21b5 try it"], ["~/apps $", "\u21b5 try it"]] : [];
     var ov = document.createElement("div");
@@ -1608,7 +1627,7 @@
     ov.innerHTML = '<div class="ck-box"><div class="ck-top"><span>KEYBOARD</span><button class="ck-x" type="button" aria-label="Close">\u2715</button></div>' +
       '<p class="kx-p">~/apps <span>$</span> man keys</p>' + dl(rows, true) +
       (eggs.length ? '<p class="kx-h">// hidden in plain sight</p>' + dl(eggs) : "") +
-      KCAP([[["ESC"], ""], [["?"], "close"]], "ck-kc") + '</div>';
+      KCAP([[["ESC"], ""], [["\u21e7", "?"], "close"]], "ck-kc") + '</div>';
     document.body.appendChild(ov);
     var x = ov.querySelector(".ck-x"), back = null;
     var open = function () {
@@ -1631,7 +1650,7 @@
       back = null;
     };
     x.addEventListener("click", close);
-    Array.prototype.forEach.call(document.querySelectorAll('.keys kbd[data-key="?"]'), function (k) {
+    Array.prototype.forEach.call(document.querySelectorAll('.keys kbd[data-key="?"], .keys kbd[data-key="Shift"]'), function (k) {
       k.addEventListener("click", function (ev) {
         ev.stopPropagation();
         /* Same press as a real key: the shared cap handler lights it, clicks, and opens help. */
@@ -1667,7 +1686,7 @@
     ? ".pads .pad, #grid > li"
     : ".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, section .feat, .code, .others > li, .live-phone, .live-open, .btn-open";
   var STOPS = (home
-    ? [".mast .prompt", ".mast h1", ".mast .kact", ".mast .kpbox", ".mast .clock", ".mast .keys", ".pads .pad", "#probe .reset"]
+    ? [".mast .prompt", ".mast h1", ".mast .kact", ".mast .kpbox", ".mast .clock", ".mast .keys", ".mast .ktip", ".pads .pad", "#probe .reset"]
     : [".bar .brand", ".bar nav a", ".hero .tag", ".hero .title-row", ".hero .tagline", ".hero .live-sub", ".hero .live-desc", ".hero .lede", ".hero .keys", ".act-note", "main section > h2", ".chips > li", "main .note", ".fine > p"]
   ).concat([HOV, ".foot-brand", ".foot-main > p:not(.foot-brand)", ".foot-note", ".foot-legal > span", ".foot-legal a"]);
   var TIGHT = ".prompt, .mast h1, .keys:not(.qk), .panel-h, .tag, .title-row, .tagline, .live-sub, .live-desc, .hero .lede, .act-note, section > h2, .note, .fine > p, .foot-brand, .foot-main > p, .foot-legal > span";
