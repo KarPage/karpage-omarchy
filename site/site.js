@@ -360,7 +360,7 @@
 
   /* Shared key caps: every keyboard hint on the site is built from these. KCAP(groups) returns a .keys row;
      each group is [[label, key], ...] plus a caption. Caps press down (and click) while their key is held. */
-  var KMAP = { "\u2190": "ArrowLeft", "\u2191": "ArrowUp", "\u2193": "ArrowDown", "\u2192": "ArrowRight", "ESC": "Escape", "TAB": "Tab", "\u21b5": "Enter", "PGUP": "PageUp", "PGDN": "PageDown", "T": "t", "?": "?", "+": "+", "\u2212": "-", "BACKSPACE": "Backspace", "SPACE": " ", "1": "1", "2": "2", "3": "3", "4": "4" };
+  var KMAP = { "\u2190": "ArrowLeft", "\u2191": "ArrowUp", "\u2193": "ArrowDown", "\u2192": "ArrowRight", "ESC": "Escape", "TAB": "Tab", "\u21b5": "Enter", "PGUP": "PageUp", "PGDN": "PageDown", "T": "t", "?": "?", "+": "+", "\u2212": "-", "BACKSPACE": "Backspace", "SPACE": " ", "1": "1", "2": "2", "3": "3", "4": "4", "5": "5" };
   var kcap = function (label) {
     var k = KMAP[label];
     return '<kbd' + (label.length > 1 ? ' class="w"' : "") + (k ? ' data-key="' + (k === " " ? " " : k) + '"' : "") + ">" + label + "</kbd>";
@@ -1372,13 +1372,13 @@
       term.setAttribute("role", "region");
       term.setAttribute("aria-label", "Terminal easter egg");
       term.innerHTML = '<div class="pt-bar" aria-hidden="true"><i></i><i></i><i></i><span>guest@karpage: ~/apps</span></div>' +
-        '<p class="pt-why">// a tiny terminal easter egg: these are the apps on this site. ' + (matchMedia("(hover: none), (pointer: coarse)").matches ? "tap a folder to open it, or tap close." : "click a folder to open it, or press ESC to close.") + '</p>' +
+        '<p class="pt-why">// a tiny terminal easter egg: these are the apps on this site. ' + (matchMedia("(hover: none), (pointer: coarse)").matches ? "tap a folder to open it, or tap close." : "press 1-5 or click a folder to open it, ESC to close.") + '</p>' +
         '<div class="pterm-in" role="log" aria-live="polite"></div><div class="pt-foot"></div>';
       var tin = term.querySelector(".pterm-in"), foot = term.querySelector(".pt-foot");
       pr.parentNode.insertBefore(term, pr.nextSibling);
       var open = false, busy = false;
       var hint = function () {
-        pr.setAttribute("data-khint", busy ? "any key skip" : open ? "\u21b5 replay|esc close" : "\u21b5 run");
+        pr.setAttribute("data-khint", open ? "" : "\u21b5 run");
         pr.setAttribute("data-term", busy ? "busy" : open ? "done" : "0");
         document.dispatchEvent(new Event("kp:hint"));
       };
@@ -1402,26 +1402,34 @@
         return d;
       };
       var lsLine = function () {
-        var d = line("pt-o pt-ls");
-        hrefs.forEach(function (h) {
-          var a = document.createElement("a");
+        var d = line("pt-o pt-ls keys pt-lk");
+        hrefs.forEach(function (h, i) {
+          var g = document.createElement("span"), k = document.createElement("kbd"), a = document.createElement("a");
+          g.className = "kg";
+          k.setAttribute("data-key", String(i + 1));
+          k.setAttribute("aria-hidden", "true");
+          k.textContent = String(i + 1);
           a.href = h;
+          a.tabIndex = -1;
+          a.setAttribute("aria-keyshortcuts", String(i + 1));
           a.textContent = h.replace(/^\/+|\/+$/g, "") + "/";
-          d.appendChild(a);
+          g.appendChild(k);
+          g.appendChild(a);
+          d.appendChild(g);
         });
       };
       /* The whole show as [time ms, step]: ls output at 40 ms, ~10 ms a typed key, done by ~0.8 s. */
       var build = function () {
-        var s = [], t = 40;
-        s.push([t, function () { var p = line("pt-p"); paint(p, "ls", false); lsLine(); sweep(); }]);
-        CMDS.forEach(function (cmd) {
+        var s = [], t = 0;
+        [{ c: "ls", ls: true }].concat(CMDS).forEach(function (cmd, n) {
           var p = null;
-          t += 70;
+          t += n ? 60 : 30;
           s.push([t, function () { p = line("pt-p"); paint(p, "", true); }]);
-          for (var i = 1; i <= cmd.c.length; i++) (function (i) { t += 10; s.push([t, function () { paint(p, cmd.c.slice(0, i), true); }]); })(i);
-          t += 50;
+          for (var i = 1; i <= cmd.c.length; i++) (function (i) { t += 18; s.push([t, function () { paint(p, cmd.c.slice(0, i), true); }]); })(i);
+          t += 40;
           s.push([t, function () { paint(p, cmd.c, false); }]);
-          cmd.out.forEach(function (o, j) { t += j ? 110 : 20; s.push([t, function () { line("pt-o" + (o[1] ? " pt-" + o[1] : ""), o[0]); }]); });
+          if (cmd.ls) { s.push([t, function () { lsLine(); sweep(); }]); return; }
+          cmd.out.forEach(function (o, j) { t += j ? 90 : 10; s.push([t, function () { line("pt-o" + (o[1] ? " pt-" + o[1] : ""), o[0]); }]); });
         });
         t += 50;
         s.push([t, function () { paint(line("pt-p"), "", true); busy = false; hint(); }]);
@@ -1440,7 +1448,10 @@
       var run = function () {
         if (busy) { finish(); return; }
         clear();
-        if (!foot.firstChild) foot.innerHTML = window.KCAP([[["ESC"], "close"], [["\u21b5"], "replay"]], "pt-kc");
+        if (!foot.firstChild) {
+          foot.innerHTML = window.KCAP([[["ESC"], "close"], [["\u21b5"], "replay"]], "pt-kc");
+          Array.prototype.forEach.call(foot.querySelectorAll(".kg"), function (g) { g.tabIndex = -1; });
+        }
         open = true;
         busy = true;
         term.classList.add("on");
@@ -1464,23 +1475,58 @@
       };
       pr.addEventListener("click", run);
       /* Any key while it plays skips to the end (Enter / Space only skip, so they never restart it). Esc closes. */
+      /* Inside the window: 1-5 open a folder (its cap presses first); arrows rove the folders (one row) and the
+         ESC / ENTER caps (a second row), Up from the folders goes back to the prompt; Enter or Space activates. */
+      var eat = function (ev) { ev.preventDefault(); ev.stopImmediatePropagation(); };
+      var rows = function () {
+        return [Array.prototype.slice.call(tin.querySelectorAll(".pt-ls a")), Array.prototype.slice.call(foot.querySelectorAll(".kg"))];
+      };
+      var go = function (n) {
+        var a = tin.querySelectorAll(".pt-ls a")[n - 1];
+        if (!a) return;
+        var k = a.parentNode.querySelector("kbd");
+        k.classList.add("hit");
+        window.setTimeout(function () { k.classList.remove("hit"); }, 400);
+        window.setTimeout(function () { window.location.href = a.href; }, 140);
+      };
       window.addEventListener("keydown", function (ev) {
-        if (!open || document.documentElement.classList.contains("lb-on")) return;
+        if (!open || ev.ctrlKey || ev.metaKey || ev.altKey || document.documentElement.classList.contains("lb-on")) return;
+        var inT = term.contains(document.activeElement);
         if (busy && !/^(Shift|Control|Alt|Meta)$/.test(ev.key)) {
           finish();
-          if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.stopPropagation(); }
+          if (!/^[1-5]$/.test(ev.key)) { if (ev.key === "Enter" || ev.key === " " || /^Arrow/.test(ev.key)) eat(ev); return; }
+        }
+        if (ev.key === "Escape") { eat(ev); reset(); pr.focus({ preventScroll: true }); return; }
+        if (/^[1-5]$/.test(ev.key)) { eat(ev); go(+ev.key); return; }
+        if (!inT && ev.key === "ArrowDown" && pr.hasAttribute("data-kcur")) { eat(ev); rows()[0][0].focus(); return; }
+        if (!inT) return;
+        var R = rows(), el = document.activeElement.closest(".pt-ls a, .kg"), r = R[0].indexOf(el) >= 0 ? 0 : 1, i = R[r].indexOf(el);
+        if (ev.key === "Enter" || ev.key === " ") {
+          eat(ev);
+          if (r === 0) go(i + 1);
+          else el.click();
           return;
         }
-        if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); reset(); }
+        var to = null;
+        if (ev.key === "ArrowRight") to = R[r][i + 1];
+        else if (ev.key === "ArrowLeft") to = R[r][i - 1];
+        else if (ev.key === "ArrowDown") to = r === 0 ? R[1][0] : null;
+        else if (ev.key === "ArrowUp") { if (r === 0) { eat(ev); pr.focus({ preventScroll: true }); return; } to = R[0][0]; }
+        else return;
+        eat(ev);
+        if (to) to.focus(); else if (window.KWALL) window.KWALL(el, ev.key);
+        if (!to) { var c = document.querySelectorAll('.keys kbd[data-key="' + ev.key + '"]'); Array.prototype.forEach.call(c, function (k) { window.KWALL(k); }); }
       }, true);
       /* The caps under the output press like keys: same shared press and click, then the same action. */
       term.addEventListener("click", function (ev) {
+        var lk = ev.target.closest && ev.target.closest(".pt-ls kbd");
+        if (lk) { go(+lk.getAttribute("data-key")); return; }
         var g = ev.target.closest && ev.target.closest(".pt-kc .kg"), k = g && g.querySelector("kbd[data-key]");
         if (!k) return;
-        var key = k.getAttribute("data-key"), was = busy;
-        window.dispatchEvent(new KeyboardEvent("keydown", { key: key, bubbles: true }));
-        window.setTimeout(function () { window.dispatchEvent(new KeyboardEvent("keyup", { key: key, bubbles: true })); }, 120);
-        if (key === "Enter" && !was) run();
+        var key = k.getAttribute("data-key");
+        k.classList.add("hit");
+        window.setTimeout(function () { k.classList.remove("hit"); }, 160);
+        if (key === "Escape") { reset(); pr.focus({ preventScroll: true }); } else run();
       });
       window.addEventListener("resize", size);
       /* Leaving the row (arrows, Esc, a click elsewhere) closes the terminal. */

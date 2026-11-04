@@ -1276,3 +1276,10 @@ svg.tr { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer
 .pins i.on { animation: pinled 1.44s steps(1, end) infinite; }
 @keyframes pinled { 0% { background: #c9ffe9; } 16% { background: var(--jade-hi); } }
 @media (prefers-reduced-motion: reduce) { .tr rect.via.on, .tr rect.via.hot, .pins i.on { animation: none; } }
+/* Terminal: each ls folder carries its number cap; 1-5 (or a click on the cap) open it. */
+.pterm .pt-ls.keys { margin: 2px 0; gap: 6px 16px; color: var(--fg); font: 12px/1.6 var(--mono); letter-spacing: 0.04em; }
+.pterm .pt-ls .kg { gap: 6px; }
+.pterm .pt-ls kbd { min-width: 18px; height: 18px; padding: 0 4px; font-size: 11px; cursor: pointer; }
+.pterm .pt-kc .kg:focus kbd, .pterm .pt-kc .kg:focus em { color: var(--jade-hi); }
+.pterm .pt-kc .kg:focus { outline: 1px solid var(--jade-hi); outline-offset: 3px; }
+.pterm .pt-ls a:focus { background: var(--jade); color: var(--ink); border-bottom-color: var(--jade); outline: none; }
