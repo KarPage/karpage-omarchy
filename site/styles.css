@@ -92,8 +92,8 @@ img, video, picture, figure.frame, .lb { -webkit-touch-callout: none; -webkit-us
 .badge.s-coming-soon { color: var(--muted); border-style: dashed; }
 
 /* front page */
-.mast { padding: 64px 0 36px; }
-.prompt { margin: 0 0 10px; color: var(--muted); font-size: 14px; letter-spacing: 0.08em; }
+.mast { padding: 30px 0 26px; }
+.prompt { margin: 0 0 6px; color: var(--muted); font-size: 14px; letter-spacing: 0.08em; }
 .prompt span { color: var(--jade-hi); }
 .mast h1 {
   margin: 0;
@@ -132,14 +132,14 @@ img, video, picture, figure.frame, .lb { -webkit-touch-callout: none; -webkit-us
 .tw.k .cursor { animation: none; opacity: 1; }
 .tw-m { position: absolute; left: -9999px; top: 0; visibility: hidden; white-space: pre; }
 @keyframes blink { 0%, 40% { opacity: 1; } 55%, 85% { opacity: 0.12; } 100% { opacity: 1; } }
-.lede { margin: 14px 0 0; color: var(--muted); font-size: 18px; }
+.lede { margin: 10px 0 0; color: var(--muted); font-size: 18px; }
 
 /* stat board: single-select filters */
 .board {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
-  margin: 32px 0 0;
+  margin: 18px 0 0;
 }
 .stat {
   position: relative;
@@ -162,7 +162,7 @@ img, video, picture, figure.frame, .lb { -webkit-touch-callout: none; -webkit-us
   left: 50%;
   top: 100%;
   width: 1px;
-  height: 29px;
+  height: 21px;
   background: var(--line-dim);
   transition: background-color 0.15s, box-shadow 0.15s;
 }
@@ -191,7 +191,7 @@ img, video, picture, figure.frame, .lb { -webkit-touch-callout: none; -webkit-us
 .stat[aria-pressed="true"] .stat-k { color: var(--fg); }
 .stat[aria-pressed="true"] .led { background: var(--jade-hi); box-shadow: 0 0 8px var(--jade-hi), 0 0 2px #fff; }
 .stat[aria-pressed="true"]::after { background: var(--jade-hi); box-shadow: 0 0 6px var(--jade-hi); }
-.traces { height: 28px; }
+.traces { height: 20px; }
 /* Tap on the preview panel: one jade glow-then-dim pass across the boxes, 120 ms apart (about 1 s in all). */
 .board.pulse .stat { animation: nudge 560ms ease-in-out both; }
 .board.pulse .stat .led { animation: nudge-led 560ms ease-in-out both; }
@@ -478,7 +478,7 @@ section h2 span { margin-right: 10px; color: var(--jade-hi); }
 
 @media (max-width: 760px) {
   .wrap { padding: 0 16px; }
-  .mast { padding: 36px 0 24px; }
+  .mast { padding: 20px 0 20px; }
   .lede.twl { font-size: 17px; }
   .mhead { grid-template-areas: "prompt clock" "h1 h1"; column-gap: 12px; }
   .mhead .prompt, .clock { align-self: center; margin-bottom: 10px; }
@@ -490,7 +490,7 @@ section h2 span { margin-right: 10px; color: var(--jade-hi); }
   .stat:first-child { grid-column: 1 / -1; }
   .stat::after { display: none; }
   .stat-v { font-size: 24px; }
-  .traces { height: 12px; }
+  .traces { height: 8px; }
   .rows li { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
   .row-ext { grid-column: 1 / -1; }
   .tiles, .grid, .gallery, .others { grid-template-columns: minmax(0, 1fr); }
@@ -556,7 +556,7 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
 /* selection cursor and key hints */
 .keys { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 14px 0 0; color: var(--muted); font-size: 11px; letter-spacing: 0.14em; }
 .kg { display: inline-flex; align-items: center; gap: 4px; }
-.kg em { margin-left: 5px; font-style: normal; opacity: 0.8; }
+.kg em { margin-left: 5px; font-style: normal; }
 .keys kbd {
   display: inline-flex;
   align-items: center;
@@ -574,19 +574,13 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
   transition: transform 0.08s, background-color 0.08s, box-shadow 0.08s, color 0.08s;
 }
 .keys kbd.w { min-width: 0; padding: 0 7px; font-size: 10px; letter-spacing: 0.14em; }
-/* ENTER is drawn as a retro ISO Enter key (inverted L, sharp jade lines); it trades places with a SPACE bar
-   every few seconds since both select. Both sit in one grid cell, so the row width never changes. */
+/* ENTER is a plain square cap like ESC; it trades places with a SPACE cap
+   when Space is pressed, since both select. Both sit in one grid cell, so the row width never changes. */
 .ksw { display: inline-grid; align-items: center; justify-items: start; }
 .ksw > kbd { grid-area: 1 / 1; }
-.keys kbd.ent, .keys kbd.spc { position: relative; width: 84px; padding: 0; border: 0; background: none; box-shadow: none; }
-.keys kbd.ent { height: 28px; align-items: flex-start; justify-content: flex-start; }
-.keys kbd.ent > span { position: relative; padding: 2px 0 0 8px; line-height: 11px; }
-.keys kbd.ent .kl { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: var(--well); stroke: var(--jade); stroke-width: 1px; vector-effect: non-scaling-stroke; filter: drop-shadow(0 2px 0 rgba(0, 168, 107, 0.4)); transition: fill 0.08s; }
-.keys kbd.spc { height: 14px; border: 1px solid var(--jade); background: var(--well); box-shadow: inset 0 1px 0 rgba(63, 224, 164, 0.18), 0 2px 0 rgba(0, 168, 107, 0.4); font-size: 8px; letter-spacing: 0.3em; opacity: 0; }
-.keys kbd.ent.hit, .keys kbd.spc.hit { background: none; box-shadow: none; }
-.keys kbd.ent.hit .kl { fill: var(--jade); filter: drop-shadow(0 0 6px rgba(63, 224, 164, 0.45)); }
-.keys kbd.spc.hit { background: var(--jade); }
-.keys kbd.ent, .keys kbd.spc { transition: opacity 0.12s linear; }
+.keys kbd.ent, .keys kbd.spc { width: 72px; }
+.keys kbd.spc { opacity: 0; }
+.keys kbd.ent, .keys kbd.spc { transition: opacity 0.12s linear, transform 0.08s, background-color 0.08s, box-shadow 0.08s, color 0.08s; }
 .keys .ksw.sp kbd.ent { opacity: 0; }
 .keys .ksw.sp kbd.spc { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .keys kbd.ent, .keys kbd.spc { transition: none; } }
@@ -597,14 +591,24 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
   box-shadow: 0 0 10px rgba(63, 224, 164, 0.45);
 }
 /* Home: a one-line terminal tip under the key row. Fades in once; the first arrow press flashes it and lets it settle dim. */
-.ktip { margin: 10px 0 0; overflow: hidden; color: var(--jade); font: 11px/1.4 var(--mono); letter-spacing: 0.06em; white-space: nowrap; text-overflow: ellipsis; opacity: 0.55; animation: ktin 0.6s ease-out 1.4s backwards; }
+.ktip { margin: 8px 0 0; overflow: hidden; color: var(--jade); font: 11px/1.4 var(--mono); letter-spacing: 0.06em; white-space: nowrap; text-overflow: ellipsis; animation: ktin 0.6s ease-out 1.4s backwards; }
 .ktip span { color: var(--muted); }
 .ktip b { color: var(--jade-hi); font-weight: inherit; }
 .ktip.got { animation: ktgot 1.6s ease-out forwards; }
 @keyframes ktin { from { opacity: 0; } }
-@keyframes ktgot { 0% { opacity: 1; color: var(--jade-hi); text-shadow: 0 0 8px rgba(63, 224, 164, 0.5); } 100% { opacity: 0.3; } }
-@media (prefers-reduced-motion: reduce) { .ktip { animation: none; } .ktip.got { animation: none; opacity: 0.3; } }
-@media (pointer: coarse), (hover: none) { .ktip { display: none; } }
+@keyframes ktgot { 0% { color: var(--jade-hi); text-shadow: 0 0 8px rgba(63, 224, 164, 0.5); } }
+@media (prefers-reduced-motion: reduce) { .ktip { animation: none; } .ktip.got { animation: none; } }
+.ktip i { font-style: normal; }
+.ktip .t-touch { display: none; }
+/* Touch: the tip speaks taps and the key caps stay hidden, until a real key press shows a keyboard is attached. */
+@media (pointer: coarse), (hover: none) {
+  .ktip .t-kb { display: none; }
+  .ktip .t-touch { display: inline; }
+  html.kb .ktip .t-kb { display: inline; }
+  html.kb .ktip .t-touch { display: none; }
+  html.kb .mast .keys { display: flex; }
+  html.kb .kcur { display: block; }
+}
 .panel-hint { padding: 12px 16px 0; animation: hint 0.12s ease-out; }
 .panel.hinting .panel-body:not([hidden]) > .panel-h { display: none; }
 .panel.hinting .panel-body { padding-top: 0; animation: none; }
@@ -1060,3 +1064,40 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
 
 /* Clock colon: on for the first half of each second, dimmed (not hidden) for the second half; synced via a negative delay. */
 @keyframes ccs { 0% { opacity: 1; } 50% { opacity: 0.18; } }
+
+/* Home pitch: one plain line and one key-cap action (square, presses like the caps). */
+.pitchrow { margin: 12px 0 0; line-height: 28px; }
+.mast .keys { margin-top: 10px; }
+.pitch { display: inline; margin: 0 14px 0 0; color: var(--fg); font-size: 17px; }
+.kact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  vertical-align: 1px;
+  padding: 0 10px;
+  border: 1px solid var(--jade);
+  border-radius: 0;
+  background: linear-gradient(rgba(0, 168, 107, 0.08), rgba(0, 0, 0, 0.35)), var(--well);
+  box-shadow: inset 0 1px 0 rgba(63, 224, 164, 0.18), 0 2px 0 rgba(0, 168, 107, 0.4);
+  color: var(--jade-hi);
+  font: 11px/1 var(--mono);
+  letter-spacing: 0.16em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.08s, background-color 0.08s, box-shadow 0.08s, color 0.08s;
+}
+.kact:hover, .kact:focus-visible { background: var(--jade); color: var(--ink); outline: none; }
+.kact:active, .kact.hit { transform: translateY(2px); background: var(--jade); color: var(--ink); box-shadow: 0 0 10px rgba(63, 224, 164, 0.45); }
+@media (prefers-reduced-motion: reduce) { .kact { transition: none; } .kact:active, .kact.hit { transform: none; } }
+/* Narrow: the logo + clock keep their full size; the prompt gives way first. */
+.ckrow { flex-shrink: 0; }
+@media (max-width: 760px) {
+  .mhead { grid-template-columns: minmax(0, 1fr) auto; }
+  .mhead .prompt { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .pitch { font-size: 15px; }
+  .pitchrow { margin-top: 8px; line-height: 26px; }
+  .mast .keys { gap: 8px 14px; margin-top: 8px; }
+  .lede.twl { margin-top: 6px; }
+  .board { margin-top: 14px; }
+}

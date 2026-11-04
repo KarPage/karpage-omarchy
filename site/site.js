@@ -53,7 +53,8 @@
     var cur = tw.querySelector(".cursor");
     var first = tw.textContent;
     var seq = tw.getAttribute("data-tw").split("|").filter(Boolean);
-    var TYPE = 80, DEL = 40, HOLD = 2800, GAP = 450;
+    /* Each line types in about 200 ms and clears at once, so it is never caught mid-word; only the cursor blinks while it holds. */
+    var HOLD = 3200, GAP = 120, TYPE = 6;
     var idx = Math.max(0, seq.indexOf(first)), n = seq[idx].length, phase = "hold", timer = 0, stopped = false;
     var fit = function () {
       // Shrink (never grow) so the longest line stays on one line.
@@ -92,21 +93,14 @@
       if (phase === "type") {
         n++;
         draw();
-        if (n >= seq[idx].length) { phase = "hold"; tw.classList.remove("k"); wait = HOLD; } else { wait = TYPE; }
-      } else if (phase === "hold") {
-        phase = "del";
-        tw.classList.add("k");
-        wait = DEL;
+        if (n >= seq[idx].length) { phase = "hold"; tw.classList.remove("k"); wait = HOLD; } else { wait = Math.max(4, Math.min(TYPE, Math.floor(200 / seq[idx].length))); }
       } else {
-        n--;
+        n = 0;
         draw();
-        if (n <= 0) {
-          phase = "type";
-          idx = (idx + 1) % seq.length;
-          wait = GAP;
-        } else {
-          wait = DEL;
-        }
+        phase = "type";
+        tw.classList.add("k");
+        idx = (idx + 1) % seq.length;
+        wait = GAP;
       }
       timer = window.setTimeout(step, wait);
     };
@@ -1358,6 +1352,13 @@
 
   /* The home tip acknowledges the first arrow press, once. */
   (function () {
+    /* A real key press means a keyboard is attached: show key caps even on touch screens. */
+    var kb = function (ev) {
+      if (!ev.isTrusted || /^(Shift|Control|Alt|Meta|Unidentified)$/.test(ev.key)) return;
+      document.documentElement.classList.add("kb");
+      document.removeEventListener("keydown", kb, true);
+    };
+    document.addEventListener("keydown", kb, true);
     var tip = document.querySelector(".ktip");
     if (!tip) return;
     var seen = function (ev) {
@@ -1449,7 +1450,7 @@
     ? ".board .stat, #panel .rows > li > a, #grid > li"
     : ".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, section .feat, .code, .others > li, .live-phone, .live-open, .btn-open";
   var STOPS = (home
-    ? [".mast .prompt", ".mast h1", ".mast .kpbox", ".mast .clock", ".mast .lede", ".mast .keys", ".board .stat", "#panel .reset", "#panel .panel-body > .panel-h", "#panel .rows > li > a"]
+    ? [".mast .prompt", ".mast h1", ".mast .kact", ".mast .kpbox", ".mast .clock", ".mast .lede", ".mast .keys", ".board .stat", "#panel .reset", "#panel .panel-body > .panel-h", "#panel .rows > li > a"]
     : [".bar .brand", ".bar nav a", ".hero .tag", ".hero .title-row", ".hero .tagline", ".hero .live-sub", ".hero .live-desc", ".hero .lede", ".hero .keys", ".act-note", "main section > h2", ".chips > li", "main .note", ".fine > p"]
   ).concat([HOV, ".foot-brand", ".foot-main > p:not(.foot-brand)", ".foot-note", ".foot-legal > span", ".foot-legal a"]);
   var TIGHT = ".prompt, .mast h1, .keys, .panel-h, .tag, .title-row, .tagline, .live-sub, .live-desc, .hero .lede, .act-note, section > h2, .note, .fine > p, .foot-brand, .foot-main > p, .foot-legal > span";
