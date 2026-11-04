@@ -170,7 +170,7 @@
     function el(tag, a) { var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); return e; }
     function R(e) { var h = host.getBoundingClientRect(), r = e.getBoundingClientRect(); return { x: r.left - h.left, y: r.top - h.top, w: r.width, h: r.height }; }
 
-    /* Route every pad-to-card wire with 45-degree chamfers. Cards below the first row are reached through
+    /* Route every pad-to-card wire with sharp 90-degree corners that run straight into the via pads. Cards below the first row are reached through
        the gutters between cards, so no wire ever crosses a card. */
     function layout() {
       while (svg.firstChild) svg.removeChild(svg.firstChild);
@@ -192,14 +192,13 @@
             if (c.y < top + 4) {
               s = tx > px ? 1 : -1;
               if (Math.abs(tx - px) < 2 * C) d = "M" + px + " " + py + "V" + ly + "H" + tx + "V" + (c.y - 7);
-              else d = "M" + px + " " + py + "V" + (ly - C) + "L" + (px + s * C) + " " + ly + "H" + (tx - s * C) + "L" + tx + " " + (ly + C) + "V" + (c.y - 7);
+              else d = "M" + px + " " + py + "V" + ly + "H" + tx + "V" + (c.y - 7);
               via(px, ly, f, 0); via(tx, ly, f, 1);
             } else {
               /* Lower rows: down the gutter to the left of the card, then along the row gap to the pin. */
               var gx = Math.round(c.x - gap / 2 + (i - 1.5) * 3), gy = Math.round(c.y - gap / 2 - 2 + (i - 1.5) * 2), c2 = 3;
               s = gx > px ? 1 : -1;
-              d = "M" + px + " " + py + "V" + (ly - C) + "L" + (px + s * C) + " " + ly + "H" + (gx - s * C) + "L" + gx + " " + (ly + C) +
-                "V" + (gy - c2) + "L" + (gx + c2) + " " + gy + "H" + (tx - c2) + "L" + tx + " " + (gy + c2) + "V" + (c.y - 7);
+              d = "M" + px + " " + py + "V" + ly + "H" + gx + "V" + gy + "H" + tx + "V" + (c.y - 7);
               via(px, ly, f, 0); via(gx, ly, f, 1); via(gx, gy, f, 2);
             }
           } else {
@@ -207,7 +206,7 @@
             var c4 = 4, ly2 = Math.round(b.y + 10 + i * 9), lx = Math.round(c.x - 36 + 3 + i * 7), ty = Math.round(c.y + 14 + i * 11);
             pin.style.top = (ty - c.y - 4) + "px";
             pin.style.left = "";
-            d = "M" + px + " " + py + "V" + (ly2 - c4) + "L" + (px - c4) + " " + ly2 + "H" + (lx + c4) + "L" + lx + " " + (ly2 + c4) + "V" + (ty - c4) + "L" + (lx + c4) + " " + ty + "H" + (c.x - 7);
+            d = "M" + px + " " + py + "V" + ly2 + "H" + lx + "V" + ty + "H" + (c.x - 7);
             via(px, ly2, f, 0); via(lx, ly2, f, 1); via(lx, ty, f, 2);
           }
           var base = el("path", { d: d, "class": "base" });
