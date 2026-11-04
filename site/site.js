@@ -127,78 +127,211 @@
     timer = window.setTimeout(step, HOLD);
   })();
 
-  var board = document.querySelector(".board");
-  if (board) {
-    var boxes = board.querySelectorAll(".stat");
-    var panels = document.querySelectorAll("[data-panel]");
-    var tiles = document.querySelectorAll("#grid > li");
+  /* Home board: the filter is a bus controller and the app cards are chips on one PCB. Four pads (J1-J4),
+     one bus each; 45-degree traces run from each pad to the top pins of every card it powers (left pins on
+     phones). Picking a pad sends one pulse down its wires, powers those cards and dims the rest. Moving onto
+     a card sends a short pulse back up its own wires to the pads it is on. Reduced motion: no pulses. */
+  var pads = document.querySelector(".pads");
+  if (pads) (function () {
+    var boxes = [].slice.call(pads.querySelectorAll(".pad"));
+    var tiles = [].slice.call(document.querySelectorAll("#grid > li"));
     var reset = document.querySelector(".reset");
-    var panel = document.getElementById("panel");
+    var probe = document.getElementById("probe"), pt = probe.querySelector(".probe-t");
+    var svg = document.getElementById("tr"), bus = document.querySelector(".bus"), host = svg.parentNode;
+    var NS = "http://www.w3.org/2000/svg", SPEED = 1.5, sel = "", wires = [], live = [], heard = false;
+    var F = boxes.map(function (b) { return b.getAttribute("data-filter"); });
+    var rm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var phone = function () { return window.innerWidth <= 760; };
+    var tagged = function (li, f) { return (" " + li.getAttribute("data-tags") + " ").indexOf(" " + f + " ") >= 0; };
+    var nameOf = function (li) { var h = li.querySelector("h2"); return h ? h.textContent : ""; };
+    window.addEventListener("pointerdown", function () { heard = true; }, true);
+    window.addEventListener("keydown", function (ev) { if (ev.isTrusted) heard = true; }, true);
+    /* A tiny square-wave blip, like a logic probe. Only after a real key press or tap. */
+    var actx = null, blip = function (f, len, vol) {
+      if (!heard) return;
+      try {
+        actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+        if (actx.state === "suspended") actx.resume();
+        var o = actx.createOscillator(), g = actx.createGain(), lp = actx.createBiquadFilter(), t = actx.currentTime;
+        o.type = "square"; o.frequency.value = f; lp.type = "lowpass"; lp.frequency.value = 2600;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        o.connect(lp); lp.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + len + 0.02);
+      } catch (e) {}
+    };
+    tiles.forEach(function (li, n) {
+      var p = document.createElement("span");
+      p.className = "pins";
+      p.setAttribute("aria-hidden", "true");
+      F.forEach(function (f) { var i = document.createElement("i"); if (tagged(li, f)) i.className = "w"; p.appendChild(i); });
+      li.appendChild(p);
+      li.setAttribute("data-hz", String([660, 740, 880, 990, 1180][n % 5]));
+    });
+    function el(tag, a) { var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); return e; }
+    function R(e) { var h = host.getBoundingClientRect(), r = e.getBoundingClientRect(); return { x: r.left - h.left, y: r.top - h.top, w: r.width, h: r.height }; }
+
+    /* Route every pad-to-card wire with 45-degree chamfers. Cards below the first row are reached through
+       the gutters between cards, so no wire ever crosses a card. */
+    function layout() {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      wires = [];
+      var b = R(bus), vias = {}, C = 6, top = Infinity, gap = 18;
+      var rs = tiles.map(function (li) { return R(li); });
+      rs.forEach(function (c) { if (c.y < top) top = c.y; });
+      if (rs.length > 1) { var g0 = rs[1].x - (rs[0].x + rs[0].w); if (g0 > 0) gap = g0; }
+      tiles.forEach(function (li, ci) {
+        var c = rs[ci], pinEls = li.querySelectorAll(".pins i");
+        F.forEach(function (f, i) {
+          if (!tagged(li, f)) return;
+          var p = R(boxes[i]), px = Math.round(p.x + p.w / 2), py = Math.round(p.y + p.h), d, pin = pinEls[i];
+          if (!phone()) {
+            var ly = Math.round(b.y + 16 + i * 14), tx = Math.round(c.x + 18 + i * ((c.w - 36) / 3)), s;
+            pin.style.left = (tx - c.x - 4) + "px";
+            pin.style.top = "";
+            if (c.y < top + 4) {
+              s = tx > px ? 1 : -1;
+              if (Math.abs(tx - px) < 2 * C) d = "M" + px + " " + py + "V" + ly + "H" + tx + "V" + (c.y - 7);
+              else d = "M" + px + " " + py + "V" + (ly - C) + "L" + (px + s * C) + " " + ly + "H" + (tx - s * C) + "L" + tx + " " + (ly + C) + "V" + (c.y - 7);
+              vias[px + "," + ly] = [px, ly, f]; vias[tx + "," + ly] = [tx, ly, f];
+            } else {
+              /* Lower rows: down the gutter to the left of the card, then along the row gap to the pin. */
+              var gx = Math.round(c.x - gap / 2 + (i - 1.5) * 3), gy = Math.round(c.y - gap / 2 - 2 + (i - 1.5) * 2), c2 = 3;
+              s = gx > px ? 1 : -1;
+              d = "M" + px + " " + py + "V" + (ly - C) + "L" + (px + s * C) + " " + ly + "H" + (gx - s * C) + "L" + gx + " " + (ly + C) +
+                "V" + (gy - c2) + "L" + (gx + c2) + " " + gy + "H" + (tx - c2) + "L" + tx + " " + (gy + c2) + "V" + (c.y - 7);
+              vias[px + "," + ly] = [px, ly, f]; vias[gx + "," + ly] = [gx, ly, f];
+            }
+          } else {
+            /* Phone: one collector per bus, then a vertical lane down the left edge into each card's side pins. */
+            var c4 = 4, ly2 = Math.round(b.y + 10 + i * 9), lx = Math.round(c.x - 36 + 3 + i * 7), ty = Math.round(c.y + 14 + i * 11);
+            pin.style.top = (ty - c.y - 4) + "px";
+            pin.style.left = "";
+            d = "M" + px + " " + py + "V" + (ly2 - c4) + "L" + (px - c4) + " " + ly2 + "H" + (lx + c4) + "L" + lx + " " + (ly2 + c4) + "V" + (ty - c4) + "L" + (lx + c4) + " " + ty + "H" + (c.x - 7);
+            vias[px + "," + ly2] = [px, ly2, f]; vias[lx + "," + ly2] = [lx, ly2, f];
+          }
+          var base = el("path", { d: d, "class": "base" });
+          svg.appendChild(base);
+          wires.push({ f: f, li: li, pin: pin, pad: boxes[i], d: d, base: base, len: base.getTotalLength() });
+        });
+      });
+      Object.keys(vias).forEach(function (k) { var v = vias[k]; svg.appendChild(el("rect", { x: v[0] - 3, y: v[1] - 3, width: 6, height: 6, "class": "via", "data-f": v[2] })); });
+      paint(false);
+    }
+    function overlay(w, cls) { var p = el("path", { d: w.d, "class": cls }); svg.appendChild(p); return p; }
+    function clearLive() {
+      live.forEach(function (a) { try { a.cancel(); } catch (e) {} });
+      live = [];
+      [].slice.call(svg.querySelectorAll(".lit, .pulse")).forEach(function (n) { n.parentNode.removeChild(n); });
+    }
+    /* Which wires are energised, which cards are powered or not connected (NC). */
+    function paint(animate) {
+      clearLive();
+      wires.forEach(function (w) { w.base.classList.toggle("on", !!sel && w.f === sel); w.pin.classList.remove("on"); });
+      [].slice.call(svg.querySelectorAll(".via")).forEach(function (v) { v.classList.toggle("on", !!sel && v.getAttribute("data-f") === sel); });
+      tiles.forEach(function (li) { li.classList.remove("pwr", "flash"); li.classList.toggle("nc", !!sel && !tagged(li, sel)); });
+      if (!sel) return;
+      wires.filter(function (w) { return w.f === sel; }).forEach(function (w) {
+        var lit = overlay(w, "lit");
+        if (!animate || rm.matches || !lit.animate) { w.pin.classList.add("on"); w.li.classList.add("pwr"); return; }
+        var dur = w.len / SPEED, seg = 46, pu = overlay(w, "pulse");
+        lit.style.strokeDasharray = w.len + " " + w.len;
+        pu.style.strokeDasharray = seg + " " + (w.len + seg);
+        live.push(lit.animate([{ strokeDashoffset: w.len }, { strokeDashoffset: 0 }], { duration: dur, easing: "linear", fill: "forwards" }));
+        var a = pu.animate([{ strokeDashoffset: seg }, { strokeDashoffset: -w.len }], { duration: dur + seg / SPEED, easing: "linear", fill: "forwards" });
+        live.push(a);
+        var f0 = sel;
+        window.setTimeout(function () {
+          if (sel !== f0) return;
+          w.pin.classList.add("on"); w.li.classList.add("pwr");
+          w.li.classList.remove("flash"); void w.li.offsetWidth; w.li.classList.add("flash");
+          blip(+w.li.getAttribute("data-hz"), 0.07, 0.03);
+        }, dur);
+        a.onfinish = function () { if (pu.parentNode) pu.parentNode.removeChild(pu); };
+      });
+    }
+    /* The status line shows only while a bus is lit. */
+    function say(text, dim) {
+      pt.textContent = text ? text + " " : "";
+      if (dim) { var sp = document.createElement("span"); sp.textContent = dim; pt.appendChild(sp); }
+      probe.classList.toggle("on", !!sel);
+    }
+    function status() {
+      if (!sel) { say(""); return; }
+      var on = tiles.filter(function (li) { return tagged(li, sel); }).map(nameOf);
+      say("> bus " + (F.indexOf(sel) + 1) + " · " + boxes[F.indexOf(sel)].getAttribute("data-name"),
+        "→ " + on.length + (on.length === 1 ? " app powered: " : " apps powered: ") + on.join(", "));
+    }
     var pick = function (key) {
-      Array.prototype.forEach.call(boxes, function (b) {
-        b.setAttribute("aria-pressed", String(b.getAttribute("data-filter") === key));
-      });
-      board.classList.toggle("has-active", key !== "");
-      Array.prototype.forEach.call(panels, function (p) {
-        p.hidden = p.getAttribute("data-panel") !== key;
-      });
-      Array.prototype.forEach.call(tiles, function (li) {
-        li.hidden = key !== "" && (" " + li.getAttribute("data-tags") + " ").indexOf(" " + key + " ") < 0;
-      });
+      sel = key;
+      boxes.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-filter") === key)); });
+      pads.classList.toggle("has-active", key !== "");
       reset.hidden = key === "";
+      traced = null;
+      status();
+      if (key) blip(220 + F.indexOf(key) * 55, 0.09, 0.03);
+      paint(true);
       document.dispatchEvent(new Event("kp:filter"));
     };
-    Array.prototype.forEach.call(boxes, function (b) {
+    boxes.forEach(function (b) {
       b.addEventListener("click", function () {
-        var key = b.getAttribute("data-filter");
-        var on = b.getAttribute("aria-pressed") === "true";
-        pick(on ? "" : key);
-        if (!on && key === "all") panel.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        pick(b.getAttribute("aria-pressed") === "true" ? "" : b.getAttribute("data-filter"));
+        var t = document.querySelector(".ktip");
+        if (t) t.classList.add("got");
       });
     });
     reset.addEventListener("click", function () { pick(""); });
 
-    /* A tap on the preview panel (not on a link or button in it) hints at the boxes above: one short jade
-       pulse runs across them in order. Reduced motion gets one brief static highlight instead. */
-    var pulseT = 0;
-    panel.addEventListener("click", function (ev) {
-      if (ev.target.closest && ev.target.closest("a, button")) return;
-      board.classList.remove("pulse");
-      void board.offsetWidth;
-      board.classList.add("pulse");
-      window.clearTimeout(pulseT);
-      pulseT = window.setTimeout(function () { board.classList.remove("pulse"); }, 1150);
+    /* Learn it: on a card, a pulse runs back up every wire it has and lights those pads. */
+    var traced = null;
+    function trace(li) {
+      if (li === traced) return;
+      traced = li;
+      [].slice.call(svg.querySelectorAll(".back")).forEach(function (n) { n.parentNode.removeChild(n); });
+      boxes.forEach(function (p) { p.classList.remove("ping"); });
+      if (!li) { status(); return; }
+      var ws = wires.filter(function (w) { return w.li === li; });
+      if (sel) say("> " + nameOf(li), "· wired to " + ws.map(function (w) { return "J" + (F.indexOf(w.f) + 1) + " " + w.pad.getAttribute("data-name"); }).join(" · "));
+      ws.forEach(function (w) {
+        if (rm.matches || !w.base.animate) { w.pad.classList.add("ping"); window.setTimeout(function () { w.pad.classList.remove("ping"); }, 600); return; }
+        var bk = overlay(w, "back"), seg = 30, dur = w.len / (SPEED * 1.6);
+        bk.style.strokeDasharray = seg + " " + (w.len + seg);
+        var a = bk.animate([{ strokeDashoffset: -w.len }, { strokeDashoffset: seg }], { duration: dur, easing: "linear", fill: "forwards" });
+        a.onfinish = function () {
+          if (bk.parentNode) bk.parentNode.removeChild(bk);
+          w.pad.classList.add("ping");
+          window.setTimeout(function () { w.pad.classList.remove("ping"); }, 600);
+        };
+      });
+    }
+    document.addEventListener("kp:cur", function (ev) {
+      var e = ev.detail;
+      trace(e && e.parentNode && e.parentNode.id === "grid" ? e : null);
+    });
+    /* 1-4 light a bus straight away. */
+    document.addEventListener("keydown", function (ev) {
+      if (!/^[1-4]$/.test(ev.key) || ev.altKey || ev.ctrlKey || ev.metaKey || ev.defaultPrevented) return;
+      var t = ev.target;
+      if (document.documentElement.classList.contains("lb-on") || (t && t.closest && t.closest("input, textarea, select, [contenteditable]"))) return;
+      var b = boxes[+ev.key - 1];
+      if (!b) return;
+      ev.preventDefault();
+      b.focus({ preventScroll: true });
+      b.click();
     });
 
-    /* Selection over a stat box previews it in the panel text; Enter, Space or a click commits. */
-    var hint = panel.querySelector(".panel-hint");
-    var hinted = null;
-    var showHint = function (b) {
-      if (b === hinted) return;
-      hinted = b;
-      if (!b) { panel.classList.remove("hinting"); hint.hidden = true; return; }
-      var t = b.getAttribute("data-hint");
-      var act = b.getAttribute("aria-pressed") === "true" ? "enter to clear" : b.getAttribute("data-filter") === "all" ? "enter to list" : "enter to filter";
-      hint.textContent = t + " ";
-      var dim = document.createElement("span");
-      dim.textContent = act;
-      hint.appendChild(dim);
-      hint.hidden = false;
-      hint.style.animation = "none";
-      void hint.offsetWidth;
-      hint.style.animation = "";
-      panel.classList.add("hinting");
-    };
-    document.addEventListener("kp:cur", function (ev) {
-      var el = ev.detail;
-      showHint(el && el.classList.contains("stat") && board.contains(el) ? el : null);
-    });
-    document.addEventListener("kp:filter", function () { var b = hinted; hinted = null; if (b) showHint(b); });
-  }
+    var rt = 0;
+    var relayout = function () { window.clearTimeout(rt); rt = window.setTimeout(layout, 60); };
+    window.addEventListener("resize", relayout);
+    window.addEventListener("load", relayout);
+    if (window.ResizeObserver) { var ro = new ResizeObserver(relayout); ro.observe(document.getElementById("grid")); ro.observe(pads); }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
+    layout();
+    window.__trace = { state: function () { return { sel: sel, wires: wires.length, pwr: tiles.filter(function (c) { return c.classList.contains("pwr"); }).length, nc: tiles.filter(function (c) { return c.classList.contains("nc"); }).length }; } };
+  })();
 
   /* Shared key caps: every keyboard hint on the site is built from these. KCAP(groups) returns a .keys row;
      each group is [[label, key], ...] plus a caption. Caps press down (and click) while their key is held. */
-  var KMAP = { "\u2190": "ArrowLeft", "\u2191": "ArrowUp", "\u2193": "ArrowDown", "\u2192": "ArrowRight", "ESC": "Escape", "TAB": "Tab", "\u21b5": "Enter", "PGUP": "PageUp", "PGDN": "PageDown", "T": "t", "?": "?", "+": "+", "\u2212": "-", "BACKSPACE": "Backspace", "SPACE": " " };
+  var KMAP = { "\u2190": "ArrowLeft", "\u2191": "ArrowUp", "\u2193": "ArrowDown", "\u2192": "ArrowRight", "ESC": "Escape", "TAB": "Tab", "\u21b5": "Enter", "PGUP": "PageUp", "PGDN": "PageDown", "T": "t", "?": "?", "+": "+", "\u2212": "-", "BACKSPACE": "Backspace", "SPACE": " ", "1": "1", "2": "2", "3": "3", "4": "4" };
   var kcap = function (label) {
     var k = KMAP[label];
     return '<kbd' + (label.length > 1 ? ' class="w"' : "") + (k ? ' data-key="' + (k === " " ? " " : k) + '"' : "") + ">" + label + "</kbd>";
@@ -668,7 +801,7 @@
 
   /* Home quirks, all keyboard-discoverable (focus hints on the cursor) and clickable:
      the clock opens a big clock and month calendar, the title glitches, the prompt re-runs ls,
-     and the key row demos itself. ASCII only and monospace, so nothing changes size (zero layout shift). */
+     and the corner ? cap opens the key map. ASCII only and monospace, so nothing changes size (zero layout shift). */
   if (home) (function () {
     var two = function (v) { return (v < 10 ? "0" : "") + v; };
     var mark = function (el, hint, at, labelled) {
@@ -1332,20 +1465,13 @@
       hint();
     }
 
-    /* 4. Key row: lights its own keycaps in order. */
-    var kr = document.querySelector(".mast .keys");
+    /* 4. Corner ? cap: Enter on it (or a click) opens the key map, like pressing ?. */
+    var kr = document.querySelector(".mast .keys.qk");
     if (kr) {
-      mark(kr, "\u21b5 demo", "r");
-      var kT = [];
+      mark(kr, "\u21b5 keys", "b");
       kr.addEventListener("click", function () {
-        kT.forEach(window.clearTimeout);
-        kT = [];
-        var ks = kr.querySelectorAll("kbd");
-        Array.prototype.forEach.call(ks, function (k, i) {
-          var at = still.matches ? 0 : i * 120;
-          kT.push(window.setTimeout(function () { k.classList.add("hit"); }, at));
-          kT.push(window.setTimeout(function () { k.classList.remove("hit"); }, at + (still.matches ? 600 : 220)));
-        });
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }));
+        window.setTimeout(function () { window.dispatchEvent(new KeyboardEvent("keyup", { key: "?", bubbles: true })); }, 120);
       });
     }
   })();
@@ -1362,7 +1488,7 @@
     var tip = document.querySelector(".ktip");
     if (!tip) return;
     var seen = function (ev) {
-      if (!/^Arrow/.test(ev.key)) return;
+      if (/^(Shift|Control|Alt|Meta|Unidentified)$/.test(ev.key)) return;
       tip.classList.add("got");
       document.removeEventListener("keydown", seen, true);
     };
@@ -1376,9 +1502,10 @@
     if (!home) rows.push(["BACKSPACE", "back to all apps"]);
     if (document.querySelector(".live-phone")) eggsLive = ["CLICK", "outside the live app to leave it"];
     if (document.querySelector(".lb, .shots, .gallery, .hero-shot")) rows.push(["\u2190 \u2192 + / \u2212", "in the viewer: next shot, zoom"]);
+    if (home) rows.push(["1 2 3 4", "light a bus: its apps power up"]);
     rows.push(["PGUP PGDN", "scroll; the next arrow starts on screen"], ["TAB", "plain tab order still works"], ["?", "this sheet"]);
     if (eggsLive) rows.push(eggsLive);
-    var eggs = home ? [["CLOCK", "\u21b5 try it"], ["TITLE", "\u21b5 try it"], ["~/apps $", "\u21b5 try it"], ["KEY ROW", "\u21b5 try it"]] : [];
+    var eggs = home ? [["CLOCK", "\u21b5 try it"], ["TITLE", "\u21b5 try it"], ["~/apps $", "\u21b5 try it"]] : [];
     var ov = document.createElement("div");
     ov.className = "ck kx";
     ov.hidden = true;
@@ -1447,16 +1574,15 @@
      Enter or Space activates a stop that has an action, Esc goes back. Text stops take focus (tabindex -1, so
      Tab order is unchanged and screen readers read them); decorative aria-hidden rows only move the frame. */
   var HOV = home
-    ? ".board .stat, #panel .rows > li > a, #grid > li"
+    ? ".pads .pad, #grid > li"
     : ".hero-shot, .reel-frame, .shots > figure, .gallery > figure, .acts > .act, section .feat, .code, .others > li, .live-phone, .live-open, .btn-open";
   var STOPS = (home
-    ? [".mast .prompt", ".mast h1", ".mast .kact", ".mast .kpbox", ".mast .clock", ".mast .lede", ".mast .keys", ".board .stat", "#panel .reset", "#panel .panel-body > .panel-h", "#panel .rows > li > a"]
+    ? [".mast .prompt", ".mast h1", ".mast .kact", ".mast .kpbox", ".mast .clock", ".mast .keys", ".pads .pad", "#probe .reset"]
     : [".bar .brand", ".bar nav a", ".hero .tag", ".hero .title-row", ".hero .tagline", ".hero .live-sub", ".hero .live-desc", ".hero .lede", ".hero .keys", ".act-note", "main section > h2", ".chips > li", "main .note", ".fine > p"]
   ).concat([HOV, ".foot-brand", ".foot-main > p:not(.foot-brand)", ".foot-note", ".foot-legal > span", ".foot-legal a"]);
   var TIGHT = ".prompt, .mast h1, .keys, .panel-h, .tag, .title-row, .tagline, .live-sub, .live-desc, .hero .lede, .act-note, section > h2, .note, .fine > p, .foot-brand, .foot-main > p, .foot-legal > span";
-  var ROVE = { stat: ".board .stat", row: "#panel .rows > li > a.row-app", tile: "#grid > li" };
-  var groups = { stat: [], row: [], tile: [] }, all = [], cur = null, lastStat = null, stickyX = null;
-  if (home) Array.prototype.forEach.call(document.querySelectorAll("#panel .panel-body > .panel-h"), function (p) { p.setAttribute("data-kf", ""); });
+  var ROVE = { stat: ".pads .pad", tile: "#grid > li" };
+  var groups = { stat: [], tile: [] }, all = [], cur = null, lastStat = null, stickyX = null;
   Array.prototype.forEach.call(document.querySelectorAll(STOPS.join(",")), function (box) {
     var act = box.matches("a[href], button, [data-kf]") ? box : box.querySelector("a[href], button, video[data-kf]");
     var virt = !!box.closest("[aria-hidden='true']");

@@ -569,7 +569,12 @@ def main():
     apps = json.loads((ROOT / "apps.json").read_text())["apps"]
     # Images are not draggable out of the page (save deterrence only; screenshots can't be blocked).
     nodrag = lambda h: h.replace("<img ", '<img draggable="false" ')
-    (ROOT / "index.html").write_text(nodrag(index(apps)))
+    home = ROOT / "index.html"
+    # The home page is hand-made now (circuit-trace board); never overwrite it.
+    if home.exists() and "hand-made home board" in home.read_text():
+        print("skip index.html: hand-made home board")
+    else:
+        home.write_text(nodrag(index(apps)))
     for a in apps:
         (ROOT / (a["slug"] + ".html")).write_text(nodrag(page(a, apps)))
     urls = [BASE + "/"] + [BASE + "/" + a["slug"] for a in apps]

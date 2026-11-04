@@ -49,7 +49,6 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--fg);
-  background: radial-gradient(var(--grid) 1px, transparent 1px) 0 0 / 22px 22px;
   font: 16px/1.55 var(--mono);
 }
 
@@ -756,7 +755,7 @@ a.act:hover { color: var(--fg); border-color: var(--jade-hi); box-shadow: var(--
 .app [data-k], .app .reel-frame, .app .shots > figure, .app .gallery > figure, .app .hero-shot, .app .act, .app .others > li { scroll-margin: 0; }
 [data-k]:focus { outline: none; }
 [data-k]:focus-visible { outline: 2px solid var(--jade-hi); outline-offset: 3px; }
-.stat, .rows > li, #grid > li { scroll-margin: 24px 0; }
+.stat, .rows > li, #grid > li, .pads .pad { scroll-margin: 24px 0; }
 @media (hover: hover) {
   .kc [data-k]:focus-visible { outline: none; }
 }
@@ -1100,4 +1099,134 @@ html.lb-on { overflow: hidden; padding-right: var(--sbw, 0px); }
   .mast .keys { gap: 8px 14px; margin-top: 8px; }
   .lede.twl { margin-top: 6px; }
   .board { margin-top: 14px; }
+}
+
+/* ---------- Site-wide board: a faint PCB under every page (traces, vias, pads, one chip per tile).
+   One 2.8 KB tiled SVG, fixed behind everything, so the live traces on the home board sit on top of it. ---------- */
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: url(img/pcb.svg) 0 0 / 360px 360px; opacity: 0.075; }
+@media (max-width: 760px) { body::before { background-size: 288px 288px; opacity: 0.065; } }
+@media (forced-colors: active), (prefers-contrast: more) { body::before { display: none; } }
+
+/* ---------- Home: circuit-trace board, calm. Only the title glows; a bus lights only when picked. ---------- */
+.home-w { position: relative; }
+.home-w .mast { padding: 28px 0 0; }
+.home-w .mhead { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "prompt clock" "h1 h1"; column-gap: 16px; }
+.home-w .mhead .prompt { margin: 0; align-self: center; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.home-w .mhead h1 { margin-top: 56px; }
+.home-w .ckrow { align-self: center; align-items: stretch; margin: 0; }
+.home-w .ckrow .clock { margin: 0; }
+.home-w .clock b { padding: 0 8px; }
+.home-w .clock time { display: flex; align-items: center; padding: 0 10px; }
+.home-w .kpbox { cursor: pointer; }
+.home-w .kpbox .kpm { filter: none; }
+.home-w .pitchrow { margin: 14px 0 0; }
+.home-w .pitch { color: var(--muted); }
+.home-w .kact { box-shadow: none; border-color: var(--line); }
+.home-w .ktip { margin: 10px 0 0; color: #7fa392; }
+.home-w .ktip span { color: #7fa392; }
+
+/* Corner ? cap: the only key cap at rest. The four arrow caps sit hidden under it and show only while a dead end flashes them rose. */
+.mast .keys.qk { position: relative; display: inline-flex; margin: 0; gap: 0; }
+.qk kbd.qq { width: 29px; height: 29px; min-width: 0; padding: 0; border-color: var(--line-dim); background: none; box-shadow: none; color: var(--muted); font-size: 13px; }
+.qk kbd.qq:hover { color: var(--jade-hi); border-color: var(--line); }
+.qk kbd.qq.hit { background: var(--jade); color: var(--ink); box-shadow: none; }
+.qk .qw { position: absolute; right: 0; top: calc(100% + 6px); display: flex; gap: 4px; }
+.qk .qw kbd { visibility: hidden; }
+.qk .qw kbd.kwall { visibility: visible; }
+@media (hover: none), (pointer: coarse) { .mast .keys.qk { display: none; } html.kb .mast .keys.qk { display: inline-flex; } }
+
+/* The status line: only while a bus is lit. */
+.probe { position: relative; display: flex; align-items: center; gap: 12px; min-height: 26px; margin: 72px 0 14px; color: var(--jade-hi); font: 13px/20px var(--mono); visibility: hidden; }
+.probe.on { visibility: visible; }
+.probe-t { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.probe-t span { color: var(--muted); }
+.probe .reset { flex: none; height: 24px; padding: 0 9px; border: 1px solid var(--line-dim); background: none; color: var(--muted); font: 11px/1 var(--mono); letter-spacing: 0.14em; cursor: pointer; transition: transform 0.08s, background-color 0.08s, color 0.08s; }
+.probe .reset:hover, .probe .reset:focus-visible { color: var(--jade-hi); border-color: var(--line); outline: none; }
+.probe .reset:active, .probe .reset.hit { transform: translateY(2px); background: var(--jade); color: var(--ink); }
+
+/* Pads: four square pads, one per bus (J1-J4). */
+.pads { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0; }
+.pad { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; height: 58px; padding: 0 14px; border: 1px solid var(--line-dim); background: none; color: var(--muted); font: 12px/1.2 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.08s, background-color 0.08s, border-color 0.12s; }
+.pad .ref { color: var(--muted); font-size: 11px; border: 1px solid var(--line-dim); padding: 5px 5px 4px; }
+.pad .pk { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pad .pk .ps { display: none; }
+.pad .pv { color: #8fb3a2; font-size: 26px; letter-spacing: 0; }
+.pad .pled { position: absolute; right: 6px; top: 6px; width: 6px; height: 6px; border: 1px solid var(--line-dim); }
+.pad:hover { border-color: var(--line); }
+.pad:focus-visible { outline: none; }
+.pad[aria-pressed="true"] { border-color: var(--jade-hi); background: rgba(0, 168, 107, 0.12); box-shadow: 0 0 14px rgba(63, 224, 164, 0.22); }
+.pad[aria-pressed="true"] .pk { color: var(--fg); }
+.pad[aria-pressed="true"] .pv, .pad[aria-pressed="true"] .ref { color: var(--jade-hi); border-color: var(--line); }
+.pad[aria-pressed="true"] .pled, .pad.ping .pled { background: var(--jade-hi); border-color: var(--jade-hi); box-shadow: 0 0 8px var(--jade-hi); }
+.pad:active, .pad.hit { transform: translateY(2px); }
+.bus { position: relative; height: 104px; }
+
+/* Wires. */
+svg.tr { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.tr path { fill: none; stroke-linejoin: miter; stroke-linecap: square; }
+.tr .base { stroke: rgba(159, 184, 171, 0.12); stroke-width: 1.5; }
+.tr .base.on { stroke: rgba(0, 168, 107, 0.45); }
+.tr .lit { stroke: var(--jade); stroke-width: 2; filter: drop-shadow(0 0 3px rgba(63, 224, 164, 0.55)); }
+.tr .pulse { stroke: #c9ffe9; stroke-width: 3; filter: drop-shadow(0 0 6px #3fe0a4); }
+.tr .back { stroke: #c9ffe9; stroke-width: 2; filter: drop-shadow(0 0 5px #3fe0a4); }
+.tr rect.via { fill: #000; stroke: rgba(159, 184, 171, 0.24); stroke-width: 1; }
+.tr rect.via.on { stroke: var(--jade-hi); fill: rgba(0, 168, 107, 0.35); }
+
+/* Cards are chips: four pins on top, one per bus. Calm at rest, no glow. */
+.home-w #grid { gap: 22px; }
+.home-w #grid > li { position: relative; }
+.home-w .tile { border-color: var(--line-dim); transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s; }
+.home-w .tile:hover, .home-w .tile:focus-visible { border-color: var(--line); box-shadow: none; }
+.home-w .tile-shot { transition: filter 0.25s; }
+.home-w .tile-bar, .home-w .tile-body { transition: opacity 0.25s; }
+.pins { position: absolute; left: 0; right: 0; top: -7px; height: 6px; pointer-events: none; }
+.pins i { position: absolute; top: 0; width: 8px; height: 6px; border: 1px solid rgba(159, 184, 171, 0.22); border-bottom: 0; }
+.pins i.w { border-color: rgba(159, 184, 171, 0.4); }
+.pins i.on { background: var(--jade-hi); border-color: var(--jade-hi); box-shadow: 0 0 6px var(--jade-hi); }
+#grid > li.pwr .tile { border-color: var(--jade-hi); box-shadow: 0 0 14px rgba(63, 224, 164, 0.2); }
+#grid > li.nc .tile { border-color: var(--line-dim); }
+#grid > li.nc .tile-shot { filter: grayscale(1) brightness(0.35); }
+#grid > li.nc .tile-bar, #grid > li.nc .tile-body { opacity: 0.86; }
+#grid > li.flash .tile { animation: chipon 0.5s ease-out; }
+@keyframes chipon { 0% { box-shadow: 0 0 0 1px #c9ffe9, 0 0 30px rgba(63, 224, 164, 0.7); } }
+.home-w main { padding-bottom: 24px; }
+
+@media (hover: none), (pointer: coarse) { .home-w .ktip .t-kb { display: none; } .home-w .ktip .t-touch { display: inline; } html.kb .home-w .ktip .t-kb { display: inline; } html.kb .home-w .ktip .t-touch { display: none; } }
+@media (max-width: 760px) {
+  .home-w .mast { padding-top: 18px; }
+  .home-w .mhead h1 { margin-top: 40px; }
+  .home-w .kpbox, .qk kbd.qq { width: 23px; height: 23px; }
+  .home-w .clock b { padding: 0 6px; }
+  .home-w .clock time { min-width: 0; padding: 0 7px; font-size: 12px; }
+  .home-w .ckrow .clock { height: 23px; }
+  .probe { margin: 44px 0 10px; min-height: 54px; align-items: flex-start; font-size: 12px; line-height: 18px; }
+  .probe-t { white-space: normal; }
+  .pads { gap: 8px; }
+  .pad { grid-template-columns: 1fr; justify-items: start; align-content: center; height: 80px; padding: 8px 8px 7px; gap: 2px; letter-spacing: 0.1em; }
+  .pad .ref { font-size: 10px; padding: 3px 4px 2px; }
+  .pad .pv { font-size: 24px; line-height: 1; }
+  .pad .pk { font-size: 11px; max-width: 100%; }
+  .pad .pk .pl { display: none; }
+  .pad .pk .ps { display: inline; }
+  .bus { height: 60px; }
+  .home-w #grid { padding-left: 36px; gap: 18px; }
+  .pins { left: -7px; right: auto; top: 0; bottom: 0; width: 6px; height: auto; }
+  .pins i { left: 0; width: 6px; height: 8px; border: 1px solid rgba(159, 184, 171, 0.22); border-right: 0; }
+  .pins i.w { border-color: rgba(159, 184, 171, 0.4); }
+  .pins i.on { border-color: var(--jade-hi); }
+}
+/* Phones: the top bar stacks. Line 1 is the prompt, the logo and the ? cap; line 2 is the LOCAL clock on its own. */
+@media (max-width: 500px) {
+  .home-w .mhead { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "prompt logo q" "clock clock clock" "h1 h1 h1"; column-gap: 6px; }
+  .home-w .ckrow { display: contents; }
+  .home-w .ckrow .kpbox { grid-area: logo; align-self: center; }
+  .home-w .ckrow .qk { grid-area: q; align-self: center; }
+  .home-w .ckrow .clock { grid-area: clock; justify-self: start; margin-top: 10px; }
+  .home-w .mhead h1 { margin-top: 34px; }
+  .home-w .ktip { white-space: normal; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pad, .probe .reset, .home-w .tile, .home-w .tile-shot, .home-w .tile-bar, .home-w .tile-body { transition: none; }
+  #grid > li.flash .tile { animation: none; }
+  .pad:active, .pad.hit, .probe .reset:active { transform: none; }
 }
