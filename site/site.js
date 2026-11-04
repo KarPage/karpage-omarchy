@@ -1180,16 +1180,16 @@
       });
     }
 
-    /* 3. Prompt: a tiny preset terminal. Enter runs the next command (ls, uname -a, then a sudo that fails),
-       Backspace erases them one step at a time, Esc (or leaving the row) closes it. The output is an
-       overlay below the prompt, so nothing on the page moves (zero layout shift). */
+    /* 3. Prompt: a tiny preset terminal window. One click or Enter plays the whole show fast (ls, uname -a,
+       then a sudo that fails) in under a second; any key or click while it plays jumps to the end, and
+       reduced motion shows the end at once. The ls folders are links to the apps. Esc, a click outside or
+       leaving the row closes it. The window is an overlay below the prompt, so nothing on the page moves. */
     var pr = document.querySelector(".mast .prompt");
     if (pr) {
       pr.tabIndex = -1;
       mark(pr, "\u21b5 run", "r", true);
-      var dollar = pr.querySelector("span"), sweepT = [], timers = [];
+      var dollar = pr.querySelector("span"), sweepT = [], timers = [], script = [], idx = 0;
       var paint = function (el, typed, cursor) {
-        /* Fresh nodes each frame, so the moving cursor never counts as a layout shift. */
         while (el.firstChild) el.removeChild(el.firstChild);
         el.appendChild(document.createTextNode("~/apps "));
         el.appendChild(dollar.cloneNode(true));
@@ -1201,140 +1201,140 @@
         sweepT = [];
         var ts = Array.prototype.filter.call(document.querySelectorAll("#grid > li:not([hidden]) .tile"), function (t) { return t.getClientRects().length; });
         ts.forEach(function (t, i) {
-          var at = still.matches ? 0 : i * 80;
+          var at = still.matches ? 0 : i * 40;
           sweepT.push(window.setTimeout(function () { t.classList.add("ls-hit"); }, at));
-          sweepT.push(window.setTimeout(function () { t.classList.remove("ls-hit"); }, at + (still.matches ? 700 : 420)));
+          sweepT.push(window.setTimeout(function () { t.classList.remove("ls-hit"); }, at + (still.matches ? 700 : 360)));
         });
       };
-      var apps = Array.prototype.map.call(document.querySelectorAll("#grid .tile[href]"), function (t) {
-        return t.getAttribute("href").replace(/^\/+|\/+$/g, "") + "/";
-      }).join("  ");
+      var hrefs = Array.prototype.map.call(document.querySelectorAll("#grid .tile[href]"), function (t) { return t.getAttribute("href"); });
       var CMDS = [
-        { c: "ls", out: [[apps, ""]] },
-        { c: "uname -a", out: [["KarPage apps 1.0-omarchy #1 SMP PREEMPT jade-on-ink x86_64 keyboard/Linux", ""]] },
+        { c: "uname -a", out: [["KarPage apps 1.0-omarchy jade-on-ink x86_64 keyboard/Linux", ""]] },
         { c: "sudo rm -rf boredom", out: [["[sudo] password for guest: ********", "dim"], ["rm: cannot remove 'boredom': permission denied. nice try.", "err"]] }
       ];
       var term = document.createElement("div");
       term.className = "pterm";
-      term.setAttribute("role", "log");
-      term.setAttribute("aria-live", "polite");
-      term.setAttribute("aria-label", "Terminal output");
-      var tin = document.createElement("div");
-      tin.className = "pterm-in";
-      term.appendChild(tin);
+      term.setAttribute("role", "region");
+      term.setAttribute("aria-label", "Terminal easter egg");
+      term.innerHTML = '<div class="pt-bar" aria-hidden="true"><i></i><i></i><i></i><span>guest@karpage: ~/apps</span></div>' +
+        '<p class="pt-why">// a tiny terminal easter egg: these are the apps on this site. ' + (matchMedia("(hover: none), (pointer: coarse)").matches ? "tap a folder to open it, or tap close." : "click a folder to open it, or press ESC to close.") + '</p>' +
+        '<div class="pterm-in" role="log" aria-live="polite"></div><div class="pt-foot"></div>';
+      var tin = term.querySelector(".pterm-in"), foot = term.querySelector(".pt-foot");
       pr.parentNode.insertBefore(term, pr.nextSibling);
-      var n = 0, busy = false, queue = [], idleLine = null;
+      var open = false, busy = false;
       var hint = function () {
-        var h = n >= CMDS.length ? "\u232b delete|esc exit" : n ? "\u21b5 run again|\u232b delete|esc exit" : "\u21b5 run";
-        pr.setAttribute("data-khint", h);
-        pr.setAttribute("data-term", String(n));
+        pr.setAttribute("data-khint", busy ? "any key skip" : open ? "\u21b5 replay|esc close" : "\u21b5 run");
+        pr.setAttribute("data-term", busy ? "busy" : open ? "done" : "0");
         document.dispatchEvent(new Event("kp:hint"));
       };
-      var fit = function () {
-        term.style.height = tin.children.length ? tin.offsetHeight + "px" : "0px";
-        term.classList.toggle("on", tin.children.length > 0);
+      /* Width: up to the header's right edge, but never under the logo box or LOCAL clock beside it. */
+      var size = function () {
+        if (!open) return;
+        term.style.width = "";
+        var m = pr.parentNode.getBoundingClientRect(), tr = term.getBoundingClientRect(), max = m.right - tr.left;
+        var ck = document.querySelector(".mast .ckrow");
+        if (ck && ck.getClientRects().length) {
+          var c = ck.getBoundingClientRect();
+          if (c.bottom > tr.top + 2 && c.left > tr.left + 200) max = Math.min(max, c.left - tr.left - 20);
+        }
+        term.style.width = Math.round(Math.min(max, 780)) + "px";
       };
-      var wait = function (ms, fn) { timers.push(window.setTimeout(fn, still.matches ? 0 : ms)); };
-      var typeInto = function (el, word, done) {
-        if (still.matches) { paint(el, word, false); done(); return; }
-        var i = 0;
-        paint(el, "", true);
-        var step = function () {
-          i++;
-          paint(el, word.slice(0, i), true);
-          if (i < word.length) wait(i === 1 ? 90 : 55 + Math.random() * 45, step);
-          else wait(200, function () { paint(el, word, false); done(); });
-        };
-        wait(160, step);
+      var line = function (cls, text) {
+        var d = document.createElement("div");
+        d.className = cls;
+        if (text != null) d.textContent = text;
+        tin.appendChild(d);
+        return d;
       };
-      var eraseFrom = function (el, word, done) {
-        if (still.matches) { paint(el, "", true); done(); return; }
-        var i = word.length;
-        var step = function () {
-          i--;
-          paint(el, word.slice(0, i), true);
-          if (i > 0) wait(28, step); else wait(90, done);
-        };
-        step();
-      };
-      var outLines = function (k) {
-        return CMDS[k].out.map(function (o) {
-          var d = document.createElement("div");
-          d.className = "pt-o" + (o[1] ? " pt-" + o[1] : "");
-          d.setAttribute("data-step", String(k + 1));
-          d.textContent = o[0];
-          return d;
+      var lsLine = function () {
+        var d = line("pt-o pt-ls");
+        hrefs.forEach(function (h) {
+          var a = document.createElement("a");
+          a.href = h;
+          a.textContent = h.replace(/^\/+|\/+$/g, "") + "/";
+          d.appendChild(a);
         });
       };
-      var newIdle = function () {
-        idleLine = document.createElement("div");
-        idleLine.className = "pt-p";
-        paint(idleLine, "", true);
-        tin.appendChild(idleLine);
-      };
-      var forward = function (done) {
-        if (n >= CMDS.length) { done(); return; }
-        var k = n, line = k ? idleLine : pr;
-        typeInto(line, CMDS[k].c, function () {
-          if (k) line.setAttribute("data-step", String(k + 1));
-          else { sweep(); pr.removeAttribute("aria-label"); }
-          var os = outLines(k), j = 0;
-          idleLine = null;
-          var add = function () {
-            tin.appendChild(os[j++]);
-            fit();
-            if (j < os.length) wait(320, add);
-            else { n = k + 1; newIdle(); fit(); hint(); done(); }
-          };
-          add();
+      /* The whole show as [time ms, step]: ls output at 40 ms, ~10 ms a typed key, done by ~0.8 s. */
+      var build = function () {
+        var s = [], t = 40;
+        s.push([t, function () { var p = line("pt-p"); paint(p, "ls", false); lsLine(); sweep(); }]);
+        CMDS.forEach(function (cmd) {
+          var p = null;
+          t += 70;
+          s.push([t, function () { p = line("pt-p"); paint(p, "", true); }]);
+          for (var i = 1; i <= cmd.c.length; i++) (function (i) { t += 10; s.push([t, function () { paint(p, cmd.c.slice(0, i), true); }]); })(i);
+          t += 50;
+          s.push([t, function () { paint(p, cmd.c, false); }]);
+          cmd.out.forEach(function (o, j) { t += j ? 110 : 20; s.push([t, function () { line("pt-o" + (o[1] ? " pt-" + o[1] : ""), o[0]); }]); });
         });
+        t += 50;
+        s.push([t, function () { paint(line("pt-p"), "", true); busy = false; hint(); }]);
+        return s;
       };
-      var back = function (done) {
-        if (n <= 0) { done(); return; }
-        var k = n - 1;
-        Array.prototype.forEach.call(tin.querySelectorAll('.pt-o[data-step="' + (k + 1) + '"]'), function (o) { tin.removeChild(o); });
-        if (idleLine && idleLine.parentNode) tin.removeChild(idleLine);
-        idleLine = null;
-        fit();
-        if (k === 0) { n = 0; paint(pr, "ls", false); hint(); done(); return; }
-        var line = tin.querySelector('.pt-p[data-step="' + (k + 1) + '"]');
-        line.removeAttribute("data-step");
-        eraseFrom(line, CMDS[k].c, function () { idleLine = line; n = k; fit(); hint(); done(); });
-      };
-      var pump = function () {
-        if (busy || !queue.length) return;
-        busy = true;
-        var fn = queue.shift();
-        fn(function () { busy = false; pump(); });
-      };
-      var reset = function () {
+      var clear = function () {
         timers.forEach(window.clearTimeout);
         timers = [];
-        queue = [];
-        busy = false;
-        n = 0;
-        idleLine = null;
         while (tin.firstChild) tin.removeChild(tin.firstChild);
-        paint(pr, "ls", false);
-        fit();
+      };
+      var finish = function () {
+        timers.forEach(window.clearTimeout);
+        timers = [];
+        while (idx < script.length) script[idx++][1]();
+      };
+      var run = function () {
+        if (busy) { finish(); return; }
+        clear();
+        if (!foot.firstChild) foot.innerHTML = window.KCAP([[["ESC"], "close"], [["\u21b5"], "replay"]], "pt-kc");
+        open = true;
+        busy = true;
+        term.classList.add("on");
+        size();
+        hint();
+        script = build();
+        idx = 0;
+        if (still.matches) { finish(); return; }
+        script.forEach(function (st, i) {
+          timers.push(window.setTimeout(function () { idx = i + 1; st[1](); }, st[0]));
+        });
+      };
+      var reset = function () {
+        clear();
+        script = [];
+        idx = 0;
+        open = busy = false;
+        term.classList.remove("on");
+        term.style.width = "";
         hint();
       };
-      pr.addEventListener("click", function () {
-        if (queue.length < 3) queue.push(forward);
-        pump();
+      pr.addEventListener("click", run);
+      /* Any key while it plays skips to the end (Enter / Space only skip, so they never restart it). Esc closes. */
+      window.addEventListener("keydown", function (ev) {
+        if (!open || document.documentElement.classList.contains("lb-on")) return;
+        if (busy && !/^(Shift|Control|Alt|Meta)$/.test(ev.key)) {
+          finish();
+          if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.stopPropagation(); }
+          return;
+        }
+        if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); reset(); }
+      }, true);
+      /* The caps under the output press like keys: same shared press and click, then the same action. */
+      term.addEventListener("click", function (ev) {
+        var g = ev.target.closest && ev.target.closest(".pt-kc .kg"), k = g && g.querySelector("kbd[data-key]");
+        if (!k) return;
+        var key = k.getAttribute("data-key"), was = busy;
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: key, bubbles: true }));
+        window.setTimeout(function () { window.dispatchEvent(new KeyboardEvent("keyup", { key: key, bubbles: true })); }, 120);
+        if (key === "Enter" && !was) run();
       });
-      document.addEventListener("keydown", function (ev) {
-        if (ev.key !== "Backspace" || ev.defaultPrevented || ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
-        var t = ev.target;
-        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-        if (!pr.hasAttribute("data-kcur") || (!n && !busy && !queue.length)) return;
-        ev.preventDefault();
-        if (queue.length < 3) queue.push(back);
-        pump();
-      });
+      window.addEventListener("resize", size);
       /* Leaving the row (arrows, Esc, a click elsewhere) closes the terminal. */
-      new MutationObserver(function () { if (!pr.hasAttribute("data-kcur") && (n || busy)) reset(); }).observe(pr, { attributes: true, attributeFilter: ["data-kcur"] });
-      document.addEventListener("pointerdown", function (ev) { if ((n || busy) && !pr.contains(ev.target) && !term.contains(ev.target)) reset(); });
+      new MutationObserver(function () { if (!pr.hasAttribute("data-kcur") && open && !term.contains(document.activeElement)) reset(); }).observe(pr, { attributes: true, attributeFilter: ["data-kcur"] });
+      document.addEventListener("pointerdown", function (ev) {
+        if (!open || pr.contains(ev.target)) return;
+        /* A click while it plays skips to the end; once done, a click outside the window closes it. */
+        if (busy) { if (!(term.contains(ev.target) && ev.target.closest(".pt-kc .kg"))) finish(); return; }
+        if (!term.contains(ev.target)) reset();
+      });
       hint();
     }
 
