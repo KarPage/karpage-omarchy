@@ -1230,3 +1230,49 @@ svg.tr { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer
   #grid > li.flash .tile { animation: none; }
   .pad:active, .pad.hit, .probe .reset:active { transform: none; }
 }
+
+/* ---------- Home: the cursor leads, the rest sinks into the board ----------
+   Powered cards stay calm (jade edge, no glow). Not-connected cards read as part of the PCB.
+   When the cursor is on a card, it leads: full brightness, a hard square offset shadow, an inverted
+   header, its own wires bright and marching. Other cards and wires step down a notch. */
+#grid > li.pwr .tile { border-color: var(--jade); box-shadow: none; }
+#grid > li.nc .tile { border-color: rgba(159, 184, 171, 0.08); background: rgba(0, 0, 0, 0.35); }
+#grid > li.nc .tile-shot { filter: grayscale(1) brightness(0.2) contrast(0.9); }
+#grid > li.nc .tile-bar, #grid > li.nc .tile-body { opacity: 0.42; }
+#grid > li.nc .pins i { opacity: 0.35; }
+.fc #grid > li:not(.fx):not(.nc) .tile-shot, .fp #grid > li:not(.pv):not(.nc) .tile-shot { filter: grayscale(0.7) brightness(0.5); }
+.fc #grid > li:not(.fx):not(.nc) .tile-bar, .fc #grid > li:not(.fx):not(.nc) .tile-body,
+.fp #grid > li:not(.pv):not(.nc) .tile-bar, .fp #grid > li:not(.pv):not(.nc) .tile-body { opacity: 0.62; }
+.fc #grid > li.pwr:not(.fx) .tile, .fp #grid > li.pwr:not(.pv) .tile { border-color: var(--line); }
+#grid > li.fx .tile { border-color: var(--jade-hi); box-shadow: 6px 6px 0 rgba(0, 168, 107, 0.32); }
+#grid > li.fx .tile-shot { filter: none; }
+#grid > li.fx .tile-bar, #grid > li.fx .tile-body { opacity: 1; }
+#grid > li.fx .tile-bar { background: var(--jade-hi); color: var(--ink); border-bottom-color: var(--jade-hi); }
+#grid > li.fx .tile-bar .num, #grid > li.fx .tile-bar .tile-path, #grid > li.fx .tile-bar .mark { color: var(--ink); }
+#grid > li.fx .tile-bar .badge { background: var(--ink); color: var(--jade-hi); border-color: var(--ink); }
+#grid > li.fx .tile-body h2 { color: #fff; }
+#grid > li.fx .go { color: var(--jade-hi); }
+#grid > li.fx .pins i.w { border-color: var(--jade-hi); }
+.pad.fx { border-color: var(--jade-hi); box-shadow: 4px 4px 0 rgba(0, 168, 107, 0.32); }
+.pad.fx .ref { background: var(--jade-hi); color: var(--ink); border-color: var(--jade-hi); }
+.pad.fx .pk { color: var(--fg); }
+.pads:has(.pad.fx) .pad:not(.fx):not([aria-pressed="true"]) { opacity: 0.6; }
+.tr .base.dim { stroke: rgba(159, 184, 171, 0.05); }
+.tr .base.on.dim { stroke: rgba(0, 168, 107, 0.16); }
+.tr .base.hot { stroke: rgba(63, 224, 164, 0.7); }
+.fc .tr .lit, .fp .tr .lit { opacity: 0.35; }
+.tr rect.via.dim { opacity: 0.3; }
+.tr .foc { stroke: #c9ffe9; stroke-width: 2.5; stroke-dasharray: 8 6; filter: drop-shadow(0 0 4px #3fe0a4); animation: march 0.9s linear infinite; }
+@keyframes march { to { stroke-dashoffset: -14; } }
+@media (prefers-reduced-motion: reduce) { .tr .foc { animation: none; } }
+@media (forced-colors: active) { .fc #grid > li .tile-shot, #grid > li.nc .tile-shot { filter: none; } }
+/* LED vias: idle pads sit dark; on a live (lit or focused) path they blink in a slow chase toward the cards.
+   Steps, not fades, so it reads like activity LEDs; delays come from site.js. Reduced motion: steady lit. */
+.tr rect.via { stroke: rgba(159, 184, 171, 0.16); }
+.tr rect.via.on, .tr rect.via.hot { animation: led 1.44s steps(1, end) infinite; }
+.tr rect.via.hot { stroke: #c9ffe9; fill: rgba(0, 168, 107, 0.5); }
+.tr rect.via.dim { animation: none; }
+@keyframes led { 0% { fill: #3fe0a4; stroke: #c9ffe9; } 16% { fill: rgba(0, 168, 107, 0.3); stroke: var(--jade-hi); } }
+.pins i.on { animation: pinled 1.44s steps(1, end) infinite; }
+@keyframes pinled { 0% { background: #c9ffe9; } 16% { background: var(--jade-hi); } }
+@media (prefers-reduced-motion: reduce) { .tr rect.via.on, .tr rect.via.hot, .pins i.on { animation: none; } }

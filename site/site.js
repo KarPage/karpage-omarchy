@@ -175,15 +175,16 @@
     function layout() {
       while (svg.firstChild) svg.removeChild(svg.firstChild);
       wires = [];
-      var b = R(bus), vias = {}, C = 6, top = Infinity, gap = 18;
+      var b = R(bus), vias = {}, wk, C = 6, top = Infinity, gap = 18;
       var rs = tiles.map(function (li) { return R(li); });
       rs.forEach(function (c) { if (c.y < top) top = c.y; });
       if (rs.length > 1) { var g0 = rs[1].x - (rs[0].x + rs[0].w); if (g0 > 0) gap = g0; }
+      function via(x, y, f, o) { var k = x + "," + y; wk.push(k); if (!vias[k] || vias[k][3] > o) vias[k] = [x, y, f, o]; }
       tiles.forEach(function (li, ci) {
         var c = rs[ci], pinEls = li.querySelectorAll(".pins i");
         F.forEach(function (f, i) {
           if (!tagged(li, f)) return;
-          var p = R(boxes[i]), px = Math.round(p.x + p.w / 2), py = Math.round(p.y + p.h), d, pin = pinEls[i];
+          wk = []; var p = R(boxes[i]), px = Math.round(p.x + p.w / 2), py = Math.round(p.y + p.h), d, pin = pinEls[i];
           if (!phone()) {
             var ly = Math.round(b.y + 16 + i * 14), tx = Math.round(c.x + 18 + i * ((c.w - 36) / 3)), s;
             pin.style.left = (tx - c.x - 4) + "px";
@@ -192,14 +193,14 @@
               s = tx > px ? 1 : -1;
               if (Math.abs(tx - px) < 2 * C) d = "M" + px + " " + py + "V" + ly + "H" + tx + "V" + (c.y - 7);
               else d = "M" + px + " " + py + "V" + (ly - C) + "L" + (px + s * C) + " " + ly + "H" + (tx - s * C) + "L" + tx + " " + (ly + C) + "V" + (c.y - 7);
-              vias[px + "," + ly] = [px, ly, f]; vias[tx + "," + ly] = [tx, ly, f];
+              via(px, ly, f, 0); via(tx, ly, f, 1);
             } else {
               /* Lower rows: down the gutter to the left of the card, then along the row gap to the pin. */
               var gx = Math.round(c.x - gap / 2 + (i - 1.5) * 3), gy = Math.round(c.y - gap / 2 - 2 + (i - 1.5) * 2), c2 = 3;
               s = gx > px ? 1 : -1;
               d = "M" + px + " " + py + "V" + (ly - C) + "L" + (px + s * C) + " " + ly + "H" + (gx - s * C) + "L" + gx + " " + (ly + C) +
                 "V" + (gy - c2) + "L" + (gx + c2) + " " + gy + "H" + (tx - c2) + "L" + tx + " " + (gy + c2) + "V" + (c.y - 7);
-              vias[px + "," + ly] = [px, ly, f]; vias[gx + "," + ly] = [gx, ly, f];
+              via(px, ly, f, 0); via(gx, ly, f, 1); via(gx, gy, f, 2);
             }
           } else {
             /* Phone: one collector per bus, then a vertical lane down the left edge into each card's side pins. */
@@ -207,14 +208,16 @@
             pin.style.top = (ty - c.y - 4) + "px";
             pin.style.left = "";
             d = "M" + px + " " + py + "V" + (ly2 - c4) + "L" + (px - c4) + " " + ly2 + "H" + (lx + c4) + "L" + lx + " " + (ly2 + c4) + "V" + (ty - c4) + "L" + (lx + c4) + " " + ty + "H" + (c.x - 7);
-            vias[px + "," + ly2] = [px, ly2, f]; vias[lx + "," + ly2] = [lx, ly2, f];
+            via(px, ly2, f, 0); via(lx, ly2, f, 1); via(lx, ty, f, 2);
           }
           var base = el("path", { d: d, "class": "base" });
           svg.appendChild(base);
-          wires.push({ f: f, li: li, pin: pin, pad: boxes[i], d: d, base: base, len: base.getTotalLength() });
+          wires.push({ f: f, li: li, pin: pin, pad: boxes[i], d: d, base: base, len: base.getTotalLength(), vk: wk });
         });
       });
-      Object.keys(vias).forEach(function (k) { var v = vias[k]; svg.appendChild(el("rect", { x: v[0] - 3, y: v[1] - 3, width: 6, height: 6, "class": "via", "data-f": v[2] })); });
+      /* Vias are LEDs: on a live bus they blink in a chase from the pad toward the cards (CSS only; the delay is the step). */
+      Object.keys(vias).forEach(function (k) { var v = vias[k], r = el("rect", { x: v[0] - 3, y: v[1] - 3, width: 6, height: 6, "class": "via", "data-f": v[2] }); r.style.animationDelay = (v[3] * 0.24) + "s"; svg.appendChild(r); v[4] = r; });
+      wires.forEach(function (w) { w.vias = w.vk.map(function (k) { return vias[k][4]; }); w.pin.style.animationDelay = "0.72s"; });
       paint(false);
     }
     function overlay(w, cls) { var p = el("path", { d: w.d, "class": cls }); svg.appendChild(p); return p; }
@@ -229,7 +232,7 @@
       wires.forEach(function (w) { w.base.classList.toggle("on", !!sel && w.f === sel); w.pin.classList.remove("on"); });
       [].slice.call(svg.querySelectorAll(".via")).forEach(function (v) { v.classList.toggle("on", !!sel && v.getAttribute("data-f") === sel); });
       tiles.forEach(function (li) { li.classList.remove("pwr", "flash"); li.classList.toggle("nc", !!sel && !tagged(li, sel)); });
-      if (!sel) return;
+      if (!sel) { focusPaint(); return; }
       wires.filter(function (w) { return w.f === sel; }).forEach(function (w) {
         var lit = overlay(w, "lit");
         if (!animate || rm.matches || !lit.animate) { w.pin.classList.add("on"); w.li.classList.add("pwr"); return; }
@@ -248,6 +251,7 @@
         }, dur);
         a.onfinish = function () { if (pu.parentNode) pu.parentNode.removeChild(pu); };
       });
+      focusPaint();
     }
     /* The status line shows only while a bus is lit. */
     function say(text, dim) {
@@ -303,8 +307,33 @@
         };
       });
     }
+    /* What the cursor is on leads; everything else sinks into the board. A focused card keeps full
+       brightness and its own wires run bright; the other cards and wires step down. A focused pad
+       brings up its bus and the cards it powers. */
+    var foc = null;
+    function focusPaint() {
+      var card = foc && foc.parentNode && foc.parentNode.id === "grid" ? foc : null;
+      var pad = foc && boxes.indexOf(foc) >= 0 ? foc : null, pf = pad ? pad.getAttribute("data-filter") : "";
+      host.classList.toggle("fc", !!card);
+      host.classList.toggle("fp", !!pad);
+      tiles.forEach(function (li) { li.classList.toggle("fx", li === card); li.classList.toggle("pv", !!pad && tagged(li, pf)); });
+      boxes.forEach(function (b) { b.classList.toggle("fx", b === pad); });
+      [].slice.call(svg.querySelectorAll(".foc")).forEach(function (n) { n.parentNode.removeChild(n); });
+      var hot = function (w) { return card ? w.li === card : pad ? w.f === pf : false; };
+      wires.forEach(function (w) {
+        var h = hot(w);
+        w.base.classList.toggle("hot", h);
+        w.base.classList.toggle("dim", !!(card || pad) && !h);
+        if (h && card) overlay(w, "foc");
+      });
+      var hv = [];
+      wires.forEach(function (w) { if (hot(w)) hv = hv.concat(w.vias); });
+      [].slice.call(svg.querySelectorAll(".via")).forEach(function (v) { var h = hv.indexOf(v) >= 0; v.classList.toggle("hot", h); v.classList.toggle("dim", !!(card || pad) && !h); });
+    }
     document.addEventListener("kp:cur", function (ev) {
       var e = ev.detail;
+      foc = e && ((e.parentNode && e.parentNode.id === "grid") || boxes.indexOf(e) >= 0) ? e : null;
+      focusPaint();
       trace(e && e.parentNode && e.parentNode.id === "grid" ? e : null);
     });
     /* 1-4 light a bus straight away. */
@@ -1476,6 +1505,21 @@
     }
   })();
 
+  /* Subpages: the hero key row holds a clickable ? cap, so Enter or Space on that row opens the key map too. */
+  if (!home) (function () {
+    var hk = document.querySelector(".hero .keys");
+    if (!hk || !hk.querySelector('kbd[data-key="?"]')) return;
+    hk.setAttribute("data-kf", "");
+    hk.setAttribute("data-khint", "\u21b5");
+    hk.setAttribute("data-khint-q", "");
+    hk.setAttribute("data-khint-at", "b");
+    hk.addEventListener("click", function (ev) {
+      if (ev.detail !== 0) return;
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }));
+      window.setTimeout(function () { window.dispatchEvent(new KeyboardEvent("keyup", { key: "?", bubbles: true })); }, 120);
+    });
+  })();
+
   /* The home tip acknowledges the first arrow press, once. */
   (function () {
     /* A real key press means a keyboard is attached: show key caps even on touch screens. */
@@ -1580,7 +1624,7 @@
     ? [".mast .prompt", ".mast h1", ".mast .kact", ".mast .kpbox", ".mast .clock", ".mast .keys", ".pads .pad", "#probe .reset"]
     : [".bar .brand", ".bar nav a", ".hero .tag", ".hero .title-row", ".hero .tagline", ".hero .live-sub", ".hero .live-desc", ".hero .lede", ".hero .keys", ".act-note", "main section > h2", ".chips > li", "main .note", ".fine > p"]
   ).concat([HOV, ".foot-brand", ".foot-main > p:not(.foot-brand)", ".foot-note", ".foot-legal > span", ".foot-legal a"]);
-  var TIGHT = ".prompt, .mast h1, .keys, .panel-h, .tag, .title-row, .tagline, .live-sub, .live-desc, .hero .lede, .act-note, section > h2, .note, .fine > p, .foot-brand, .foot-main > p, .foot-legal > span";
+  var TIGHT = ".prompt, .mast h1, .keys:not(.qk), .panel-h, .tag, .title-row, .tagline, .live-sub, .live-desc, .hero .lede, .act-note, section > h2, .note, .fine > p, .foot-brand, .foot-main > p, .foot-legal > span";
   var ROVE = { stat: ".pads .pad", tile: "#grid > li" };
   var groups = { stat: [], tile: [] }, all = [], cur = null, lastStat = null, stickyX = null;
   Array.prototype.forEach.call(document.querySelectorAll(STOPS.join(",")), function (box) {
