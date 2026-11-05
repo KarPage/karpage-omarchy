@@ -1,0 +1,1081 @@
+#!/usr/bin/env bash
+# Kar Page launcher for Omarchy. No root, no secrets, no telemetry.
+# One window: launching again focuses it. Hyprland frames it as a phone.
+# shellcheck shell=bash
+set -euo pipefail
+
+CLASS_RE='^(karpage|KarPage|chrome-karpage\.app.*|brave-karpage\.app.*|msedge-karpage\.app.*|vivaldi-karpage\.app.*)$'
+URL_DEFAULT='https://karpage.app'
+POLL_TRIES=${KARPAGE_POLL_TRIES:-50}
+POLL_SLEEP=${KARPAGE_POLL_SLEEP:-0.15}
+
+die() {
+  printf 'karpage: %s\n' "$1" >&2
+  exit 1
+}
+
+warn() {
+  printf 'karpage: %s\n' "$1" >&2
+}
+
+load_paths() {
+  : "${HOME:?HOME is not set}"
+  CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
+  STATE_HOME=${XDG_STATE_HOME:-$HOME/.local/state}
+  DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
+  CONFIG_FILE=$CONFIG_HOME/karpage/config
+  STATE_DIR=$STATE_HOME/karpage
+  # Omarchy reads Hyprland files from ~/.config/hypr, including on version 4.
+  HYPR_DIR=$HOME/.config/hypr
+  BIN=$HOME/.local/bin/karpage
+}
+
+trim() {
+  local s=$1
+  s="${s##+([[:space:]])}"
+  s="${s%%+([[:space:]])}"
+  printf '%s' "$s"
+}
+
+is_uint() {
+  printf '%s\n' "$1" | grep -Eq '^[0-9]+$'
+}
+
+write_default_config() {
+  mkdir -p "$(dirname "$CONFIG_FILE")"
+  if [ -f "$CONFIG_FILE" ]; then
+    return 0
+  fi
+  cat >"$CONFIG_FILE" <<'EOF'
+# Kar Page launcher. One KEY=value per line. No secrets.
+# Edit this file, then run: karpage rules
+
+# auto, chromium, chrome, brave, vivaldi, edge, or firefox
+browser=auto
+
+url=https://karpage.app
+
+# Where the window sits: center, left, or right
+side=right
+
+# Starting mode: phone, tile, or full
+mode=phone
+
+# 1.0 is solid. A value like 0.98 lets a little wallpaper through.
+opacity=1.0
+
+# Logical phone size before it is fit to the monitor.
+phone_width=430
+phone_height=932
+
+# Gap from the screen edge, in logical pixels. Short monitors use a smaller gap.
+margin=48
+
+# Phone bezel, in pixels.
+rounding=46
+border_size=2
+
+# Keep the side column on every workspace: yes or no
+pin=no
+EOF
+}
+
+load_config() {
+  BROWSER=auto
+  URL=$URL_DEFAULT
+  SIDE=right
+  MODE=phone
+  OPACITY=1.0
+  PHONE_W=430
+  PHONE_H=932
+  MARGIN=48
+  ROUNDING=46
+  BORDER=2
+  PIN=no
+  if [ ! -f "$CONFIG_FILE" ]; then
+    return 0
+  fi
+  local line raw key value number
+  while IFS= read -r line || [ -n "$line" ]; do
+    raw=$(trim "$line")
+    case $raw in
+      ''|\#*) continue ;;
+    esac
+    key=${raw%%=*}
+    value=${raw#*=}
+    key=$(trim "$key")
+    value=$(trim "$value")
+    value=${value#\"}
+    value=${value%\"}
+    value=${value#\'}
+    value=${value%\'}
+    case $key in
+      browser)
+        case $value in
+          auto|chromium|chrome|brave|vivaldi|edge|firefox) BROWSER=$value ;;
+          *) warn "Ignoring browser=$value. Use auto, chromium, chrome, brave, vivaldi, edge, or firefox." ;;
+        esac
+        ;;
+      url)
+        if printf '%s\n' "$value" | grep -Eq '^https://[A-Za-z0-9.-]+([/?#][A-Za-z0-9._~:/?#@!$&()*+,;=%-]*)?$'; then
+          URL=$value
+        else
+          warn "Ignoring url. It must be an https address with no spaces."
+        fi
+        ;;
+      side)
+        case $value in
+          left|right|center) SIDE=$value ;;
+          *) warn "Ignoring side=$value. Use center, left, or right." ;;
+        esac
+        ;;
+      mode)
+        case $value in
+          phone|tile|full) MODE=$value ;;
+          *) warn "Ignoring mode=$value. Use phone, tile, or full." ;;
+        esac
+        ;;
+      opacity)
+        number=$(awk -v v="$value" 'BEGIN {
+          if (v !~ /^[0-9]+(\.[0-9]+)?$/) exit 1
+          n = v + 0
+          if (n < 0.85 || n > 1) exit 1
+          if (n == int(n)) printf "%.1f", n
+          else printf "%.2f", n
+        }') || warn "Ignoring opacity=$value. Use a number from 0.85 to 1."
+        if [ -n "$number" ]; then
+          OPACITY=$number
+        fi
+        ;;
+      phone_width)
+        if is_uint "$value" && [ "$value" -ge 200 ] && [ "$value" -le 1400 ]; then
+          PHONE_W=$value
+        else
+          warn "Ignoring phone_width=$value. Use 200 to 1400."
+        fi
+        ;;
+      phone_height)
+        if is_uint "$value" && [ "$value" -ge 400 ] && [ "$value" -le 2400 ]; then
+          PHONE_H=$value
+        else
+          warn "Ignoring phone_height=$value. Use 400 to 2400."
+        fi
+        ;;
+      margin)
+        if is_uint "$value" && [ "$value" -le 160 ]; then
+          MARGIN=$value
+        else
+          warn "Ignoring margin=$value. Use 0 to 160."
+        fi
+        ;;
+      rounding)
+        if is_uint "$value" && [ "$value" -le 80 ]; then
+          ROUNDING=$value
+        else
+          warn "Ignoring rounding=$value. Use 0 to 80."
+        fi
+        ;;
+      border_size)
+        if is_uint "$value" && [ "$value" -le 8 ]; then
+          BORDER=$value
+        else
+          warn "Ignoring border_size=$value. Use 0 to 8."
+        fi
+        ;;
+      pin)
+        case $value in
+          yes|true|on) PIN=yes ;;
+          no|false|off) PIN=no ;;
+          *) warn "Ignoring pin=$value. Use yes or no." ;;
+        esac
+        ;;
+      *)
+        warn "Ignoring unknown setting $key."
+        ;;
+    esac
+  done <"$CONFIG_FILE"
+}
+
+load_state() {
+  local mode_file=$STATE_DIR/mode
+  local side_file=$STATE_DIR/side
+  local value
+  if [ -f "$mode_file" ] && { [ ! -f "$CONFIG_FILE" ] || [ "$mode_file" -nt "$CONFIG_FILE" ]; }; then
+    value=$(trim "$(cat "$mode_file")")
+    case $value in
+      phone|tile|full) MODE=$value ;;
+    esac
+  fi
+  if [ -f "$side_file" ] && { [ ! -f "$CONFIG_FILE" ] || [ "$side_file" -nt "$CONFIG_FILE" ]; }; then
+    value=$(trim "$(cat "$side_file")")
+    case $value in
+      left|right|center) SIDE=$value ;;
+    esac
+  fi
+}
+
+save_state() {
+  mkdir -p "$STATE_DIR"
+  printf '%s\n' "$MODE" >"$STATE_DIR/mode"
+  printf '%s\n' "$SIDE" >"$STATE_DIR/side"
+}
+
+take_lock() {
+  mkdir -p "$STATE_DIR"
+  if command -v flock >/dev/null 2>&1; then
+    exec 9>>"$STATE_DIR/launch.lock"
+    flock -w 8 9 || die "Kar Page is busy. Wait for the other launch to finish."
+  fi
+}
+
+browser_bin() {
+  local candidate
+  case $1 in
+    chromium) set -- chromium chromium-browser ;;
+    chrome) set -- google-chrome-stable google-chrome google-chrome-beta ;;
+    brave) set -- brave brave-browser ;;
+    vivaldi) set -- vivaldi-stable vivaldi ;;
+    edge) set -- microsoft-edge-stable microsoft-edge microsoft-edge-beta ;;
+    firefox) set -- firefox firefox-esr ;;
+    *) return 1 ;;
+  esac
+  for candidate in "$@"; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      command -v "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+resolve_browser() {
+  local requested=$1
+  local name bin
+  case $requested in
+    auto|chromium|chrome|brave|vivaldi|edge|firefox) ;;
+    *) die "Unknown browser '$requested'. Use auto, chromium, chrome, brave, vivaldi, edge, or firefox." ;;
+  esac
+  if [ "$requested" != auto ]; then
+    if bin=$(browser_bin "$requested"); then
+      BROWSER_NAME=$requested
+      BROWSER_BIN=$bin
+      return 0
+    fi
+    warn "Browser '$requested' is not on PATH. Trying the others."
+  fi
+  for name in chromium chrome brave vivaldi edge firefox; do
+    if bin=$(browser_bin "$name"); then
+      BROWSER_NAME=$name
+      BROWSER_BIN=$bin
+      if [ "$requested" != auto ]; then
+        printf 'Using %s (%s).\n' "$name" "$bin" >&2
+      fi
+      return 0
+    fi
+  done
+  cat >&2 <<EOF
+No supported browser is on PATH.
+Looked for Chromium, Google Chrome, Brave, Vivaldi, Microsoft Edge, and Firefox.
+On Omarchy: sudo pacman -S chromium
+Or set browser= in $CONFIG_FILE
+EOF
+  return 1
+}
+
+is_app_class() {
+  printf '%s\n' "$1" | grep -Eq "$CLASS_RE"
+}
+
+pid_uses_our_profile() {
+  local pid=$1
+  local hops=0
+  local cmd ppid
+  while [ "$hops" -lt 5 ] && [ -n "$pid" ] && [ "$pid" != 0 ] && [ "$pid" != 1 ]; do
+    if [ -r "/proc/$pid/cmdline" ]; then
+      cmd=$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)
+      case $cmd in
+        *"/karpage/browsers/"*) return 0 ;;
+      esac
+    fi
+    ppid=$(awk '/^PPid:/ { print $2; exit }' "/proc/$pid/status" 2>/dev/null || true)
+    [ -n "$ppid" ] || return 1
+    pid=$ppid
+    hops=$((hops + 1))
+  done
+  return 1
+}
+
+find_window() {
+  FOUND_ADDR=
+  FOUND_PIN=0
+  FOUND_FULL=0
+  FOUND_COUNT=0
+  command -v hyprctl >/dev/null 2>&1 || return 0
+  local dump
+  dump=$(hyprctl clients 2>/dev/null || true)
+  [ -n "$dump" ] || return 0
+
+  local line raw key value
+  local win_addr="" win_class="" win_init="" win_pid=""
+  local win_pin=0 win_full=0 win_mapped=1
+
+  commit_win() {
+    local class=$win_class
+    local addr=$win_addr
+    [ -n "$addr" ] || return 0
+    [ "$win_mapped" = 1 ] || return 0
+    [ -n "$class" ] || class=$win_init
+    case $addr in
+      0x[0-9a-fA-F]*) ;;
+      [0-9a-fA-F]*) addr=0x$addr ;;
+      *) return 0 ;;
+    esac
+    if is_app_class "$class" || pid_uses_our_profile "$win_pid"; then
+      if [ -z "$FOUND_ADDR" ]; then
+        FOUND_ADDR=$addr
+        FOUND_PIN=$win_pin
+        FOUND_FULL=$win_full
+      fi
+      FOUND_COUNT=$((FOUND_COUNT + 1))
+    fi
+  }
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    raw=$(trim "$line")
+    case $raw in
+      Window\ *)
+        commit_win
+        win_addr=${raw#Window }
+        win_addr=${win_addr%% *}
+        win_class=
+        win_init=
+        win_pid=
+        win_pin=0
+        win_full=0
+        win_mapped=1
+        ;;
+      *)
+        key=${raw%%:*}
+        value=$(trim "${raw#*:}")
+        case $key in
+          class) win_class=$value ;;
+          initialClass) win_init=$value ;;
+          pid) win_pid=$value ;;
+          pinned)
+            case $value in
+              1|true|yes) win_pin=1 ;;
+              *) win_pin=0 ;;
+            esac
+            ;;
+          fullscreen)
+            case $value in
+              ''|*[!0-9]*) win_full=0 ;;
+              *) win_full=$value ;;
+            esac
+            ;;
+          mapped)
+            case $value in
+              0|false|no) win_mapped=0 ;;
+              *) win_mapped=1 ;;
+            esac
+            ;;
+        esac
+        ;;
+    esac
+  done < <(printf '%s\n' "$dump")
+  commit_win
+  if [ "$FOUND_COUNT" -gt 1 ]; then
+    warn "More than one Kar Page window is open. Focusing one of them."
+  fi
+}
+
+read_monitor() {
+  MON_X=0
+  MON_Y=0
+  MON_W=0
+  MON_H=0
+  MON_SCALE=1
+  MON_TOP=0
+  MON_RIGHT=0
+  MON_BOTTOM=0
+  MON_LEFT=0
+  command -v hyprctl >/dev/null 2>&1 || return 1
+  local dump
+  dump=$(hyprctl monitors 2>/dev/null || true)
+  [ -n "$dump" ] || return 1
+
+  local line raw
+  local cx=0 cy=0 cw=0 ch=0 cscale=1
+  local ctop=0 cright=0 cbottom=0 cleft=0
+  local cfocused=0 chave=0
+  local bx=0 by=0 bw=0 bh=0 bscale=1
+  local btop=0 bright=0 bbottom=0 bleft=0
+  local bset=0
+
+  save_mon() {
+    if [ "$chave" -eq 1 ] && { [ "$cfocused" -eq 1 ] || [ "$bset" -eq 0 ]; }; then
+      bx=$cx
+      by=$cy
+      bw=$cw
+      bh=$ch
+      bscale=$cscale
+      btop=$ctop
+      bright=$cright
+      bbottom=$cbottom
+      bleft=$cleft
+      bset=1
+    fi
+  }
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    raw=$(trim "$line")
+    case $raw in
+      Monitor\ *)
+        save_mon
+        cx=0
+        cy=0
+        cw=0
+        ch=0
+        cscale=1
+        ctop=0
+        cright=0
+        cbottom=0
+        cleft=0
+        cfocused=0
+        chave=0
+        ;;
+      *)
+        if [[ $raw =~ ^([0-9]+)x([0-9]+)@[^[:space:]]+\ at\ (-?[0-9]+)x(-?[0-9]+)$ ]]; then
+          cw=${BASH_REMATCH[1]}
+          ch=${BASH_REMATCH[2]}
+          cx=${BASH_REMATCH[3]}
+          cy=${BASH_REMATCH[4]}
+          chave=1
+        fi
+        case $raw in
+          scale:*)
+            cscale=$(trim "${raw#scale:}")
+            if ! printf '%s\n' "$cscale" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; then
+              cscale=1
+            fi
+            ;;
+          reserved:*)
+            # shellcheck disable=SC2086
+            set -- ${raw#reserved:}
+            ctop=${1:-0}
+            cright=${2:-0}
+            cbottom=${3:-0}
+            cleft=${4:-0}
+            is_uint "$ctop" || ctop=0
+            is_uint "$cright" || cright=0
+            is_uint "$cbottom" || cbottom=0
+            is_uint "$cleft" || cleft=0
+            ;;
+          focused:\ yes|focused:yes) cfocused=1 ;;
+        esac
+        ;;
+    esac
+  done < <(printf '%s\n' "$dump")
+  save_mon
+  [ "$bset" -eq 1 ] || return 1
+  MON_X=$bx
+  MON_Y=$by
+  MON_W=$bw
+  MON_H=$bh
+  MON_SCALE=$bscale
+  MON_TOP=$btop
+  MON_RIGHT=$bright
+  MON_BOTTOM=$bbottom
+  MON_LEFT=$bleft
+}
+
+compute_geometry() {
+  local result
+  result=$(awk \
+    -v mode="$MODE" -v side="$SIDE" \
+    -v pw="$PHONE_W" -v ph="$PHONE_H" -v margin="$MARGIN" \
+    -v rounding="$ROUNDING" -v border="$BORDER" \
+    -v mx="$MON_X" -v my="$MON_Y" -v mw="$MON_W" -v mh="$MON_H" \
+    -v scale="$MON_SCALE" \
+    -v rt="$MON_TOP" -v rr="$MON_RIGHT" -v rb="$MON_BOTTOM" -v rl="$MON_LEFT" \
+    'BEGIN {
+      if (scale + 0 <= 0) scale = 1
+      lw = mw / scale
+      lh = mh / scale
+      if (lh + 0 >= ph + (margin * 2) + 40) vinset = margin
+      else vinset = 16
+      top = rt + vinset
+      bottom = rb + vinset
+      left_inset = rl + vinset
+      right_inset = rr + vinset
+      avail_h = lh - top - bottom
+      avail_w = lw - left_inset - right_inset
+      if (avail_h < 200) { avail_h = lh; top = 0 }
+      if (avail_w < 160) { avail_w = lw; left_inset = 0; right_inset = 0 }
+      fit = 1
+      if (pw > 0 && avail_w / pw < fit) fit = avail_w / pw
+      if (ph > 0 && avail_h / ph < fit) fit = avail_h / ph
+      if (fit > 1) fit = 1
+      if (fit < 0.35) fit = 0.35
+      w = int(pw * fit + 0.5)
+      h = int(ph * fit + 0.5)
+      round_px = rounding
+      border_px = border
+      if (mode == "tile") {
+        w = pw + 0
+        if (w > lw * 0.46) w = int(lw * 0.46 + 0.5)
+        if (w > avail_w) w = int(avail_w)
+        if (w < 1) w = 1
+        h = int(avail_h + 0.5)
+        if (h < 1) h = 1
+      }
+      if (mode == "full") {
+        w = int(lw + 0.5)
+        h = int(lh + 0.5)
+        x = mx
+        y = my
+        round_px = 0
+        border_px = 0
+      } else {
+        if (side == "left") x = mx + left_inset
+        else if (side == "right") x = mx + lw - w - right_inset
+        else x = mx + (lw - w) / 2
+        if (mode == "tile") y = my + top
+        else y = my + top + (avail_h - h) / 2
+        if (x < mx) x = mx
+        if (y < my) y = my
+        x = int(x + 0.5)
+        y = int(y + 0.5)
+      }
+      printf "%d %d %d %d %d %d\n", w, h, x, y, round_px, border_px
+    }')
+  read -r GEO_W GEO_H GEO_X GEO_Y GEO_ROUND GEO_BORDER <<<"$result"
+}
+
+valid_addr() {
+  printf '%s\n' "$1" | grep -Eq '^0x[0-9a-fA-F]+$'
+}
+
+hypr_running() {
+  command -v hyprctl >/dev/null 2>&1 || return 1
+  hyprctl monitors >/dev/null 2>&1
+}
+
+focus_addr() {
+  valid_addr "$ADDR" || return 0
+  if hyprctl dispatch "hl.dsp.focus({ window = \"address:${ADDR}\" })" >/dev/null 2>&1; then
+    return 0
+  fi
+  hyprctl dispatch focuswindow "address:${ADDR}" >/dev/null 2>&1 || true
+}
+
+set_fullscreen() {
+  local action=$1
+  # internal 2 / client 0 fills the screen without Chromium's presentation mode.
+  if [ "$action" = set ]; then
+    if hyprctl dispatch "hl.dsp.window.fullscreen_state({ window = \"address:${ADDR}\", action = \"set\", internal = 2, client = 0 })" >/dev/null 2>&1; then
+      return 0
+    fi
+    hyprctl dispatch fullscreenstate 2 0 >/dev/null 2>&1 || true
+  else
+    if hyprctl dispatch "hl.dsp.window.fullscreen_state({ window = \"address:${ADDR}\", action = \"unset\", internal = 0, client = 0 })" >/dev/null 2>&1; then
+      return 0
+    fi
+    hyprctl dispatch fullscreenstate 0 0 >/dev/null 2>&1 || true
+  fi
+}
+
+set_floating() {
+  if hyprctl dispatch "hl.dsp.window.float({ window = \"address:${ADDR}\", action = \"enable\" })" >/dev/null 2>&1; then
+    return 0
+  fi
+  hyprctl dispatch setfloating "address:${ADDR}" >/dev/null 2>&1 || true
+}
+
+set_pin() {
+  local want=$1
+  local action=disable
+  [ "$want" = 1 ] && action=enable
+  if hyprctl dispatch "hl.dsp.window.pin({ window = \"address:${ADDR}\", action = \"${action}\" })" >/dev/null 2>&1; then
+    return 0
+  fi
+  if [ "$want" != "$FOUND_PIN" ]; then
+    hyprctl dispatch pin "address:${ADDR}" >/dev/null 2>&1 || true
+  fi
+}
+
+hypr_prop() {
+  local prop=$1
+  local value=$2
+  if hyprctl dispatch "hl.dsp.window.set_prop({ window = \"address:${ADDR}\", prop = \"${prop}\", value = \"${value}\" })" >/dev/null 2>&1; then
+    return 0
+  fi
+  hyprctl dispatch setprop "address:${ADDR}" "$prop" "$value" >/dev/null 2>&1 || true
+}
+
+apply_mode() {
+  ADDR=$1
+  valid_addr "$ADDR" || return 0
+  command -v hyprctl >/dev/null 2>&1 || return 0
+  if ! read_monitor; then
+    focus_addr
+    warn "Hyprland did not report a monitor, so the window was only focused."
+    return 0
+  fi
+  compute_geometry
+  focus_addr
+  if [ "$MODE" = full ]; then
+    set_pin 0
+    if [ "$FOUND_FULL" != 2 ]; then
+      set_fullscreen set
+    fi
+    hypr_prop rounding 0
+    hypr_prop border_size 0
+    return 0
+  fi
+  if [ "$FOUND_FULL" != 0 ]; then
+    set_fullscreen unset
+  fi
+  if [ "$MODE" = tile ] && [ "$PIN" = yes ]; then
+    set_pin 1
+  else
+    set_pin 0
+  fi
+  set_floating
+  if hyprctl dispatch "hl.dsp.window.resize({ window = \"address:${ADDR}\", x = ${GEO_W}, y = ${GEO_H} })" >/dev/null 2>&1; then
+    :
+  else
+    hyprctl dispatch resizewindowpixel "exact ${GEO_W} ${GEO_H},address:${ADDR}" >/dev/null 2>&1 || true
+  fi
+  if hyprctl dispatch "hl.dsp.window.move({ window = \"address:${ADDR}\", x = ${GEO_X}, y = ${GEO_Y} })" >/dev/null 2>&1; then
+    :
+  else
+    hyprctl dispatch movewindowpixel "exact ${GEO_X} ${GEO_Y},address:${ADDR}" >/dev/null 2>&1 || true
+  fi
+  hypr_prop rounding "$GEO_ROUND"
+  hypr_prop border_size "$GEO_BORDER"
+  hypr_prop rounding_power 4
+  if ! hyprctl dispatch "hl.dsp.window.alter_zorder({ window = \"address:${ADDR}\", mode = \"top\" })" >/dev/null 2>&1; then
+    hyprctl dispatch alterzorder top >/dev/null 2>&1 || true
+  fi
+}
+
+write_firefox_prefs() {
+  local profile=$1
+  mkdir -p "$profile"
+  if [ -f "$profile/user.js" ]; then
+    return 0
+  fi
+  cat >"$profile/user.js" <<'EOF'
+// Kar Page's own Firefox profile. This is not your everyday Firefox.
+user_pref("browser.aboutwelcome.enabled", false);
+user_pref("browser.shell.checkDefaultBrowser", false);
+user_pref("datareporting.policy.dataSubmissionEnabled", false);
+user_pref("toolkit.telemetry.enabled", false);
+EOF
+}
+
+launch_browser() {
+  local width=$1
+  local height=$2
+  local profile=$DATA_HOME/karpage/browsers/$BROWSER_NAME
+  mkdir -p "$profile" "$STATE_DIR"
+  local -a args=()
+  if [ "$BROWSER_NAME" = firefox ]; then
+    write_firefox_prefs "$profile"
+    args=(--profile "$profile" --new-window "$URL")
+  else
+    args=(
+      "--app=$URL"
+      --class=karpage
+      "--user-data-dir=$profile"
+      "--window-size=${width},${height}"
+      --no-first-run
+      --no-default-browser-check
+      --ozone-platform-hint=auto
+    )
+  fi
+  if command -v setsid >/dev/null 2>&1; then
+    setsid "$BROWSER_BIN" "${args[@]}" >/dev/null 2>&1 &
+  else
+    "$BROWSER_BIN" "${args[@]}" >/dev/null 2>&1 &
+  fi
+  printf '%s\n' "$!" >"$STATE_DIR/browser.pid"
+  printf '%s\n' "$BROWSER_NAME" >"$STATE_DIR/browser.name"
+}
+
+notify_first_run() {
+  [ "${KARPAGE_NO_NOTIFY:-}" = 1 ] && return 0
+  local stamp=$STATE_DIR/tips-shown
+  [ -f "$stamp" ] && return 0
+  mkdir -p "$STATE_DIR"
+  local body
+  body=$(printf '%s\n' \
+    'Super+Shift+K launches or focuses.' \
+    'Super+Shift+Alt+K cycles phone, side column, and fullscreen.' \
+    'Super+Shift+Ctrl+K moves it left or right.' \
+    'karpage keys prints the sheet.')
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send -a 'Kar Page' -u low 'Kar Page' "$body" || true
+  else
+    printf '%s\n' "$body" >&2
+  fi
+  : >"$stamp"
+}
+
+wait_for_window() {
+  local tries=$POLL_TRIES
+  local i=0
+  FOUND_ADDR=
+  while [ "$i" -lt "$tries" ]; do
+    find_window
+    if [ -n "$FOUND_ADDR" ]; then
+      return 0
+    fi
+    i=$((i + 1))
+    sleep "$POLL_SLEEP"
+  done
+  return 1
+}
+
+cmd_open() {
+  take_lock
+  load_config
+  if [ -n "${BROWSER_FLAG:-}" ]; then
+    BROWSER=$BROWSER_FLAG
+  fi
+  load_state
+  find_window
+  if [ -n "$FOUND_ADDR" ]; then
+    ADDR=$FOUND_ADDR
+    focus_addr
+    notify_first_run
+    return 0
+  fi
+  launch_fresh
+}
+
+cmd_toggle() {
+  take_lock
+  load_config
+  load_state
+  case $MODE in
+    phone) MODE=tile ;;
+    tile) MODE=full ;;
+    *) MODE=phone ;;
+  esac
+  save_state
+  printf '%s\n' "$MODE"
+  find_window
+  if [ -n "$FOUND_ADDR" ]; then
+    apply_mode "$FOUND_ADDR"
+    return 0
+  fi
+  # The lock is already held. Launch without taking it again.
+  launch_fresh
+}
+
+launch_fresh() {
+  if [ -n "${BROWSER_FLAG:-}" ]; then
+    BROWSER=$BROWSER_FLAG
+  fi
+  resolve_browser "$BROWSER"
+  local width=$PHONE_W
+  local height=$PHONE_H
+  if read_monitor; then
+    compute_geometry
+    width=$GEO_W
+    height=$GEO_H
+  fi
+  launch_browser "$width" "$height"
+  if ! hypr_running; then
+    warn "Hyprland is not running. Opened a ${width}x${height} window."
+    notify_first_run
+    return 0
+  fi
+  if wait_for_window; then
+    apply_mode "$FOUND_ADDR"
+  else
+    warn "The browser started. Kar Page will frame the window when Hyprland lists it."
+  fi
+  notify_first_run
+}
+
+cmd_mode() {
+  local arg=${1:-}
+  take_lock
+  load_config
+  load_state
+  if [ -z "$arg" ]; then
+    printf '%s\n' "$MODE"
+    return 0
+  fi
+  case $arg in
+    phone|float) MODE=phone ;;
+    tile|column|dock) MODE=tile ;;
+    full|fullscreen) MODE=full ;;
+    *) die "Mode is phone, tile, or full." ;;
+  esac
+  save_state
+  printf '%s\n' "$MODE"
+  find_window
+  if [ -n "$FOUND_ADDR" ]; then
+    apply_mode "$FOUND_ADDR"
+  fi
+}
+
+cmd_side() {
+  local arg=${1:-}
+  take_lock
+  load_config
+  load_state
+  case $arg in
+    '') ;;
+    left|right|center) SIDE=$arg ;;
+    toggle)
+      case $SIDE in
+        left) SIDE=right ;;
+        right) SIDE=left ;;
+        *) SIDE=right ;;
+      esac
+      ;;
+    *) die "Side is left, right, center, or toggle." ;;
+  esac
+  if [ -n "$arg" ]; then
+    save_state
+  fi
+  printf '%s\n' "$SIDE"
+  if [ -z "$arg" ]; then
+    return 0
+  fi
+  find_window
+  if [ -n "$FOUND_ADDR" ]; then
+    apply_mode "$FOUND_ADDR"
+  fi
+}
+
+write_rules() {
+  mkdir -p "$HYPR_DIR"
+  local match=$CLASS_RE
+  local move
+  case $SIDE in
+    left) move="move ${MARGIN} (monitor_h-window_h)/2" ;;
+    right) move="move monitor_w-window_w-${MARGIN} (monitor_h-window_h)/2" ;;
+    *) move="center on" ;;
+  esac
+  local tmp
+  tmp=$(mktemp)
+  cat >"$tmp" <<EOF
+# Generated by karpage rules. Edit the Kar Page config, then run karpage rules.
+# This file is sourced from hyprland.conf. It only matches the Kar Page window.
+# Firefox is framed by the launcher, because its class stays firefox.
+
+windowrule = tag +karpage, match:class ${match}
+windowrule = float on, match:class ${match}
+windowrule = size ${PHONE_W} ${PHONE_H}, match:class ${match}
+windowrule = ${move}, match:class ${match}
+windowrule = rounding ${ROUNDING}, match:class ${match}
+windowrule = rounding_power 4, match:class ${match}
+windowrule = border_size ${BORDER}, match:class ${match}
+windowrule = border_color rgb(ececec) rgb(2b2b2b), match:class ${match}
+windowrule = opacity ${OPACITY} override ${OPACITY} override, match:class ${match}
+EOF
+  mv "$tmp" "$HYPR_DIR/karpage.conf"
+
+  tmp=$(mktemp)
+  cat >"$tmp" <<EOF
+# Opt-in Kar Page keybinds. Install does not source this file.
+# Omarchy uses Super+K for its keybindings menu, so these use Super+Shift+K.
+#
+# Omarchy 3, add this line to the bottom of ~/.config/hypr/hyprland.conf:
+#   source = $HYPR_DIR/karpage-binds.conf
+#
+# The three lines below are the binds. The commented set takes Super+K
+# and replaces Omarchy's keybindings menu on that key.
+
+bindd = SUPER SHIFT, K, Kar Page, exec, $BIN open
+bindd = SUPER SHIFT ALT, K, Kar Page mode, exec, $BIN toggle
+bindd = SUPER SHIFT CTRL, K, Kar Page side, exec, $BIN side toggle
+
+# bindd = SUPER, K, Kar Page, exec, $BIN open
+# bindd = SUPER ALT, K, Kar Page mode, exec, $BIN toggle
+# bindd = SUPER CTRL, K, Kar Page side, exec, $BIN side toggle
+EOF
+  mv "$tmp" "$HYPR_DIR/karpage-binds.conf"
+}
+
+cmd_rules() {
+  load_config
+  write_default_config
+  load_config
+  write_rules
+  if [ "${KARPAGE_NO_RELOAD:-}" = 1 ]; then
+    return 0
+  fi
+  if hypr_running; then
+    hyprctl reload >/dev/null 2>&1 || true
+  fi
+}
+
+print_keys() {
+  cat <<EOF
+Kar Page shortcuts
+
+Launcher
+  karpage                         Launch the phone window, or focus it
+  karpage toggle                  Cycle phone, side column, fullscreen
+  karpage mode phone              Floating phone
+  karpage mode tile               Side column
+  karpage mode full               Fullscreen
+  karpage side left|right|toggle  Move the window
+  karpage --browser NAME          Use one browser this time
+  karpage keys                    This sheet
+  karpage --help                  Browsers, files, and Firefox limits
+
+Suggested Hyprland binds, opt-in
+  These are not installed. Omarchy already uses Super+K for its
+  keybindings menu, so the suggestions sit beside that key.
+
+  Super+Shift+K                   Launch or focus
+  Super+Shift+Alt+K               Cycle phone, side column, fullscreen
+  Super+Shift+Ctrl+K              Move left or right
+
+  Omarchy 3, add to ~/.config/hypr/hyprland.conf:
+    source = ~/.config/hypr/karpage-binds.conf
+
+  Omarchy 4, add to ~/.config/hypr/hyprland.lua:
+    require("hypr.karpage_binds")
+
+  The window rules are already sourced. The binds are not.
+EOF
+}
+
+print_help() {
+  cat <<EOF
+karpage — open https://karpage.app as one phone window on Omarchy
+
+Usage
+  karpage [open]
+  karpage toggle
+  karpage mode [phone|tile|full]
+  karpage side [left|right|center|toggle]
+  karpage --browser NAME [command]
+  karpage rules
+  karpage keys
+  karpage --help
+
+Modes
+  phone   Floating window at a phone aspect, thin rounded bezel
+  tile    Full-height column on the configured side
+  full    Fullscreen
+  Launching again focuses the window that is already open.
+
+Browsers
+  Auto tries Chromium, Google Chrome, Brave, Vivaldi, Microsoft Edge,
+  then Firefox. --browser NAME uses one of those names for this launch.
+  If the one you named is missing, karpage says so and tries the rest.
+  Each browser gets its own profile under:
+    $DATA_HOME/karpage/browsers/
+  That profile is not your everyday browser profile. Sign in once there.
+  Chromium-based browsers use --app, --class=karpage, and --user-data-dir.
+
+Firefox
+  Firefox has no app window. Kar Page opens --new-window in the profile
+  above, so the toolbar stays and the class stays firefox. The launcher
+  finds that profile's window and frames it. Kiosk mode is not used: it
+  is fullscreen only and cannot sit as a phone. A Firefox window you
+  already had open is left alone.
+
+Config
+  $CONFIG_FILE
+  Window rules are generated at:
+    $HYPR_DIR/karpage.conf
+    $HYPR_DIR/karpage.lua
+  Run karpage rules after editing the config. Install sources the rules.
+  It never rewrites the rest of hyprland.conf or hyprland.lua.
+
+Shortcuts
+  karpage keys
+EOF
+}
+
+main() {
+  shopt -s extglob
+  load_paths
+  local cmd=open
+  local cmd_arg=
+  BROWSER_FLAG=
+  while [ $# -gt 0 ]; do
+    case $1 in
+      -h|--help|help)
+        cmd=help
+        shift
+        ;;
+      keys)
+        cmd=keys
+        shift
+        ;;
+      rules)
+        cmd=rules
+        shift
+        ;;
+      open|focus|launch)
+        cmd=open
+        shift
+        ;;
+      toggle)
+        cmd=toggle
+        shift
+        ;;
+      mode|side)
+        cmd=$1
+        shift
+        if [ $# -gt 0 ] && [ "${1#--}" = "$1" ]; then
+          cmd_arg=$1
+          shift
+        fi
+        ;;
+      --browser)
+        [ $# -ge 2 ] || die "--browser needs a name."
+        BROWSER_FLAG=$2
+        shift 2
+        ;;
+      --browser=*)
+        BROWSER_FLAG=${1#--browser=}
+        shift
+        ;;
+      *)
+        die "Unknown argument: $1 (try karpage --help)"
+        ;;
+    esac
+  done
+
+  case $cmd in
+    help)
+      print_help
+      ;;
+    keys)
+      print_keys
+      ;;
+    rules)
+      cmd_rules
+      ;;
+    open)
+      cmd_open
+      ;;
+    toggle)
+      cmd_toggle
+      ;;
+    mode)
+      cmd_mode "$cmd_arg"
+      ;;
+    side)
+      cmd_side "$cmd_arg"
+      ;;
+    *)
+      die "Unknown command."
+      ;;
+  esac
+}
+
+main "$@"
