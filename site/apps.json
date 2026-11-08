@@ -459,6 +459,110 @@
    "mediaTop": true
   },
   {
+   "slug": "jade-rain-matrix",
+   "name": "Jade Rain Matrix",
+   "mark": "rain",
+   "status": "public",
+   "license": "MIT",
+   "repo": "KarPage/jade-rain-matrix",
+   "short": "Calm digital rain for Omarchy, in your theme’s colors.",
+   "tag": "OMARCHY · LOCAL-FIRST · MIT",
+   "tagline": "Make the rain yours",
+   "lede": "Calm digital rain for Omarchy in your theme’s colors. Live, Still, Light and Screensaver modes. Rain your own words and drop your own logo — all rendered locally on your machine.",
+   "seo": {
+    "title": "Jade Rain Matrix: calm digital rain for Omarchy",
+    "description": "Calm digital rain for Omarchy in your theme’s colors. Live, Still, Light and Screensaver modes, your own words and logo, with local live-preview settings.",
+    "keywords": "Jade Rain Matrix, Omarchy, digital rain, wallpaper, screensaver, Hyprland, Linux"
+   },
+   "features": [
+    [
+     "FOUR MODES",
+     "Live rain, a Still frame, Light for a brighter field, or a separate Screensaver loop."
+    ],
+    [
+     "YOUR WORDS",
+     "Rain your own words through the columns. Use short phrases, a word list, or imported text."
+    ],
+    [
+     "YOUR LOGO",
+     "Drop your own PNG or SVG logo. Choose floating outlines or small marks, and tune size and visibility."
+    ],
+    [
+     "YOUR THEME",
+     "The active Omarchy theme sets the palette. Choose custom colors when you want a different mood."
+    ],
+    [
+     "LIVE PREVIEW",
+     "See changes before saving. Pause or expand the preview; simple controls keep Advanced out of the way."
+    ],
+    [
+     "ONE TAP",
+     "The rain-columns bar icon opens clean, floating settings, or brings the existing window to the front."
+    ],
+    [
+     "LOCAL ONLY",
+     "No account, tracking or remote requests. Rendering, words, logos and settings stay on your machine."
+    ],
+    [
+     "LIGHTWEIGHT",
+     "Python, NumPy, Pillow and ffmpeg. No framework or new runtime service for settings."
+    ]
+   ],
+   "install": [
+    [
+     "FROM GITHUB",
+     "git clone https://github.com/KarPage/jade-rain-matrix.git && cd jade-rain-matrix && ./install.sh"
+    ],
+    [
+     "OPEN SETTINGS",
+     "jade-rain-matrix edit"
+    ],
+    [
+     "RENDER THE RAIN",
+     "jade-rain-matrix render"
+    ]
+   ],
+   "installNote": "Requires Python 3.11+, NumPy, Pillow, ffmpeg and a CJK font. Review the README for dependencies and optional bar/theme hooks. Chromium opens clean app settings; without it, settings use your default browser. Nothing is rendered until you request it.",
+   "links": [
+    [
+     "SOURCE",
+     "https://github.com/KarPage/jade-rain-matrix"
+    ]
+   ],
+   "inspiration": [
+    "bjarneo’s Omarchy Matrix theme",
+    "https://github.com/bjarneo/omarchy-matrix-theme",
+    "@iamdothash",
+    "https://x.com/iamdothash"
+   ],
+   "fine": [
+    "An original renderer inspired by the theme above. No code, images or video from that unlicensed repository are included.",
+    "Actual XPS screen capture, with the rain, Kar Page words and original logo exactly as configured. No windows, notifications or desktop bar.",
+    "Five seconds of real playback with a short crossfade at the repeat seam. Silent; no audio track. Reduced motion shows the static poster instead.",
+    "MIT licensed. Unofficial, not affiliated with Omarchy."
+   ],
+   "shots": [
+    {
+     "id": "jade-rain-real-1",
+     "alt": "Actual Jade Rain Matrix on an empty XPS screen: theme-colored rain, Kar Page words and the original small drifting Kar Page logo as configured.",
+     "w": 1920,
+     "h": 1157,
+     "format": "webp",
+     "cap": "ACTUAL SCREEN · ORIGINAL WORDS & LOGO"
+    }
+   ],
+   "mediaTop": true,
+   "loop": {
+    "webm": "media/jade-rain-loop.webm",
+    "mp4": "media/jade-rain-loop.mp4",
+    "poster": "img/jade-rain-loop-poster.webp",
+    "w": 1920,
+    "h": 1158,
+    "label": "Silent live-screen recording of Jade Rain Matrix with its original Kar Page words and logo, exactly as configured.",
+    "cap": "ACTUAL LIVE CAPTURE · 5 SECONDS · SILENT · ORIGINAL CONFIGURATION"
+   }
+  },
+  {
    "slug": "launcher",
    "name": "Kar Page Launcher",
    "mark": "launch",
