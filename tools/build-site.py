@@ -22,6 +22,7 @@ MARKS = {
     "kp": '<svg viewBox="0 0 2500 4172" fill="currentColor"><path fill-rule="evenodd" d="%s"/></svg>' % KP_D,
     "raptor": '<svg viewBox="0 0 32 32" fill="currentColor"><path fill-rule="evenodd" d="M16 1.25 17.3 4.6 17.9 8.4 19.3 11.6 30.75 19.6 30.75 22 21.3 21.4 21.9 23.6 27.4 27.6 27.4 29.9 20.4 28.9 18.6 30.75 16 30 13.4 30.75 11.6 28.9 4.6 29.9 4.6 27.6 10.1 23.6 10.7 21.4 1.25 22 1.25 19.6 12.7 11.6 14.1 8.4 14.7 4.6ZM16 5.4 16.75 8 16 11.2 15.25 8Z"/></svg>',
     "car": '<svg viewBox="0 0 32 32" fill="currentColor"><path d="M4.5 19.5c1-3.6 3-5.4 6-5.4h5.6l2.2-3.2h6.4c2 0 3.4 1.3 4 3l.8 2.4v3.2h-1.7a2.7 2.7 0 0 1-5.2 0h-9.6a2.7 2.7 0 0 1-5.2 0H4.5v-2.8z"/></svg>',
+    "rain": '<svg viewBox="0 0 32 32" fill="currentColor"><path opacity=".55" d="M3 2h6v12H3zM13 10h6v14h-6zM23 6h6v12h-6z"/><path d="M3 14h6v6H3zM13 24h6v6h-6zM23 18h6v6h-6z"/></svg>',
     "launch": '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"><rect x="5" y="7" width="22" height="18"/><path d="M5 12.2h22M12 20.2h8M17.2 17.4 20.2 20.2 17.2 23"/></svg>',
 }
 
@@ -41,7 +42,7 @@ e = lambda s: escape(str(s), quote=True)
 
 # Glyph bounds (measured from the rendered SVGs) so a boxed mark can fill its square edge to edge.
 TIGHT = {"kp": "0 0 2500 4172", "raptor": "1.25 1.25 29.5 29.5", "car": "4.5 10.85 25 10.65",
-         "launch": "4.2 6.2 23.6 19.6", "year": "3.5 5 25.3 20.85"}
+         "rain": "3 2 26 28", "launch": "4.2 6.2 23.6 19.6", "year": "3.5 5 25.3 20.85"}
 
 
 def mark(app, cls="mark"):
@@ -102,12 +103,12 @@ def picture(shot, eager=False):
         src.append('<source type="image/avif" srcset="%s">' % (base + ".avif" + (" 1x, %s-2x.avif 2x" % base if x2 else "")))
     src.append('<source type="image/webp" srcset="%s">' % (base + ".webp" + (" 1x, %s-2x.webp 2x" % base if x2 else "")))
     load = 'loading="eager" fetchpriority="high"' if eager else 'loading="lazy"'
-    return '<picture>%s<img src="%s.png" alt="%s" width="%d" height="%d" decoding="async" %s></picture>' % (
-        "".join(src), base, e(shot.get("alt") or ""), shot["w"], shot["h"], load)
+    return '<picture>%s<img src="%s.%s" alt="%s" width="%d" height="%d" decoding="async" %s></picture>' % (
+        "".join(src), base, shot.get("format", "png"), e(shot.get("alt") or ""), shot["w"], shot["h"], load)
 
 
 def full_src(shot):
-    return "img/%s%s" % (shot["id"], "-2x.webp" if shot.get("x2") else ".png")
+    return "img/%s%s" % (shot["id"], "-2x.webp" if shot.get("x2") else "." + shot.get("format", "png"))
 
 
 HOME_OG_ALT = "Kar Page Apps: a jade terminal window running ~/apps $ ls"
@@ -200,6 +201,8 @@ def tile_detail(app):
         return " · ".join(x for x in parts if x)
     if app.get("open"):
         return app["open"][1]
+    if app.get("status") == "public":
+        return " · ".join(filter(None, (app.get("license"), "public source")))
     return "no release yet · demo data"
 
 
@@ -369,6 +372,19 @@ def tw_lines(apps):
     return "|".join([TAG] + [TW[a["slug"]] for a in apps if a["slug"] in TW])
 
 
+def loop_media(app, controls=False):
+    """A poster-first loop: attach video sources only when motion is allowed."""
+    r = app["loop"]
+    video = ('<video class="rain-video" data-rain-loop width="%d" height="%d" poster="%s" '
+             'autoplay muted loop playsinline preload="none" aria-label="%s">%s</video>' % (
+                 r["w"], r["h"], e(r["poster"]), e(r["label"]),
+                 "".join('<source data-src="%s" type="video/%s">' % (e(r[k]), k) for k in ("webm", "mp4"))))
+    poster = '<img class="rain-poster" src="%s" alt="%s" width="%d" height="%d" decoding="async">' % (
+        e(r["poster"]), e(r["label"]), r["w"], r["h"])
+    button = '<button class="rain-toggle" type="button" hidden>Pause animation</button>' if controls else ""
+    return '<div class="rain-loop">%s%s%s</div>' % (video, poster, button)
+
+
 def index(apps):
     tiles = []
     for i, a in enumerate(apps):
@@ -378,6 +394,8 @@ def index(apps):
                 % (t["id"], t["id"], t["id"], e(t["alt"]), t["w"], t["h"]) for t in a["thumbs"])
         elif a.get("window"):
             media = '<div class="tile-shot winbox">%s</div>' % app_window(a, "tile")
+        elif a.get("loop"):
+            media = '<div class="tile-shot">%s</div>' % loop_media(a)
         elif a["shots"]:
             s = a["shots"][0]
             media = '<div class="tile-shot%s">%s</div>' % (" phone" if a.get("frame") == "phone" else "", picture(s, i == 0))
@@ -404,7 +422,7 @@ def index(apps):
 <div class="ckrow"><span class="kpbox" aria-hidden="true"><svg class="kpm" viewBox="0 0 2500 4172" aria-hidden="true" focusable="false"><use href="#kpm"/></svg></span><p class="clock" aria-hidden="true"><b>local</b><time>--- -- --- ---- · --:--</time></p></div>
 </div>
 <p class="lede twl" aria-hidden="true"><span class="tw p" data-tw="%s"><span class="sl">#</span>%s<span class="cursor"></span></span></p>
-<p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg ks"><span class="ksw"><kbd class="w ent" data-key="Enter"><svg class="kl" viewBox="0 0 84 28" preserveAspectRatio="none" focusable="false"><path d="M.5 .5H83.5V27.5H16.5V15.5H.5Z"/></svg><span>↲ ENTER</span></kbd><kbd class="w spc" data-key=" "><span>SPACE</span></kbd></span><em>select</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span><span class="kg"><kbd data-key="?">?</kbd><em>keys</em></span></p>
+<p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg ks"><span class="ksw"><kbd class="w ent" data-key="Enter"><svg class="kl" viewBox="0 0 84 28" preserveAspectRatio="none" focusable="false"><path d="M.5 .5H83.5V27.5H16.5V15.5H.5Z"/></svg><span>↲ ENTER</span></kbd><kbd class="w spc" data-key=" "><span>SPACE</span></kbd></span><em>select</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span><span class="kg"><kbd class="w" data-key="Shift">⇧</kbd><kbd data-key="?">?</kbd><em>keys</em></span></p>
 <p class="ktip" aria-hidden="true"><span>// tip:</span> this site runs on your keyboard · arrows to roam, <b>?</b> for the map</p>
 %s
 </header>
@@ -424,13 +442,16 @@ def code_tile(i, label, cmd, detail=""):
 
 def media_top(app):
     """Apps whose real media leads the page: hero shot, optional reel, more shots, then the three cards."""
-    return bool(app["shots"] and (app.get("reel") or app.get("mediaTop")))
+    return bool(app["shots"] and (app.get("reel") or app.get("mediaTop") or app.get("loop")))
 
 
 def reel(app):
     """Hero screenshot on top (eager, sized), then the real-app screen recording if there is one (muted loop,
     poster is its own first frame so the box is never black), then the other real screenshots, lazy-loaded.
     No third-party code."""
+    if app.get("loop"):
+        return ('<figure class="frame hero-shot hero-still">%s<figcaption>%s</figcaption></figure>'
+                '<div class="shots">%s</div>' % (loop_media(app, controls=True), e(app["loop"]["cap"]), figs_html(app["shots"])))
     r, shots = app.get("reel"), app["shots"]
     hero = shots[0]
     top = ('<figure class="frame hero-shot hero-still"><a href="%s">%s</a><figcaption>%s</figcaption></figure>'
@@ -530,8 +551,12 @@ def page(app, apps):
     elif app.get("soon"):
         section("status", "STATUS", '<div class="feat soon"><b>COMING SOON</b><p>%s</p></div>' % e(app["soon"]))
         nav.append(("status", "STATUS"))
-    if app.get("fine"):
-        section("credits", "CREDITS · NOTES", '<div class="fine">%s</div>' % "".join("<p>%s</p>" % e(f) for f in app["fine"]))
+    if app.get("fine") or app.get("inspiration"):
+        credit = ""
+        if app.get("inspiration"):
+            title, url, handle, profile = app["inspiration"]
+            credit = '<p>Inspired by <a href="%s" rel="noopener">%s</a>. Credit: bjarneo (<a href="%s" rel="noopener">%s</a>).</p>' % (e(url), e(title), e(profile), e(handle))
+        section("credits", "CREDITS · NOTES", '<div class="fine">%s%s</div>' % (credit, "".join("<p>%s</p>" % e(f) for f in app.get("fine", []))))
         nav.append(("credits", "CREDITS"))
 
     others = "".join('<li><a href="/%s">%s<span>%s</span></a></li>' % (e(a["slug"]), mark(a), e(a["name"]))
@@ -546,7 +571,7 @@ def page(app, apps):
 <div class="title-row">%s<h1>%s</h1>%s</div>
 <p class="tagline">%s</p>
 <p class="lede">%s</p>
-<p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg ks"><span class="ksw"><kbd class="w ent" data-key="Enter"><svg class="kl" viewBox="0 0 84 28" preserveAspectRatio="none" focusable="false"><path d="M.5 .5H83.5V27.5H16.5V15.5H.5Z"/></svg><span>↲ ENTER</span></kbd><kbd class="w spc" data-key=" "><span>SPACE</span></kbd></span><em>open</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span><span class="kg"><kbd data-key="?">?</kbd><em>keys</em></span></p>
+<p class="keys" aria-hidden="true"><span class="kg"><kbd data-key="ArrowLeft">←</kbd><kbd data-key="ArrowUp">↑</kbd><kbd data-key="ArrowDown">↓</kbd><kbd data-key="ArrowRight">→</kbd><em>move</em></span><span class="kg ks"><span class="ksw"><kbd class="w ent" data-key="Enter"><svg class="kl" viewBox="0 0 84 28" preserveAspectRatio="none" focusable="false"><path d="M.5 .5H83.5V27.5H16.5V15.5H.5Z"/></svg><span>↲ ENTER</span></kbd><kbd class="w spc" data-key=" "><span>SPACE</span></kbd></span><em>open</em></span><span class="kg"><kbd class="w" data-key="Escape">ESC</kbd><em>back</em></span><span class="kg"><kbd class="w" data-key="Shift">⇧</kbd><kbd data-key="?">?</kbd><em>keys</em></span></p>
 %s
 %s
 </section>""" % (tag_html(app["tag"]), mark(app, "mark big"), e(app["name"]), status_badge(app), e(app["tagline"]), e(app["lede"]),

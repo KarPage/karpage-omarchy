@@ -481,8 +481,46 @@
     });
   });
 
-  /* Real-app screen recording: muted, looping, plays only while on screen.
-     Visitors who prefer reduced motion get the poster only. */
+  // A real-screen loop stays a static poster with reduced motion or without JS.
+  document.querySelectorAll("[data-rain-loop]").forEach(function (video) {
+    var box = video.closest(".rain-loop"), button = box.querySelector(".rain-toggle");
+    var calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var seen = !window.IntersectionObserver, wanted = true;
+    function sync() {
+      if (calm.matches) {
+        video.pause(); video.autoplay = false;
+        video.querySelectorAll("source[src]").forEach(function (source) { source.removeAttribute("src"); });
+        video.load(); box.classList.remove("motion-ready");
+        if (button) button.hidden = true;
+        return;
+      }
+      if (!seen || document.hidden || !wanted) { video.pause(); return; }
+      var loaded = false;
+      video.querySelectorAll("source[data-src]").forEach(function (source) {
+        if (!source.hasAttribute("src")) { source.src = source.dataset.src; loaded = true; }
+      });
+      video.muted = true; video.autoplay = true;
+      if (loaded) video.load();
+      var play = video.play();
+      if (play) play.catch(function () { box.classList.remove("motion-ready"); });
+    }
+    video.addEventListener("playing", function () {
+      if (calm.matches) { sync(); return; }
+      box.classList.add("motion-ready");
+      if (button) { button.hidden = false; button.textContent = "Pause animation"; }
+    });
+    video.addEventListener("pause", function () { if (button) button.textContent = "Play animation"; });
+    video.addEventListener("error", function () { box.classList.remove("motion-ready"); if (button) button.hidden = true; });
+    if (button) button.addEventListener("click", function () { wanted = !wanted; sync(); });
+    if (window.IntersectionObserver) new IntersectionObserver(function (entries) {
+      seen = entries[0].isIntersecting; sync();
+    }, { threshold: 0.1 }).observe(box);
+    calm.addEventListener("change", sync);
+    document.addEventListener("visibilitychange", sync);
+    sync();
+  });
+
+  /* Existing OmaRaptor screen recording. */
   var reel = document.querySelector("video.reel");
   if (reel) {
     var calm = window.matchMedia("(prefers-reduced-motion: reduce)");
