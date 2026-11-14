@@ -746,17 +746,17 @@
   },
   {
    "slug": "mcholev",
-   "name": "Mihail Cholev",
+   "name": "Commercial Helicopter Pilot",
    "mark": "rotor",
    "status": "web app",
    "short": "A mil-spec HUD pilot site with logbook gauges, rotor top-view blueprints, a sling-load mini game and a scannable Pilot Card.",
    "tag": "WEB · ASTRO · VERCEL",
-   "tagline": "Commercial Helicopter Pilot & CFI",
+   "tagline": "Certified flight instructor",
    "lede": "A mil-spec HUD pilot site with logbook gauges, rotor top-view blueprints, a sling-load mini game and a scannable Pilot Card.",
    "seo": {
-    "title": "Mihail Cholev: commercial helicopter pilot and CFI",
-    "description": "Personal website of Mihail Cholev, commercial helicopter pilot and CFI. A mil-spec HUD pilot site with logbook gauges, rotor top-view blueprints, a sling-load mini game and a scannable Pilot Card.",
-    "keywords": "Mihail Cholev, commercial helicopter pilot, CFI, mcholev.com"
+    "title": "Commercial Helicopter Pilot",
+    "description": "A mil-spec HUD pilot site with logbook gauges, rotor top-view blueprints, a sling-load mini game and a scannable Pilot Card.",
+    "keywords": "commercial helicopter pilot, CFI, mcholev.com"
    },
    "features": [
     [
@@ -791,7 +791,7 @@
    "shots": [
     {
      "id": "mcholev-cover",
-     "alt": "Mihail Cholev site cover: a Mil Mi-17-1V on the flight line above a dark HUD, with the name, commercial helicopter and CFI tags, and logbook gauges for total time, PIC, cross-country, dual given, Bell 206 and types.",
+     "alt": "Site cover: a Mil Mi-17-1V on the flight line above a dark HUD, with commercial helicopter and CFI tags and logbook gauges for total time, PIC, cross-country, dual given, Bell 206 and types.",
      "w": 1440,
      "h": 900,
      "avif": true,

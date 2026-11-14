@@ -65,6 +65,7 @@ class SiteTests(unittest.TestCase):
         apps = json.loads((ROOT / "site/apps.json").read_text())["apps"]
         app = next(a for a in apps if a["slug"] == "mcholev")
         self.assertEqual(app["status"], "web app")
+        self.assertEqual(app["name"], "Commercial Helicopter Pilot")
         self.assertEqual(app["tag"], "WEB · ASTRO · VERCEL")
         self.assertEqual(app["open"][1], "https://mcholev.com")
         self.assertNotIn("listing", app)
@@ -72,7 +73,10 @@ class SiteTests(unittest.TestCase):
         page = build.page(app, apps)
         self.assertIn('href="https://mcholev.com"', page)
         self.assertIn("WEB · ASTRO · VERCEL", page)
+        self.assertIn("<h1>Commercial Helicopter Pilot</h1>", page)
         self.assertIn("img/mcholev-cover.webp", page)
+        self.assertNotIn("Mihail", page)
+        self.assertNotIn("Cholev", page)
         self.assertNotIn("plugins.omarchy.org", page)
         for shot in app["shots"]:
             self.assertTrue((ROOT / "site" / build.full_src(shot)).is_file())
@@ -80,6 +84,11 @@ class SiteTests(unittest.TestCase):
         self.assertIn('href="/mcholev"', home)
         self.assertIn("WEB · ASTRO · VERCEL", home)
         self.assertIn("All apps: 7 apps", home)
+        self.assertIn("<h2>Commercial Helicopter Pilot</h2>", home)
+        self.assertIn('srcset="img/mcholev-cover.avif 1x"', home)
+        self.assertIn('loading="eager"', home[home.index('href="/mcholev"'):])
+        self.assertNotIn("Mihail", home)
+        self.assertNotIn("Cholev", home)
 
     def test_legacy_reel_is_unchanged(self):
         apps = json.loads((ROOT / "site/apps.json").read_text())["apps"]
