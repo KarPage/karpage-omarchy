@@ -50,7 +50,7 @@ def check(out):
                 tile = page.locator('.tile[href="/jade-rain-matrix"]')
                 tile.scroll_into_view_if_needed()
                 expect(tile.locator("video")).to_have_js_property("paused", False)
-                assert page.locator("#grid > li").count() == 6
+                assert page.locator("#grid > li").count() == 7
                 page.screenshot(path=str(out / f"site-preview-home-{label}.png"), full_page=True)
                 tile.screenshot(path=str(out / f"site-preview-tile-{label}.png"))
                 page.locator('[data-filter="open"]').click()
