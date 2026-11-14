@@ -24,6 +24,8 @@ MARKS = {
     "car": '<svg viewBox="0 0 32 32" fill="currentColor"><path d="M4.5 19.5c1-3.6 3-5.4 6-5.4h5.6l2.2-3.2h6.4c2 0 3.4 1.3 4 3l.8 2.4v3.2h-1.7a2.7 2.7 0 0 1-5.2 0h-9.6a2.7 2.7 0 0 1-5.2 0H4.5v-2.8z"/></svg>',
     "rain": '<svg viewBox="0 0 32 32" fill="currentColor"><path opacity=".55" d="M3 2h6v12H3zM13 10h6v14h-6zM23 6h6v12h-6z"/><path d="M3 14h6v6H3zM13 24h6v6h-6zM23 18h6v6h-6z"/></svg>',
     "launch": '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"><rect x="5" y="7" width="22" height="18"/><path d="M5 12.2h22M12 20.2h8M17.2 17.4 20.2 20.2 17.2 23"/></svg>',
+    # Top-view rotor: an original drawing for this site.
+    "rotor": '<svg viewBox="0 0 32 32" fill="currentColor"><path fill-rule="evenodd" d="M14.4 2h3.2V10h-3.2zM14.4 22h3.2V30h-3.2zM2 14.4H10v3.2H2zM22 14.4h8v3.2h-8zM10 10h12v12H10zm3 3h6v6h-6z"/></svg>',
 }
 
 
@@ -42,7 +44,8 @@ e = lambda s: escape(str(s), quote=True)
 
 # Glyph bounds (measured from the rendered SVGs) so a boxed mark can fill its square edge to edge.
 TIGHT = {"kp": "0 0 2500 4172", "raptor": "1.25 1.25 29.5 29.5", "car": "4.5 10.85 25 10.65",
-         "rain": "3 2 26 28", "launch": "4.2 6.2 23.6 19.6", "year": "3.5 5 25.3 20.85"}
+         "rain": "3 2 26 28", "launch": "4.2 6.2 23.6 19.6", "year": "3.5 5 25.3 20.85",
+         "rotor": "2 2 28 28"}
 
 
 def mark(app, cls="mark"):

@@ -1,6 +1,6 @@
 # Kar Page Apps
 
-Static site for [apps.karpage.com](https://apps.karpage.com). A front page with every app, plus one page per app (`/omaraptor`, `/oma-year`, `/kar-page`, `/launcher`, `/jade-rain-matrix`, `/omakardash`). No framework, no tracking, no external fonts or CDNs. Every page works without JavaScript; `site.js` only adds the copy buttons, the stat filters and old-link redirects.
+Static site for [apps.karpage.com](https://apps.karpage.com). A front page with every app, plus one page per app (`/omaraptor`, `/oma-year`, `/kar-page`, `/launcher`, `/jade-rain-matrix`, `/omakardash`, `/mcholev`). No framework, no tracking, no external fonts or CDNs. Every page works without JavaScript; `site.js` only adds the copy buttons, the stat filters and old-link redirects.
 
 ## Build
 
@@ -19,7 +19,7 @@ Each app is one object in `apps`. Only add an app you have a real source for. Sc
 
 | Field | What it does |
 | --- | --- |
-| `slug`, `name`, `mark` | URL (`/<slug>`), title, and logo (`kp`, `year`, `raptor`, `car`, `launch`, `rain`). |
+| `slug`, `name`, `mark` | URL (`/<slug>`), title, and logo (`kp`, `year`, `raptor`, `car`, `launch`, `rain`, `rotor`). |
 | `status` | Badge and filter: `marketplace`, `in review`, `public`, `web app`, `coming soon`. |
 | `license`, `repo` | An app with both counts as open source. `repo` is `KarPage/<name>`. |
 | `short` | One line on the front tile. |
@@ -45,6 +45,7 @@ Square corners only. Demo data only in screenshots. No maps, flags, news or poli
 - Omarchy mark: from the Omarchy project (MIT, github.com/basecamp/omarchy), vector via Simple Icons. Unofficial, not affiliated.
 - Tux silhouette: Simple Icons "linux" glyph, based on Tux by Larry Ewing (lewing@isc.tamu.edu), drawn with The GIMP.
 - OmaRaptor jet: an original drawing for this site.
+- Mihail Cholev rotor: an original top-view drawing for this site.
 - No Arch Linux logo is used: the Arch trademark policy requires the ™ mark with the logo and limits combining it with other marks.
 
 ### Actual-screen animation
