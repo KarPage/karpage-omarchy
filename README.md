@@ -44,7 +44,7 @@ fi
 echo "Kar Page is in the launcher."
 ```
 
-Open **Kar Page** from the Omarchy launcher. The window loads https://karpage.app.
+Open **Kar Page** from the Omarchy launcher. The window loads https://karpage.app/?shell=omarchy.
 
 Remove it with `./uninstall` from this directory. That deletes the two files above. The website is unchanged.
 
